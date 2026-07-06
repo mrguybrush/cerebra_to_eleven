@@ -70,6 +70,230 @@
         </button>
     </div>
 
+</div>
+
+<div class="background-image pink-corner-frame mt-3">
+    <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1">
+        <div class="flex-grow-1 pl-2">Gestensteuerung</div>
+    </div>
+
+    <div class="d-flex flex-row m-3 align-items-center flex-wrap" id="gesture-capture-controls">
+        <select
+            class="mr-2 mb-2"
+            data-test="SEL_Gesture_Capture_Mode"
+            [(ngModel)]="captureMode"
+            [disabled]="(capturing$ | async) ?? false">
+            <option value="static">Statisch (einzelne Geste)</option>
+            <option value="dynamic">Dynamisch (Bewegungssequenz)</option>
+        </select>
+        <select
+            class="mr-2 mb-2"
+            data-test="SEL_Gesture_Pose_Source"
+            title="Woher die Kamerabilder für die Erkennung kommen"
+            [(ngModel)]="poseSource"
+            [disabled]="(capturing$ | async) ?? false">
+            <option value="robot">Kamera vom Roboter</option>
+            <option value="webcam">Eigene Webcam</option>
+        </select>
+        <input
+            type="number"
+            min="1"
+            max="60"
+            class="mr-2 mb-2"
+            style="width: 5rem"
+            data-test="TXT_Gesture_Capture_Duration"
+            [(ngModel)]="captureDurationS"
+            [disabled]="(capturing$ | async) ?? false" />
+        <span class="mr-2 mb-2">Sekunden</span>
+
+        <button
+            *ngIf="!(capturing$ | async)"
+            type="button"
+            class="btn btn-regular mb-2"
+            data-test="BTN_Gesture_Capture_Start"
+            (click)="startCapture()">
+            Start
+        </button>
+        <button
+            *ngIf="capturing$ | async"
+            type="button"
+            class="btn btn-regular mb-2"
+            data-test="BTN_Gesture_Capture_Stop"
+            (click)="stopCapture()">
+            Stopp ({{remainingSeconds$ | async}}s)
+        </button>
+    </div>
+
+    <div
+        *ngIf="poseTrackerError$ | async as error"
+        class="m-3"
+        style="color: #ff8080"
+        data-test="TXT_Gesture_Pose_Tracker_Error">
+        {{error}}
+    </div>
+
+    <div
+        *ngIf="capturing$ | async"
+        class="m-3"
+        style="font-size: 0.85rem; opacity: 0.8"
+        data-test="TXT_Gesture_Debug_Status">
+        Debug: MediaPipe bereit: {{(landmarkerReady$ | async) ? "ja" : "nein"}} |
+        Bilder empfangen: {{framesReceived$ | async}} |
+        Bilder gezeichnet: {{framesDrawn$ | async}}
+    </div>
+
+    <div
+        *ngIf="capturing$ | async"
+        class="d-flex flex-row m-3 flex-wrap"
+        id="gesture-capture-preview">
+        <div class="mr-4 mb-2">
+            <div class="pb-1">Canvas (mit erkannten Punkten)</div>
+            <canvas
+                #previewCanvas
+                data-test="CANVAS_Gesture_Preview"
+                style="max-width: 480px; width: 100%; border-radius: 6px; background: #000;"></canvas>
+        </div>
+        <div class="mr-4 mb-2" *ngIf="rawFrame$ | async as raw">
+            <div class="pb-1">Rohbild (zum Vergleich)</div>
+            <img
+                [src]="raw"
+                data-test="IMG_Gesture_Raw_Frame"
+                style="max-width: 320px; width: 100%; border-radius: 6px;" />
+        </div>
+        <div class="mb-2">
+            <div class="pb-2">Erkannte Gelenkwinkel</div>
+            <table class="joint-angle-table">
+                <tr *ngFor="let entry of jointAngles$ | async | keyvalue">
+                    <td class="pr-3">{{entry.key}}</td>
+                    <td>{{entry.value | number: "1.0-0"}}&deg;</td>
+                </tr>
+                <tr *ngIf="(jointAngles$ | async | keyvalue)?.length === 0">
+                    <td>Keine Person erkannt</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row m-3 pb-1 pl-2 align-items-center">
+        <span class="flex-grow-1">Gesten</span>
+        <button
+            type="button"
+            class="btn btn-regular btn-sm"
+            data-test="BTN_Gesture_Import"
+            (click)="importGesture()">
+            Importieren
+        </button>
+    </div>
+    <div
+        *ngFor="let gesture of gestures | async"
+        class="pose-item d-flex flex-row mt-1 mb-2">
+        <button
+            class="apply-button flex-shrink-0"
+            [attr.data-test]="'BTN_Gesture_Apply_' + gesture.name"
+            (click)="applyGesture(gesture)">
+            <img
+                class="apply-pose"
+                src="../../../assets/joint-control/other/apply-pose.svg"
+                alt="apply-gesture" />
+        </button>
+        <button
+            class="pose-label flex-grow-1 flex-shrink-1 pl-3"
+            [attr.data-test]="'BTN_Gesture_Select_' + gesture.name"
+            (dblclick)="renameGesture(gesture)">
+            {{gesture.name}}
+        </button>
+        <button
+            *ngIf="gesture.deletable"
+            [attr.data-test]="'BTN_Gesture_Rename_' + gesture.name"
+            class="rename-button flex-shrink-0"
+            (click)="renameGesture(gesture)">
+            <img
+                class="rename-icon"
+                src="../../../assets/edit.svg"
+                alt="rename-gesture" />
+        </button>
+        <button
+            [attr.data-test]="'BTN_Gesture_Export_' + gesture.name"
+            class="rename-button flex-shrink-0"
+            title="Exportieren"
+            (click)="exportGesture(gesture)">
+            <img
+                class="rename-icon"
+                src="../../../assets/export.svg"
+                alt="export-gesture" />
+        </button>
+        <button
+            *ngIf="gesture.deletable"
+            [attr.data-test]="'BTN_Gesture_Delete_' + gesture.name"
+            class="delete-button flex-shrink-0"
+            (click)="deleteGesture(gesture)">
+            <img
+                class="delete-icon"
+                src="../../../assets/delete.svg"
+                alt="delete-gesture" />
+        </button>
+    </div>
+
+    <div class="d-flex flex-row m-3 pb-1 pl-2 align-items-center">
+        <span class="flex-grow-1">Bewegungssequenzen</span>
+        <button
+            type="button"
+            class="btn btn-regular btn-sm"
+            data-test="BTN_Sequence_Import"
+            (click)="importSequence()">
+            Importieren
+        </button>
+    </div>
+    <div
+        *ngFor="let sequence of sequences | async"
+        class="pose-item d-flex flex-row mt-1 mb-2">
+        <button
+            class="apply-button flex-shrink-0"
+            [attr.data-test]="'BTN_Sequence_Apply_' + sequence.name"
+            (click)="applySequence(sequence)">
+            <img
+                class="apply-pose"
+                src="../../../assets/joint-control/other/apply-pose.svg"
+                alt="apply-sequence" />
+        </button>
+        <button
+            class="pose-label flex-grow-1 flex-shrink-1 pl-3"
+            [attr.data-test]="'BTN_Sequence_Select_' + sequence.name"
+            (dblclick)="renameSequence(sequence)">
+            {{sequence.name}}
+        </button>
+        <button
+            *ngIf="sequence.deletable"
+            [attr.data-test]="'BTN_Sequence_Rename_' + sequence.name"
+            class="rename-button flex-shrink-0"
+            (click)="renameSequence(sequence)">
+            <img
+                class="rename-icon"
+                src="../../../assets/edit.svg"
+                alt="rename-sequence" />
+        </button>
+        <button
+            [attr.data-test]="'BTN_Sequence_Export_' + sequence.name"
+            class="rename-button flex-shrink-0"
+            title="Exportieren"
+            (click)="exportSequence(sequence)">
+            <img
+                class="rename-icon"
+                src="../../../assets/export.svg"
+                alt="export-sequence" />
+        </button>
+        <button
+            *ngIf="sequence.deletable"
+            [attr.data-test]="'BTN_Sequence_Delete_' + sequence.name"
+            class="delete-button flex-shrink-0"
+            (click)="deleteSequence(sequence)">
+            <img
+                class="delete-icon"
+                src="../../../assets/delete.svg"
+                alt="delete-sequence" />
+        </button>
+    </div>
+
     <ng-template
         #modalContent
         let-modal

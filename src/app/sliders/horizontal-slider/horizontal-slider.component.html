@@ -1,10 +1,11 @@
 <div
     id="horizontal-slider-{{baseId}}"
     [ngClass]="(thumbSelected ? 'no-highlight' : '') + (active ? '' : 'inactive')"
-    (mouseup)="onMouseUp($event)"
-    (mouseenter)="onMouseEnter($event)"
-    (mouseleave)="onMouseLeave($event)"
-    (mousemove)="onMouseMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (pointerenter)="onPointerEnter($event)"
+    (pointerleave)="onPointerLeave($event)"
+    (pointermove)="onPointerMove($event)"
     #slider>
     <div class="row pb-3 mx-0 px-0">
         <!-- name -->
@@ -52,7 +53,7 @@
     </div>
     <div class="row pb-2 mt-3 px-0 pt-0 m-0 display-flex">
         <svg
-            (mousedown)="onMouseDown($event)"
+            (pointerdown)="onPointerDown($event)"
             class="slider-row"
             id="slider-{{baseId}}"
             [attr.style]="'height: ' + 2*thumbRadius + 'px;'">

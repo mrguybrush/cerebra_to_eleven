@@ -1,0 +1,25 @@
+<div class="settings-container">
+    <div class="setting-row">
+        <label
+            for="blockly-language-select"
+            class="setting-label">
+            Blockprogrammierung – Sprache
+        </label>
+        <select
+            id="blockly-language-select"
+            data-test="SEL_Blockly_Language"
+            class="setting-select"
+            [ngModel]="selectedLanguage"
+            (ngModelChange)="onLanguageChange($event)">
+            <option
+                *ngFor="let locale of locales"
+                [value]="locale.code">
+                {{ locale.label }}
+            </option>
+        </select>
+    </div>
+    <div class="setting-hint">
+        Legt die Sprache der Blöcke und Kategorien im Programm-Editor fest.
+        Änderungen wirken sofort und gelten für diesen Browser.
+    </div>
+</div>

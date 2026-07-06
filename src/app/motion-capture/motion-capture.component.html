@@ -1,0 +1,116 @@
+<div class="background-image pink-corner-frame mt-5">
+    <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1 align-items-center flex-wrap">
+        <div class="flex-grow-1 pl-2">Bewegungserfassung</div>
+
+        <select
+            class="mr-2 mb-1"
+            data-test="SEL_Motion_Capture_Source"
+            [(ngModel)]="poseSource"
+            [disabled]="running || starting">
+            <option value="robot">Kamera vom Roboter</option>
+            <option value="webcam">Eigene Webcam</option>
+        </select>
+
+        <button
+            *ngIf="!running"
+            type="button"
+            class="btn btn-regular mb-1"
+            data-test="BTN_Motion_Capture_Start"
+            [disabled]="starting"
+            (click)="start()">
+            {{starting ? "Lädt..." : "Start"}}
+        </button>
+        <button
+            *ngIf="running"
+            type="button"
+            class="btn btn-regular mb-1"
+            data-test="BTN_Motion_Capture_Stop"
+            (click)="stop()">
+            Stopp
+        </button>
+    </div>
+
+    <div
+        *ngIf="running"
+        class="m-3 motor-toggle-box"
+        [class.motors-on]="motorsActive">
+        <label class="motor-toggle-label">
+            <input
+                type="checkbox"
+                data-test="CHK_Motion_Capture_Motors"
+                [checked]="motorsActive"
+                (change)="setMotorsActive($any($event.target).checked)" />
+            <span class="ml-2 font-weight-bold">
+                Motoren folgen Bewegung (Live-Mirroring)
+            </span>
+        </label>
+        <div class="motor-toggle-hint">
+            {{motorsActive
+                ? "AKTIV - der Roboter bewegt sich mit! Ausschalten stoppt ihn sofort an der aktuellen Position."
+                : "Aus - der Roboter bleibt stehen. Einschalten bewegt die Arme zügig in deine aktuelle Haltung."}}
+        </div>
+    </div>
+
+    <div
+        *ngIf="error$ | async as error"
+        class="m-3 error-text"
+        data-test="TXT_Motion_Capture_Error">
+        {{error}}
+    </div>
+
+    <div
+        *ngIf="running"
+        class="m-3"
+        style="font-size: 0.85rem; opacity: 0.7">
+        MediaPipe bereit: {{(landmarkerReady$ | async) ? "ja" : "nein"}} |
+        Bilder empfangen: {{framesReceived$ | async}}
+    </div>
+
+    <div class="d-flex flex-row m-3 flex-wrap align-items-start">
+        <div class="flex-grow-1 mr-3 mb-3 video-box">
+            <canvas
+                #overlayCanvas
+                data-test="CANVAS_Motion_Capture"
+                class="capture-canvas"></canvas>
+            <div
+                *ngIf="!running"
+                class="canvas-hint">
+                Quelle wählen und auf Start klicken
+            </div>
+        </div>
+
+        <div class="mb-3 angle-box">
+            <div class="pb-2 font-weight-bold">Robotergelenke</div>
+            <table
+                class="angle-table joint-table"
+                data-test="TABLE_Motion_Capture_Joints">
+                <tr
+                    *ngFor="let row of jointRows"
+                    class="joint-row"
+                    [class.joint-selected]="selectedJoints.has(row.motor)"
+                    (click)="toggleJoint(row.motor)">
+                    <td class="pr-2">
+                        <input
+                            type="checkbox"
+                            tabindex="-1"
+                            style="pointer-events: none"
+                            [checked]="selectedJoints.has(row.motor)" />
+                    </td>
+                    <td class="pr-3">{{row.label}}</td>
+                    <td class="text-right">
+                        <ng-container *ngIf="liveDegrees(row.motor) !== null; else noValue">
+                            {{liveDegrees(row.motor) | number: "1.0-0"}}&deg;
+                        </ng-container>
+                        <ng-template #noValue>&ndash;</ng-template>
+                    </td>
+                </tr>
+            </table>
+            <div class="joint-table-hint">
+                Gelenk anklicken, um es in die Bewegungsübertragung
+                aufzunehmen. Werte erscheinen, sobald die Erfassung läuft und
+                eine Person erkannt wird; die Dreh-Gelenke brauchen einen
+                angewinkelten Arm.
+            </div>
+        </div>
+    </div>
+</div>

@@ -8,6 +8,11 @@ import {
 } from "@angular/forms";
 import {RosService} from "../../shared/services/ros-service/ros.service";
 import {TokenService} from "src/app/shared/services/token.service";
+import {VoiceSettingsService} from "src/app/shared/services/voice-settings.service";
+import {
+    VoiceSettings,
+    PiperVoice,
+} from "src/app/shared/types/voice-settings";
 
 @Component({
     selector: "app-smart-connect",
@@ -22,6 +27,11 @@ export class SmartConnectComponent implements OnInit {
     isTokenStored: boolean = false;
     isTokenActive: boolean = false;
     onErrorSubmit: boolean = false;
+
+    // Lokale Stimme (Piper): globale Einstellung + verfuegbare Stimmen
+    localVoiceEnabled: boolean = false;
+    selectedVoiceModel: string = "de_DE-thorsten-low";
+    availableVoices: PiperVoice[] = [];
     encryptTokenForm = new FormGroup(
         {
             token: new FormControl("", [Validators.required]),
@@ -43,6 +53,7 @@ export class SmartConnectComponent implements OnInit {
         private readonly rosService: RosService,
         private readonly modalService: NgbModal,
         private readonly tokenService: TokenService,
+        private readonly voiceSettingsService: VoiceSettingsService,
     ) {}
 
     ngOnInit(): void {
@@ -50,6 +61,40 @@ export class SmartConnectComponent implements OnInit {
             this.isTokenStored = response.tokenExists;
             this.isTokenActive = response.tokenActive;
             this.updatePasswordControlState();
+        });
+
+        // aktuelle globale TTS-Einstellungen laden
+        this.voiceSettingsService.voiceSettingsSubject.subscribe(
+            (settings: VoiceSettings) => {
+                this.localVoiceEnabled = settings.localVoiceEnabled;
+                this.selectedVoiceModel = settings.localVoiceModel;
+            },
+        );
+
+        // verfuegbare deutsche Stimmen laden
+        this.voiceSettingsService.availableVoicesSubject.subscribe(
+            (voices: PiperVoice[]) => {
+                this.availableVoices = voices;
+            },
+        );
+    }
+
+    // Checkbox "Nur lokale Stimme" umgeschaltet
+    onToggleLocalVoice(enabled: boolean) {
+        this.localVoiceEnabled = enabled;
+        this.persistVoiceSettings();
+    }
+
+    // Stimme im Dropdown gewechselt
+    onSelectVoiceModel(model: string) {
+        this.selectedVoiceModel = model;
+        this.persistVoiceSettings();
+    }
+
+    private persistVoiceSettings() {
+        this.voiceSettingsService.updateVoiceSettings({
+            localVoiceEnabled: this.localVoiceEnabled,
+            localVoiceModel: this.selectedVoiceModel,
         });
     }
 

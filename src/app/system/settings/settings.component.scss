@@ -1,0 +1,31 @@
+.settings-container {
+    color: white;
+    padding: 0.5rem;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.setting-label {
+    font-weight: bold;
+    margin: 0;
+}
+
+.setting-select {
+    color: white;
+    background-color: #344864;
+    border-radius: 5px;
+    border: none;
+    padding: 6px 10px;
+    min-width: 180px;
+}
+
+.setting-hint {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}

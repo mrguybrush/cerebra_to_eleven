@@ -40,6 +40,7 @@ import {ConsoleComponent} from "./program/program-overview/program-manager/progr
 import {SmartConnectComponent} from "./ui-components/smart-connect/smart-connect.component";
 import {NgOptimizedImage} from "@angular/common";
 import {PoseComponent} from "./pose/pose.component";
+import {MotionCaptureComponent} from "./motion-capture/motion-capture.component";
 import {MarkdownModule} from "ngx-markdown";
 import {HardwareIdComponent} from "./system/hardware-id/hardware-id.component";
 import {RelayControlComponent} from "./ui-components/relay-control/relay-control.component";
@@ -49,6 +50,7 @@ import {ProgramOverviewComponent} from "./program/program-overview/program-overv
 import {SystemComponent} from "./system/system.component";
 import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
 import {LogsComponent} from "./system/logs/logs.component";
+import {SettingsComponent} from "./system/settings/settings.component";
 
 @NgModule({
     declarations: [
@@ -77,6 +79,7 @@ import {LogsComponent} from "./system/logs/logs.component";
         ConsoleComponent,
         VoiceAssistantPersonalitySidebarRightComponent,
         PoseComponent,
+        MotionCaptureComponent,
         SmartConnectComponent,
         HardwareIdComponent,
         RelayControlComponent,
@@ -86,6 +89,7 @@ import {LogsComponent} from "./system/logs/logs.component";
         SystemComponent,
         DiagnoseComponent,
         LogsComponent,
+        SettingsComponent,
     ],
     imports: [
         BrowserModule,

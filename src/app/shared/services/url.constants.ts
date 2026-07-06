@@ -10,4 +10,7 @@ export enum UrlConstants {
     BRICKLET = "/bricklet",
     HOST_IP = "/host-ip",
     RGB_BUTTON = "/button-programs",
+    VOICE_SETTINGS = "/voice-assistant/voice-settings",
+    GESTURE = "/gesture-control/gestures",
+    MOVEMENT_SEQUENCE = "/gesture-control/sequences",
 }

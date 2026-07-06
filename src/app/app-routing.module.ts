@@ -20,12 +20,14 @@ import {SaveConfirmationGuard} from "./security/save-confirmation.guard";
 import {ProgramSplitscreenComponent} from "./program/program-overview/program-manager/program-splitscreen/program-splitscreen.component";
 import {programCodeResolver} from "./program/program-overview/program-manager/program-splitscreen/resolver/program-code.resolver";
 import {PoseComponent} from "./pose/pose.component";
+import {MotionCaptureComponent} from "./motion-capture/motion-capture.component";
 import {HardwareIdComponent} from "./system/hardware-id/hardware-id.component";
 import {RgbLedButtonComponent} from "./program/program-overview/rgb-led-button/rgb-led-button.component";
 import {ProgramOverviewComponent} from "./program/program-overview/program-overview.component";
 import {SystemComponent} from "./system/system.component";
 import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
 import {LogsComponent} from "./system/logs/logs.component";
+import {SettingsComponent} from "./system/settings/settings.component";
 
 const routes: Routes = [
     {
@@ -64,12 +66,20 @@ const routes: Routes = [
                 path: "hardware-ids",
                 component: HardwareIdComponent,
             },
+            {
+                path: "settings",
+                component: SettingsComponent,
+            },
             {path: "", redirectTo: "diagnose", pathMatch: "full"},
         ],
     },
     {
         path: "pose",
         component: PoseComponent,
+    },
+    {
+        path: "motion-capture",
+        component: MotionCaptureComponent,
     },
     {
         path: "camera",

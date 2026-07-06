@@ -76,6 +76,33 @@
             </div>
         </div>
 
+        <div class="col-2 md-auto">
+            <div
+                class="custom-control custom-switch custom-switch-pib cameraIcon d-inline-block video-nav-element"
+                id="audioToggle"
+                title="Ton vom Mikrofon des Roboters im Browser wiedergeben">
+                <input
+                    class="custom-control-input"
+                    type="checkbox"
+                    id="toggleAudio"
+                    data-test="TGL_Camera_Audio"
+                    [checked]="listening$ | async"
+                    (change)="toggleListening($any($event.target).checked)" />
+                <label
+                    class="custom-control-label"
+                    for="toggleAudio">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px">
+                        <path [attr.d]="(listening$ | async) ? audioOnIcon : audioOffIcon" />
+                    </svg>
+                    <span class="ml-1">Zuhören</span>
+                </label>
+            </div>
+        </div>
+
         <div class="col md-auto text-right pr-5">
             <button
                 type="button"

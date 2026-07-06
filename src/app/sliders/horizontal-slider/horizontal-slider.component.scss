@@ -15,6 +15,9 @@ svg {
     padding: 0px;
     margin: 0px;
     cursor: pointer;
+    // prevents the browser from hijacking drag gestures as page-scroll/zoom
+    // on touch devices (iPad etc.) - required for pointer events to work
+    touch-action: none;
 }
 
 p {

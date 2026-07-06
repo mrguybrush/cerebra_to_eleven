@@ -1,0 +1,110 @@
+* {
+    color: white;
+}
+
+/* Same reasoning as pose.component.css: native <select> is white-on-white
+   otherwise, since the global input styling doesn't cover selects. */
+select {
+    color: white;
+    background-color: #344864;
+    border-radius: 5px;
+    border: none;
+    padding: 4px 8px;
+}
+
+.video-box {
+    position: relative;
+    min-width: 300px;
+    max-width: 800px;
+}
+
+.capture-canvas {
+    width: 100%;
+    border-radius: 8px;
+    background: #041939;
+    display: block;
+    min-height: 200px;
+}
+
+.canvas-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.6;
+    white-space: nowrap;
+}
+
+.angle-box {
+    min-width: 260px;
+}
+
+.angle-table {
+    border-collapse: collapse;
+}
+
+.angle-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #344864;
+    font-variant-numeric: tabular-nums;
+}
+
+.error-text {
+    color: #ff8080;
+}
+
+.joint-row {
+    cursor: pointer;
+}
+
+.joint-row:hover {
+    background-color: rgba(52, 72, 100, 0.5);
+}
+
+.joint-row.joint-selected {
+    background-color: rgba(225, 0, 114, 0.18);
+}
+
+.joint-row input[type="checkbox"] {
+    accent-color: #e10072;
+}
+
+.joint-table-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 6px;
+    max-width: 320px;
+}
+
+.motor-toggle-box {
+    border: 2px solid #344864;
+    border-radius: 8px;
+    padding: 10px 14px;
+    max-width: 620px;
+}
+
+/* Unmissable when live motor motion is armed. */
+.motor-toggle-box.motors-on {
+    border-color: #e10072;
+    background-color: rgba(225, 0, 114, 0.15);
+}
+
+.motor-toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+.motor-toggle-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #e10072;
+    cursor: pointer;
+}
+
+.motor-toggle-hint {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}

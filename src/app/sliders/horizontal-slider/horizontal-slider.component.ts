@@ -294,30 +294,36 @@ export class HorizontalSliderComponent
         return (buttons & 1) === 1;
     }
 
-    onMouseDown(event: MouseEvent) {
+    // PointerEvent (not MouseEvent) so mouse, touch and pen all work
+    // identically - plain mouse events don't fire reliably for drag
+    // gestures on touch devices like iPad.
+    onPointerDown(event: PointerEvent) {
         if (this.primaryButtonPressed(event.buttons)) {
+            // keep receiving pointermove/pointerup even if the finger
+            // drifts outside the svg's bounds mid-drag
+            (event.target as Element).setPointerCapture?.(event.pointerId);
             this.selectClosestSlider(event.x);
             this.moveSelectedSlider(event.x);
         }
     }
 
-    onMouseLeave(event: MouseEvent) {
+    onPointerLeave(event: PointerEvent) {
         if (this.primaryButtonPressed(event.buttons)) {
             this.moveSelectedSlider(event.x);
         }
     }
 
-    onMouseMove(event: MouseEvent) {
+    onPointerMove(event: PointerEvent) {
         this.moveSelectedSlider(event.x);
     }
 
-    onMouseUp(event: MouseEvent) {
+    onPointerUp(event: PointerEvent) {
         if (!this.primaryButtonPressed(event.buttons)) {
             this.unselectSlider();
         }
     }
 
-    onMouseEnter(event: MouseEvent) {
+    onPointerEnter(event: PointerEvent) {
         if (this.primaryButtonPressed(event.buttons)) {
             this.moveSelectedSlider(event.x);
         } else {

@@ -2,6 +2,17 @@
     color: white;
 }
 
+/* Native <select> has no dark background by default (unlike <input>,
+   which gets one globally in styles.scss) - without this, white text
+   (from the "* {color: white}" rule above) sits on the browser's default
+   white select background and becomes invisible. */
+select {
+    color: white;
+    background-color: #344864;
+    border-radius: 5px;
+    border: none;
+}
+
 .pose-item {
     border: none;
     height: 40px;

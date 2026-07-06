@@ -15,6 +15,7 @@
   },
   "private": true,
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.14",
     "@angular/animations": "^18.0.6",
     "@angular/cdk": "^18.0.6",
     "@angular/common": "^18.0.6",

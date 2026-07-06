@@ -15,4 +15,9 @@ export enum rosTopics {
     programInput = "/program_input",
     deleteTokenTopic = "/delete_token",
     solidStateRelayState = "/solid_state_relay_state",
+    gestureCaptureControl = "/gesture_capture_control",
+    gestureCaptureResult = "/gesture_capture_result",
+    gestureRetargetTargets = "/gesture_retarget_targets",
+    browserPoseLandmarks = "/browser_pose_landmarks",
+    audioStream = "/audio_stream",
 }

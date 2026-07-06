@@ -3,6 +3,7 @@ export enum rosDataTypes {
     empty = "std_msgs/Empty",
     int32 = "std_msgs/Int32",
     int32MultiArray = "std_msgs/Int32MultiArray",
+    int16MultiArray = "std_msgs/Int16MultiArray",
     float64 = "std_msgs/Float64",
     string = "std_msgs/String",
     // msg
@@ -26,6 +27,7 @@ export enum rosDataTypes {
     getVoiceAssistantState = "datatypes/srv/GetVoiceAssistantState",
     getChatIsListening = "datatypes/srv/GetChatIsListening",
     applyJointTrajectory = "datatypes/srv/ApplyJointTrajectory",
+    getMicConfiguration = "datatypes/srv/GetMicConfiguration",
     get_token_exists = "datatypes/srv/GetTokenExists",
     encryptToken = "datatypes/srv/EncryptToken",
     decryptToken = "datatypes/srv/DecryptToken",

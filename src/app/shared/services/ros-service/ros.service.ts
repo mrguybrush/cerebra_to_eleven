@@ -106,6 +106,8 @@ export class RosService implements IRosService {
     solidStateRelayStateReceiver$: BehaviorSubject<
         SolidStateRelayState | undefined
     > = new BehaviorSubject<SolidStateRelayState | undefined>(undefined);
+    gestureCaptureResultReceiver$: Subject<string> = new Subject<string>();
+    gestureRetargetTargetsReceiver$: Subject<string> = new Subject<string>();
 
     private ros!: ROSLIB.Ros;
 
@@ -125,6 +127,12 @@ export class RosService implements IRosService {
     private voiceAssistantStateTopic!: ROSLIB.Topic<VoiceAssistantState>;
     private chatIsListeningTopic!: ROSLIB.Topic<ChatIsListening>;
     private solidStateRelayStateTopic!: ROSLIB.Topic<SolidStateRelayState>;
+    private gestureCaptureControlTopic!: ROSLIB.Topic;
+    private gestureCaptureResultTopic!: ROSLIB.Topic;
+    private gestureRetargetTargetsTopic!: ROSLIB.Topic;
+    private browserPoseLandmarksTopic!: ROSLIB.Topic;
+    private audioStreamTopic!: ROSLIB.Topic;
+    private getMicConfigurationService!: ROSLIB.Service;
 
     private existTokenService!: ROSLIB.Service<
         Record<string, never>,
@@ -273,6 +281,30 @@ export class RosService implements IRosService {
             rosTopics.solidStateRelayState,
             rosDataTypes.solidStateRelayState,
         );
+        this.gestureCaptureControlTopic = this.createRosTopic(
+            rosTopics.gestureCaptureControl,
+            rosDataTypes.string,
+        );
+        this.gestureCaptureResultTopic = this.createRosTopic(
+            rosTopics.gestureCaptureResult,
+            rosDataTypes.string,
+        );
+        this.gestureRetargetTargetsTopic = this.createRosTopic(
+            rosTopics.gestureRetargetTargets,
+            rosDataTypes.string,
+        );
+        this.browserPoseLandmarksTopic = this.createRosTopic(
+            rosTopics.browserPoseLandmarks,
+            rosDataTypes.string,
+        );
+        this.audioStreamTopic = this.createRosTopic(
+            rosTopics.audioStream,
+            rosDataTypes.int16MultiArray,
+        );
+        this.getMicConfigurationService = this.createRosService(
+            rosServices.getMicConfiguration,
+            rosDataTypes.getMicConfiguration,
+        );
 
         this.applyMotorSettingsService = this.createRosService(
             rosServices.applyMotorSettings,
@@ -354,6 +386,14 @@ export class RosService implements IRosService {
         this.subscribeDefaultRosMessageTopic(
             this.cameraQualityFactorTopic,
             this.cameraQualityFactorReceiver$,
+        );
+        this.subscribeDefaultRosMessageTopic(
+            this.gestureCaptureResultTopic,
+            this.gestureCaptureResultReceiver$,
+        );
+        this.subscribeDefaultRosMessageTopic(
+            this.gestureRetargetTargetsTopic,
+            this.gestureRetargetTargetsReceiver$,
         );
 
         this.subscribeVoiceAssistantStateTopic();
@@ -776,6 +816,90 @@ export class RosService implements IRosService {
         }
         const message = new ROSLIB.Message({data: [width, height]});
         this.cameraPreviewSizeTopic.publish(message);
+    }
+
+    startGestureCapture(mode: "static" | "dynamic", durationS: number) {
+        if (!this.gestureCaptureControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({action: "start", mode, duration_s: durationS}),
+        });
+        this.gestureCaptureControlTopic.publish(message);
+    }
+
+    stopGestureCapture() {
+        if (!this.gestureCaptureControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({action: "stop"}),
+        });
+        this.gestureCaptureControlTopic.publish(message);
+    }
+
+    /** Subscribe to the robot's mono Int16 PCM microphone stream
+     * (audio_streamer node, ReSpeaker mic array). The callback receives
+     * one chunk of samples per message. */
+    subscribeAudioStream(callback: (samples: number[]) => void) {
+        this.audioStreamTopic.subscribe((message: any) => {
+            callback(message.data);
+        });
+    }
+
+    unsubscribeAudioStream() {
+        this.audioStreamTopic.unsubscribe();
+    }
+
+    /** Asks the audio_streamer node for its actual mic configuration
+     * (sample rate etc.); resolves with the sample rate in Hz. */
+    getMicSampleRate(): Promise<number> {
+        return new Promise((resolve, reject) => {
+            this.getMicConfigurationService.callService(
+                new ROSLIB.ServiceRequest({}),
+                (response: any) => resolve(response.sample_rate),
+                (error: string) => reject(new Error(error)),
+            );
+        });
+    }
+
+    /** Live mirroring on/off: when on, motors follow the tracked person;
+     * when turned off, the robot holds its current position (servos keep
+     * their last commanded target). */
+    setGestureMirroring(active: boolean) {
+        if (!this.gestureCaptureControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({action: active ? "mirror_start" : "mirror_stop"}),
+        });
+        this.gestureCaptureControlTopic.publish(message);
+    }
+
+    /** Selects which robot joints live mirroring may drive (motor names as
+     * in the database); joints not in the list are never moved. */
+    setGestureJoints(jointNames: string[]) {
+        if (!this.gestureCaptureControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({action: "set_joints", joints: jointNames}),
+        });
+        this.gestureCaptureControlTopic.publish(message);
+    }
+
+    publishPoseLandmarks(landmarks: {
+        [name: string]: [number, number, number, number];
+    }) {
+        if (!this.browserPoseLandmarksTopic) {
+            return;
+        }
+        const message = new ROSLIB.Message({data: JSON.stringify(landmarks)});
+        this.browserPoseLandmarksTopic.publish(message);
     }
 
     setQualityFactor(factor: number) {

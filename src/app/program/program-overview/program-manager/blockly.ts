@@ -1,5 +1,5 @@
 export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none; colour="200"">
-<category name="Logic" colour="210">
+<category name="%{BKY_PIB_CAT_LOGIC}" colour="210">
     <block type="controls_if"></block>
     <block type="logic_compare">
         <field name="OP">EQ</field>
@@ -14,7 +14,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
     <block type="logic_null"></block>
     <block type="logic_ternary"></block>
 </category>
-<category name="Loops" colour="120">
+<category name="%{BKY_PIB_CAT_LOOPS}" colour="120">
     <block type="controls_repeat_ext">
         <value name="TIMES">
             <shadow type="math_number">
@@ -50,7 +50,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
         <field name="FLOW">BREAK</field>
     </block>
 </category>
-<category name="Math" colour="230">
+<category name="%{BKY_PIB_CAT_MATH}" colour="230">
     <block type="math_round">
         <field name="OP">ROUND</field>
         <value name="NUM">
@@ -150,7 +150,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
     </block>
     <block type="math_random_float"></block>
 </category>
-<category name="Text" colour="159">
+<category name="%{BKY_PIB_CAT_TEXT}" colour="159">
     <block type="text_charAt">
         <mutation at="true"></mutation>
         <field name="WHERE">FROM_START</field>
@@ -244,7 +244,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
         </value>
     </block>
 </category>
-<category name="Lists" colour="260">
+<category name="%{BKY_PIB_CAT_LISTS}" colour="260">
     <block type="lists_indexOf">
         <field name="END">FIRST</field>
         <value name="VALUE">
@@ -312,7 +312,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
         <field name="DIRECTION">1</field>
     </block>
 </category>
-<category name="Colour" colour="19">
+<category name="%{BKY_PIB_CAT_COLOUR}" colour="19">
     <block type="colour_picker">
         <field name="COLOUR">0</field>
     </block>
@@ -352,28 +352,40 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
         </value>
     </block>
 </category>
-<category name="Time" colour="60">
+<category name="%{BKY_PIB_CAT_TIME}" colour="60">
     <block type = "sleep_for_seconds"></block>
     <block type = "get_system_time"></block>
 </category>
 <sep></sep>
-<category name="Variables" colour="310" custom="VARIABLE_DYNAMIC"></category>
-<category name="Functions" colour="290" custom="PROCEDURE"></category>
-<category name="System" colour="45">
+<category name="%{BKY_PIB_CAT_VARIABLES}" colour="310" custom="VARIABLE_DYNAMIC"></category>
+<category name="%{BKY_PIB_CAT_FUNCTIONS}" colour="290" custom="PROCEDURE"></category>
+<category name="%{BKY_PIB_CAT_SYSTEM}" colour="45">
     <block type="run_script"></block>
     <block type="set_solid_state_relay"></block>
     <block type="get_solid_state_relay"></block>
 </category>
 <sep></sep>
-<category name="Motoric skills" colour="355">
+<category name="%{BKY_PIB_CAT_MOTORIC}" colour="355">
     <block type="move_motor"></block>
     <block type="move_to_pose"></block>
+    <block type="run_gesture"></block>
+    <block type="run_movement_sequence"></block>
 </category>
-<category name="Language skills" colour="260">
+<category name="%{BKY_PIB_CAT_LANGUAGE}" colour="260">
     <block type="play_audio_from_speech"></block>
 </category>
-<category name="Visual Skills" colour="200">
+<category name="%{BKY_PIB_CAT_VISUAL}" colour="200">
     <block type="face_detector_start_stop"></block>
     <block type="face_detector_running"></block>
+</category>
+<category name="%{BKY_PIB_CAT_BUTTONS}" colour="45">
+    <block type="set_rgb_button_color">
+        <value name="COLOUR">
+            <shadow type="colour_picker">
+                <field name="COLOUR">#00ff00</field>
+            </shadow>
+        </value>
+    </block>
+    <block type="button_is_pressed"></block>
 </category>
 </xml>`;
