@@ -29,6 +29,7 @@ import {ProgramOverviewComponent} from "./program/program-overview/program-overv
 import {SystemComponent} from "./system/system.component";
 import {SettingsComponent} from "./system/settings/settings.component";
 import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
+import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.component";
 
 const routes: Routes = [
     {
@@ -72,6 +73,10 @@ const routes: Routes = [
             {
                 path: "program-assignment",
                 component: ProgramAssignmentComponent,
+            },
+            {
+                path: "pin-assignment",
+                component: PinAssignmentComponent,
             },
             {path: "", redirectTo: "settings", pathMatch: "full"},
         ],
@@ -147,8 +152,8 @@ const routes: Routes = [
             },
         ],
     },
-    {path: "", redirectTo: "joint-control/head", pathMatch: "full"},
-    {path: "**", redirectTo: "joint-control/head"},
+    {path: "", redirectTo: "joint-control/all", pathMatch: "full"},
+    {path: "**", redirectTo: "joint-control/all"},
 ];
 
 @NgModule({

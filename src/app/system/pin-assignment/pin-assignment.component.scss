@@ -1,0 +1,89 @@
+.form-headline {
+    color: white;
+    font-size: 1.1rem;
+}
+
+.pin-hint {
+    color: white;
+    font-size: 0.85rem;
+    opacity: 0.75;
+    margin-bottom: 1.25rem;
+    max-width: 900px;
+}
+
+.restart-button {
+    margin-left: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.bricklet-group {
+    margin-bottom: 1.5rem;
+}
+
+.bricklet-title {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.bricklet-uid {
+    font-weight: normal;
+    opacity: 0.7;
+    font-size: 0.85rem;
+}
+
+.pin-table {
+    width: 100%;
+    max-width: 500px;
+    border-collapse: collapse;
+    color: white;
+}
+
+.pin-table th {
+    text-align: left;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    padding: 6px 10px;
+}
+
+.pin-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #344864;
+}
+
+.pin-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: bold;
+    width: 1%;
+}
+
+.pin-select {
+    color: white;
+    background-color: #344864;
+    border-radius: 5px;
+    border: none;
+    padding: 4px 8px;
+    width: 100%;
+    max-width: 260px;
+}
+
+.pin-select:disabled {
+    opacity: 0.5;
+}
+
+.defective-checkbox {
+    accent-color: #e10072;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.defective-checkbox:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+tr.pin-defective {
+    background-color: rgba(225, 0, 114, 0.12);
+}

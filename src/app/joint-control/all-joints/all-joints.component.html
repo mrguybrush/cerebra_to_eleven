@@ -1,4 +1,13 @@
 <div class="all-joints-container">
+    <label class="show-current-toggle">
+        <input
+            type="checkbox"
+            data-test="CHK_Show_Motor_Current"
+            [checked]="showMotorCurrent"
+            (change)="showMotorCurrent = $any($event.target).checked" />
+        Motorstrom anzeigen
+    </label>
+
     <!-- Kopf: keine links/rechts-Seite, volle Breite -->
     <table class="joints-table">
         <tr *ngFor="let row of headRows">
@@ -24,6 +33,12 @@
                         [value]="motorValues[row.motor]"
                         (input)="onSliderInput(row.motor, $any($event.target).value)" />
                     <span class="joint-value">{{degrees(row.motor)}}&deg;</span>
+                    <span
+                        *ngIf="showMotorCurrent"
+                        class="joint-current"
+                        [attr.data-test]="'TXT_Current_' + row.motor"
+                        >{{motorCurrents[row.motor]}} mA</span
+                    >
                 </div>
             </td>
         </tr>
@@ -58,6 +73,12 @@
                         [value]="motorValues[row.rightMotor]"
                         (input)="onSliderInput(row.rightMotor, $any($event.target).value)" />
                     <span class="joint-value">{{degrees(row.rightMotor)}}&deg;</span>
+                    <span
+                        *ngIf="showMotorCurrent"
+                        class="joint-current"
+                        [attr.data-test]="'TXT_Current_' + row.rightMotor"
+                        >{{motorCurrents[row.rightMotor]}} mA</span
+                    >
                 </div>
             </td>
             <td class="joint-slider-cell">
@@ -79,6 +100,12 @@
                         [value]="motorValues[row.leftMotor]"
                         (input)="onSliderInput(row.leftMotor, $any($event.target).value)" />
                     <span class="joint-value">{{degrees(row.leftMotor)}}&deg;</span>
+                    <span
+                        *ngIf="showMotorCurrent"
+                        class="joint-current"
+                        [attr.data-test]="'TXT_Current_' + row.leftMotor"
+                        >{{motorCurrents[row.leftMotor]}} mA</span
+                    >
                 </div>
             </td>
         </tr>

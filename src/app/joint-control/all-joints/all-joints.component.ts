@@ -55,11 +55,15 @@ export class AllJointsComponent implements OnInit, OnDestroy {
 
     motorValues: {[motor: string]: number} = {};
     motorRanges: {[motor: string]: {min: number; max: number}} = {};
+    motorCurrents: {[motor: string]: number} = {};
     // Purely visual, per-session slider flip (checkbox in front of each
     // slider) - lets the user make a slider's drag direction feel
     // intuitive without touching the motor's actual rotation range/
     // direction in the backend. Not persisted.
     invertedMotors: {[motor: string]: boolean} = {};
+    // Single checkbox at the top of the page - shows/hides the motor
+    // current (mA) reading next to every slider at once.
+    showMotorCurrent = false;
 
     private subscriptions = new Subscription();
     private lastSendTime: {[motor: string]: number} = {};
@@ -90,6 +94,14 @@ export class AllJointsComponent implements OnInit, OnDestroy {
                     .getPositionObservable(motor)
                     .subscribe((position) => {
                         this.motorValues[motor] = position;
+                    }),
+            );
+            this.motorCurrents[motor] = 0;
+            this.subscriptions.add(
+                this.motorService
+                    .getCurrentObservable(motor)
+                    .subscribe((current) => {
+                        this.motorCurrents[motor] = current;
                     }),
             );
         }

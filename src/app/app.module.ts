@@ -52,6 +52,7 @@ import {ProgramOverviewComponent} from "./program/program-overview/program-overv
 import {SystemComponent} from "./system/system.component";
 import {SettingsComponent} from "./system/settings/settings.component";
 import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
+import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.component";
 
 @NgModule({
     declarations: [
@@ -92,6 +93,7 @@ import {ProgramAssignmentComponent} from "./system/program-assignment/program-as
         SystemComponent,
         SettingsComponent,
         ProgramAssignmentComponent,
+        PinAssignmentComponent,
     ],
     imports: [
         BrowserModule,

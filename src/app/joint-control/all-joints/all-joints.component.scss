@@ -3,6 +3,24 @@
     padding: 0.5rem;
 }
 
+.show-current-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    width: fit-content;
+}
+
+.show-current-toggle input {
+    accent-color: #e10072;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
 .joints-table {
     width: 100%;
     max-width: 980px;
@@ -63,6 +81,14 @@
     min-width: 3.5rem;
     text-align: right;
     font-size: 0.9rem;
+}
+
+.joint-current {
+    font-variant-numeric: tabular-nums;
+    min-width: 4.5rem;
+    text-align: right;
+    font-size: 0.85rem;
+    opacity: 0.8;
 }
 
 .all-joints-hint {
