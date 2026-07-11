@@ -1,6 +1,6 @@
-import {Component, Input, OnInit} from "@angular/core";
+import {Component, Input, OnDestroy, OnInit} from "@angular/core";
 import {ActivatedRoute, NavigationStart, Router} from "@angular/router";
-import {Observable} from "rxjs";
+import {Observable, Subscription} from "rxjs";
 import {SidebarElement} from "src/app/shared/interfaces/sidebar-element.interface";
 import {CerebraRegex} from "src/app/shared/types/cerebra-regex";
 
@@ -9,19 +9,30 @@ import {CerebraRegex} from "src/app/shared/types/cerebra-regex";
     templateUrl: "./voice-assistant-nav.component.html",
     styleUrls: ["./voice-assistant-nav.component.scss"],
 })
-export class VoiceAssistantNavComponent implements OnInit {
+export class VoiceAssistantNavComponent implements OnInit, OnDestroy {
     sidebarElements?: SidebarElement[];
     @Input() subject?: Observable<SidebarElement[]>;
     @Input() button?: {enabled: boolean; func: () => void};
     @Input() defaultRoute?: string;
+
+    // Without unsubscribing, these outlive the component: leaving
+    // /voice-assistant for any other page does NOT stop them, so a later,
+    // unrelated personalitiesSubject emission (e.g. triggered from another
+    // page) still runs this callback and force-navigates back to
+    // /voice-assistant out from under the user - see defaultRoute below.
+    private subscriptions = new Subscription();
 
     constructor(
         private router: Router,
         private route: ActivatedRoute,
     ) {}
 
+    ngOnDestroy(): void {
+        this.subscriptions.unsubscribe();
+    }
+
     ngOnInit(): void {
-        this.router.events.subscribe((event) => {
+        this.subscriptions.add(this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 if (
                     RegExp("/voice-assistant/" + CerebraRegex.UUID).test(
@@ -40,37 +51,48 @@ export class VoiceAssistantNavComponent implements OnInit {
                     }
                 }
             }
-        });
+        }));
 
-        this.subject?.subscribe((elements) => {
-            const diff = elements.length - (this.sidebarElements?.length ?? 0);
-            const len = this.sidebarElements?.length ?? 0;
-            this.sidebarElements = elements;
-            if (len == 0 && elements.length > 0) {
-                this.router.navigate(
-                    [this.sidebarElements[0].getUUID(), "chat"],
-                    {
+        this.subscriptions.add(
+            this.subject?.subscribe((elements) => {
+                // Defense in depth on top of the unsubscribe above: this
+                // component's whole job is redirecting within
+                // /voice-assistant, so it must never navigate anywhere from
+                // a route it doesn't own (e.g. a stray/late emission
+                // arriving while the user is on a different page).
+                if (!this.router.url.startsWith("/voice-assistant")) {
+                    this.sidebarElements = elements;
+                    return;
+                }
+                const diff = elements.length - (this.sidebarElements?.length ?? 0);
+                const len = this.sidebarElements?.length ?? 0;
+                this.sidebarElements = elements;
+                if (len == 0 && elements.length > 0) {
+                    this.router.navigate(
+                        [this.sidebarElements[0].getUUID(), "chat"],
+                        {
+                            relativeTo: this.route,
+                        },
+                    );
+                } else if (diff > 0 && len != 0) {
+                    this.router.navigate(
+                        [
+                            this.sidebarElements[
+                                this.sidebarElements.length - 1
+                            ].getUUID(),
+                            "chat",
+                        ],
+                        {relativeTo: this.route},
+                    );
+                } else if (this.getRedirectRoute()) {
+                    this.router.navigate([this.getRedirectRoute()], {
                         relativeTo: this.route,
-                    },
-                );
-            } else if (diff > 0 && len != 0) {
-                this.router.navigate(
-                    [
-                        this.sidebarElements[
-                            this.sidebarElements.length - 1
-                        ].getUUID(),
-                        "chat",
-                    ],
-                    {relativeTo: this.route},
-                );
-            } else if (this.getRedirectRoute()) {
-                this.router.navigate([this.getRedirectRoute()], {
-                    relativeTo: this.route,
-                });
-            } else {
-                this.router.navigate([this.defaultRoute]);
-            }
-        });
+                    });
+                } else {
+                    this.router.navigate([this.defaultRoute]);
+                }
+            }),
+        );
     }
 
     getRedirectRoute(): string | undefined {

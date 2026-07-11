@@ -1,6 +1,17 @@
 <div class="pt-4 pl-2 pr-2">
     <ul class="nav nav-tabs">
         <li
+            class="nav-item"
+            routerLinkActive="navbar-btn-active">
+            <a
+                id="all-joints-nav"
+                data-test="LNK_Joint_All"
+                class="nav-link sidebar-btn"
+                routerLink="all">
+                Alle Gelenke
+            </a>
+        </li>
+        <li
             *ngFor="let joint of joints"
             class="nav-item"
             routerLinkActive="navbar-btn-active">

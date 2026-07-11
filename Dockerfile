@@ -18,7 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
     mkdir -p src/assets/mediapipe/wasm && \
     cp -r node_modules/@mediapipe/tasks-vision/wasm/* src/assets/mediapipe/wasm/ && \
     curl -sL -o src/assets/mediapipe/pose_landmarker_lite.task \
-      https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task
+      https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task && \
+    curl -sL -o src/assets/mediapipe/hand_landmarker.task \
+      https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 
 ARG NODE_ENV=production
 RUN if [ "$NODE_ENV" = "production" ]; then \

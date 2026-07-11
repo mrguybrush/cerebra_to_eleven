@@ -12,6 +12,7 @@ import {
     ViewChild,
 } from "@angular/core";
 import * as Blockly from "blockly";
+import {Multiselect} from "@mit-app-inventor/blockly-plugin-workspace-multiselect";
 import {toolbox} from "../../blockly";
 import {ITheme} from "blockly/core/theme";
 import {pythonGenerator} from "../../../../pib-blockly/program-generators/custom-generators";
@@ -26,6 +27,8 @@ import {Gesture} from "src/app/shared/types/gesture";
 import {MovementSequenceService} from "src/app/shared/services/movement-sequence.service";
 import {MovementSequence} from "src/app/shared/types/movement-sequence";
 import {BlocklyLanguageService} from "src/app/shared/services/blockly-language.service";
+import {VoiceRecordingService} from "src/app/shared/services/voice-recording.service";
+import {VoiceRecording} from "src/app/shared/types/voice-recording";
 
 @Component({
     selector: "app-program-workspace",
@@ -74,6 +77,7 @@ export class ProgramWorkspaceComponent
         private gestureService: GestureService,
         private movementSequenceService: MovementSequenceService,
         private blocklyLanguageService: BlocklyLanguageService,
+        private voiceRecordingService: VoiceRecordingService,
     ) {}
 
     get workspaceContent(): string {
@@ -125,6 +129,12 @@ export class ProgramWorkspaceComponent
                   ]);
         });
 
+        this.voiceRecordingService.recordingsSubject.subscribe((recordings) => {
+            recordings.length > 0
+                ? this.updatePlayWavBlockDropdown(recordings)
+                : this.updatePlayWavBlockDropdown([]);
+        });
+
         this.movementSequenceService
             .getSequencesObservable()
             .subscribe((sequences) => {
@@ -146,6 +156,7 @@ export class ProgramWorkspaceComponent
             toolbox: this.toolbox,
             theme: this.customTheme,
         });
+        this.initMultiselect(this.workspace);
 
         customBlockDefinition();
 
@@ -230,6 +241,7 @@ export class ProgramWorkspaceComponent
             toolbox: this.toolbox,
             theme: this.customTheme,
         });
+        this.initMultiselect(this.workspace);
         this.workspace.addChangeListener((event: Abstract) => {
             if (this.workspace.isDragging()) return;
             if (!this.supportedEvents.has(event.type)) return;
@@ -239,8 +251,49 @@ export class ProgramWorkspaceComponent
         this.workspaceContent = content;
     }
 
+    /**
+     * Lets the user drag a selection box over multiple blocks (and
+     * shift-click to add/remove individual ones) and then duplicate/delete
+     * all of them at once - previously only one block at a time could be
+     * duplicated. Ctrl/Cmd+C/V and Delete act on the whole selection.
+     */
+    private initMultiselect(workspace: Blockly.WorkspaceSvg): void {
+        const multiselectPlugin = new Multiselect(workspace);
+        multiselectPlugin.init({
+            useDoubleClick: false,
+            bumpNeighbours: false,
+            multiselectIcon: {
+                hideIcon: true,
+                weight: 3,
+                enabledIcon: "",
+                disabledIcon: "",
+            },
+            multiFieldUpdate: true,
+            workspaceAutoFocus: true,
+            useCopyPaste: true,
+            wsSearch: false,
+        });
+    }
+
     resizeBlockly() {
         Blockly.svgResize(this.workspace);
+    }
+
+    /**
+     * Called by the parent when entering/leaving split-screen mode (Run
+     * button or the split-screen toggle). Unlike a gutter drag, this is an
+     * abrupt flex-basis jump (e.g. 100% -> 50% height), not a gradual
+     * ResizeObserver stream - any open flyout/trashcan gets left stuck
+     * mid-transition, and svgResize alone doesn't recenter content that's
+     * now outside the shrunk viewport, which showed up as a blank/black or
+     * misaligned-looking workspace.
+     */
+    handleLayoutTransition(): void {
+        Blockly.hideChaff();
+        requestAnimationFrame(() => {
+            Blockly.svgResize(this.workspace);
+            this.workspace.scrollCenter();
+        });
     }
 
     flyoutChangeCallback = () => {
@@ -265,6 +318,20 @@ export class ProgramWorkspaceComponent
             gesture.gestureId,
         ]);
         Blockly.Blocks["run_gesture"].getGestures = () => gestureOptions;
+        if (this.workspace) {
+            this.workspaceContent = this.codeVisual;
+        }
+    }
+
+    updatePlayWavBlockDropdown(recordings: VoiceRecording[]): void {
+        const wavOptions =
+            recordings.length > 0
+                ? recordings.map((recording) => [
+                      recording.filename,
+                      recording.filename,
+                  ])
+                : [["keine Aufnahme vorhanden", "NO_RECORDING"]];
+        Blockly.Blocks["play_wav"].getWavFiles = () => wavOptions;
         if (this.workspace) {
             this.workspaceContent = this.codeVisual;
         }

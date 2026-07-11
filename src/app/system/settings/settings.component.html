@@ -22,4 +22,468 @@
         Legt die Sprache der Blöcke und Kategorien im Programm-Editor fest.
         Änderungen wirken sofort und gelten für diesen Browser.
     </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">Lerngruppe</h3>
+    <div class="setting-hint">
+        Ist eine Lerngruppe aktiv, werden überall (Programme, Posen, auch in
+        der Blockprogrammierung) nur die Inhalte dieser Gruppe angezeigt.
+        Neue Programme und Posen gehören automatisch zur aktiven Gruppe.
+        Die Resting-Pose ist immer verfügbar.
+    </div>
+    <div class="setting-row">
+        <label
+            for="learning-group-select"
+            class="setting-label">
+            Aktive Gruppe
+        </label>
+        <select
+            id="learning-group-select"
+            data-test="SEL_Learning_Group"
+            class="setting-select"
+            (change)="onSelectLearningGroup($any($event.target).value)">
+            <option
+                [value]="''"
+                [selected]="activeLearningGroup === null">
+                (keine – alles anzeigen)
+            </option>
+            <option
+                *ngFor="let group of learningGroups"
+                [value]="group.groupId"
+                [selected]="group.groupId === activeLearningGroup?.groupId">
+                {{ group.name
+                }}{{ group.groupId === activeLearningGroup?.groupId ? " (aktiv)" : "" }}
+            </option>
+        </select>
+    </div>
+    <div class="setting-row">
+        <input
+            type="text"
+            class="setting-text-input"
+            placeholder="Neue Gruppe (Name)"
+            data-test="TXT_New_Learning_Group"
+            [formControl]="newGroupNameControl" />
+        <button
+            type="button"
+            class="btn btn-regular btn-sm"
+            data-test="BTN_Create_Learning_Group"
+            [disabled]="!newGroupNameControl.value"
+            (click)="createLearningGroup()">
+            Anlegen
+        </button>
+    </div>
+    <div
+        class="learning-group-list"
+        *ngIf="learningGroups.length > 0">
+        <div
+            class="learning-group-row"
+            *ngFor="let group of learningGroups">
+            <span class="flex-grow-1">{{group.name}}</span>
+            <button
+                type="button"
+                class="btn btn-regular btn-sm delete-token-button"
+                [attr.data-test]="'BTN_Delete_Group_' + group.name"
+                (click)="deleteLearningGroup(group)">
+                Löschen
+            </button>
+        </div>
+        <div class="setting-hint mt-1">
+            Beim Löschen einer Gruppe bleiben ihre Programme/Posen erhalten
+            und werden wieder allgemein sichtbar.
+        </div>
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">Chat-Verbindung</h3>
+    <div class="setting-hint">
+        Bestimmt, welcher Dienst mit dem Sprachassistenten und dem Chat
+        spricht - gilt global für alle Personalities. Nur eine Option ist
+        gleichzeitig aktiv; die jeweils passenden Felder erscheinen darunter.
+    </div>
+
+    <div class="connection-type-choice">
+        <label class="connection-type-option">
+            <input
+                type="radio"
+                name="connection-type"
+                data-test="RDO_Connection_Gemini"
+                [checked]="connectionType === 'gemini'"
+                (change)="onSelectConnectionType('gemini')" />
+            <span>Gemini</span>
+        </label>
+        <label class="connection-type-option">
+            <input
+                type="radio"
+                name="connection-type"
+                data-test="RDO_Connection_Local_Llm"
+                [checked]="connectionType === 'local-llm'"
+                (change)="onSelectConnectionType('local-llm')" />
+            <span>Lokales Netzwerk-LLM</span>
+        </label>
+        <label class="connection-type-option">
+            <input
+                type="radio"
+                name="connection-type"
+                data-test="RDO_Connection_Tryb"
+                [checked]="connectionType === 'tryb'"
+                (change)="onSelectConnectionType('tryb')" />
+            <span>Tryb (GPT-4o / Claude, mit Token)</span>
+        </label>
+    </div>
+
+    <!-- Gemini: nur API-Key + Pruefung, kein Modell-Dropdown (es gibt nur
+         das eine Modell "Gemini 2.5 Flash"). -->
+    <div
+        *ngIf="connectionType === 'gemini'"
+        class="connection-type-panel">
+        <div class="setting-row">
+            <label
+                for="gemini-api-key"
+                class="setting-label">
+                Gemini API-Key
+            </label>
+            <div class="input-group setting-input-group">
+                <input
+                    id="gemini-api-key"
+                    data-test="TXT_Gemini_Api_Key"
+                    class="setting-text-input"
+                    autocomplete="off"
+                    [type]="geminiKeyTextType ? 'text' : 'password'"
+                    [formControl]="geminiApiKeyControl" />
+                <span class="input-group-text setting-input-icon">
+                    <i
+                        [ngClass]="{'bi bi-eye': geminiKeyTextType, 'bi bi-eye-slash': !geminiKeyTextType}"
+                        (click)="toggleGeminiKeyTextType()"></i>
+                </span>
+            </div>
+        </div>
+        <div class="setting-row mt-2">
+            <button
+                type="button"
+                class="btn btn-regular btn-sm"
+                data-test="BTN_Verify_Gemini_Key"
+                [disabled]="verifyingGeminiKey || !geminiApiKeyControl.value"
+                (click)="verifyGeminiKey()">
+                {{verifyingGeminiKey ? "Prüfe..." : "Überprüfen"}}
+            </button>
+            <button
+                type="button"
+                class="btn btn-regular btn-sm"
+                data-test="BTN_Save_Llm_Settings"
+                (click)="saveLlmSettings()">
+                Speichern
+            </button>
+            <span
+                *ngIf="llmSettingsSaved"
+                class="text-success"
+                data-test="TXT_Llm_Settings_Saved">
+                Gespeichert.
+            </span>
+        </div>
+        <div
+            *ngIf="geminiKeyVerification as result"
+            class="mt-1"
+            [ngClass]="result.valid ? 'text-success' : 'text-danger'"
+            data-test="TXT_Gemini_Key_Verification">
+            {{result.message}}
+        </div>
+        <div class="setting-hint mt-2">
+            Ohne gültigen Key lässt sich der Sprachassistent mit Gemini nicht
+            aktivieren. "Überprüfen" testet den Key direkt bei Google, ohne
+            ihn vorher speichern zu müssen.
+        </div>
+    </div>
+
+    <!-- Lokales Netzwerk-LLM: nur URL + Modellname, kein Modell-Dropdown. -->
+    <div
+        *ngIf="connectionType === 'local-llm'"
+        class="connection-type-panel">
+        <div class="setting-row">
+            <label
+                for="local-llm-url"
+                class="setting-label">
+                Server-URL
+            </label>
+            <input
+                id="local-llm-url"
+                data-test="TXT_Local_Llm_Url"
+                class="setting-text-input"
+                placeholder="http://192.168.1.50:11434/v1"
+                [formControl]="localLlmUrlControl" />
+        </div>
+        <div class="setting-row">
+            <label
+                for="local-llm-model"
+                class="setting-label">
+                Modellname
+            </label>
+            <input
+                id="local-llm-model"
+                data-test="TXT_Local_Llm_Model"
+                class="setting-text-input"
+                placeholder="llama3.2"
+                [formControl]="localLlmModelControl" />
+        </div>
+        <div class="setting-hint">
+            Adresse eines OpenAI-kompatiblen LLM-Servers im lokalen Netzwerk
+            (z.B. Ollama, LM Studio) - braucht keine Internetverbindung und
+            keinen Token.
+        </div>
+        <div class="setting-row mt-2">
+            <button
+                type="button"
+                class="btn btn-regular btn-sm"
+                data-test="BTN_Save_Llm_Settings"
+                (click)="saveLlmSettings()">
+                Speichern
+            </button>
+            <span
+                *ngIf="llmSettingsSaved"
+                class="text-success"
+                data-test="TXT_Llm_Settings_Saved">
+                Gespeichert.
+            </span>
+        </div>
+    </div>
+
+    <!-- Tryb: Modellwahl (mehrere Modelle je nach Anbieter/Vision) + der
+         bestehende Smart-API-Token-Flow - beides nur relevant, wenn Tryb
+         tatsächlich genutzt wird. -->
+    <div
+        *ngIf="connectionType === 'tryb'"
+        class="connection-type-panel">
+        <div class="setting-row">
+            <label
+                for="assistant-model-select"
+                class="setting-label">
+                Modell
+            </label>
+            <select
+                id="assistant-model-select"
+                data-test="SEL_Assistant_Model"
+                class="setting-select"
+                (change)="onSelectAssistantModel($any($event.target).value)">
+                <option
+                    *ngFor="let model of trybModels"
+                    [value]="model.id"
+                    [selected]="model.id === selectedAssistantModelId">
+                    {{ model.visualName
+                    }}{{ model.id === selectedAssistantModelId ? " (aktiv)" : "" }}
+                </option>
+            </select>
+        </div>
+
+        <h4 class="settings-subsection-title">Smart API Token</h4>
+
+        <!-- Decrypt Token Form -->
+        <div
+            *ngIf="isTokenStored; else encryptToken"
+            class="mt-2">
+            <div
+                *ngIf="isTokenActive"
+                class="mb-2">
+                <span class="text-success">Token bereits entschlüsselt.</span>
+            </div>
+            <p
+                [ngClass]="{disabled: isTokenActive}"
+                class="setting-hint">
+                Passwort eingeben, um sich mit der Smart API zu verbinden.
+            </p>
+            <form
+                [formGroup]="decryptTokenForm"
+                (ngSubmit)="onSubmitDecryptToken()">
+                <div class="setting-row">
+                    <label
+                        for="password"
+                        [ngClass]="{disabled: isTokenActive}"
+                        class="setting-label"
+                        >Passwort</label
+                    >
+                    <div class="input-group setting-input-group">
+                        <input
+                            id="password"
+                            data-test="TXT_Password"
+                            class="setting-text-input"
+                            type="password"
+                            [type]="passwordTextType ? 'password' : 'text'"
+                            formControlName="password" />
+                        <span class="input-group-text setting-input-icon">
+                            <i
+                                [ngClass]="{'bi bi-eye': passwordTextType, 'bi bi-eye-slash': !passwordTextType}"
+                                (click)="togglePasswordTextType()"></i>
+                        </span>
+                    </div>
+                </div>
+                <div *ngIf="onErrorSubmit">
+                    <span class="text-danger">Entschlüsseln fehlgeschlagen.</span>
+                </div>
+                <div class="setting-row mt-2">
+                    <button
+                        id="decrypt-form-btn"
+                        data-test="BTN_Connect"
+                        type="submit"
+                        class="btn btn-regular"
+                        [disabled]="decryptTokenForm.invalid || isTokenActive">
+                        Verbinden
+                    </button>
+                    <button
+                        type="button"
+                        data-test="BTN_Delete"
+                        class="btn btn-regular delete-token-button"
+                        (click)="onDeleteToken()">
+                        Token löschen
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Encrypt Token Form -->
+        <ng-template #encryptToken>
+            <div class="mt-2">
+                <p class="setting-hint">
+                    <b
+                        >Um dich mit der Smart API zu verbinden, gib den
+                        erhaltenen Token ein und verschlüssele ihn mit einem
+                        Passwort.</b
+                    >
+                    Bei vergessenem Passwort muss ein neuer Token angefordert
+                    werden.
+                </p>
+                <form
+                    [formGroup]="encryptTokenForm"
+                    (ngSubmit)="onSubmitEncryptToken()">
+                    <div class="setting-row">
+                        <label
+                            for="token"
+                            class="setting-label"
+                            >Token</label
+                        >
+                        <input
+                            id="token"
+                            data-test="TXT_Token"
+                            autocomplete="off"
+                            class="setting-text-input"
+                            type="text"
+                            formControlName="token" />
+                    </div>
+
+                    <div class="setting-row">
+                        <label
+                            for="encrypt-password"
+                            class="setting-label"
+                            >Passwort</label
+                        >
+                        <div class="input-group setting-input-group">
+                            <input
+                                id="encrypt-password"
+                                data-test="TXT_Password"
+                                class="setting-text-input"
+                                type="password"
+                                [type]="passwordTextType ? 'password' : 'text'"
+                                formControlName="password" />
+                            <span class="input-group-text setting-input-icon">
+                                <i
+                                    [ngClass]="{'bi bi-eye': passwordTextType, 'bi bi-eye-slash': !passwordTextType}"
+                                    (click)="togglePasswordTextType()"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        *ngIf="encryptTokenForm.get('password')?.errors?.['minlength'] && (encryptTokenForm.touched || encryptTokenForm.dirty)">
+                        <span class="text-danger"
+                            >Passwort muss mindestens 8 Zeichen lang sein.</span
+                        >
+                    </div>
+
+                    <div class="setting-row">
+                        <label
+                            for="confirmPassword"
+                            class="setting-label"
+                            >Passwort bestätigen</label
+                        >
+                        <div class="input-group setting-input-group">
+                            <input
+                                id="confirmPassword"
+                                data-test="TXT_Password_confirm"
+                                class="setting-text-input"
+                                type="password"
+                                [type]="passwordTextType ? 'password' : 'text'"
+                                formControlName="confirmPassword" />
+                            <span class="input-group-text setting-input-icon">
+                                <i
+                                    [ngClass]="{'bi bi-eye': passwordTextType, 'bi bi-eye-slash': !passwordTextType}"
+                                    (click)="togglePasswordTextType()"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        *ngIf="encryptTokenForm.get('confirmPassword')?.errors?.['mismatch'] && (encryptTokenForm.touched || encryptTokenForm.dirty)">
+                        <span class="text-danger">Passwörter stimmen nicht überein.</span>
+                    </div>
+                    <div *ngIf="onErrorSubmit">
+                        <span class="text-danger"
+                            >Verschlüsseln fehlgeschlagen. Bitte
+                            Netzwerkverbindung prüfen und erneut versuchen.</span
+                        >
+                    </div>
+
+                    <div class="setting-row mt-2">
+                        <button
+                            id="encrypt-form-btn"
+                            data-test="BTN_Encrypt"
+                            type="submit"
+                            class="btn btn-regular"
+                            [disabled]="encryptTokenForm.invalid">
+                            Verschlüsseln
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </ng-template>
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">Lokale Sprachausgabe (Piper)</h3>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="local-voice-checkbox"
+                data-test="CHK_Local_Voice"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="localVoiceEnabled"
+                (change)="onToggleLocalVoice($any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="local-voice-checkbox">
+                Nur lokale Stimme (Piper, ohne Cloud)
+            </label>
+        </div>
+    </div>
+    <div
+        class="setting-row"
+        *ngIf="localVoiceEnabled">
+        <label
+            for="local-voice-select"
+            class="setting-label">
+            Stimme
+        </label>
+        <select
+            id="local-voice-select"
+            data-test="SEL_Local_Voice"
+            class="setting-select"
+            [value]="selectedVoiceModel"
+            (change)="onSelectVoiceModel($any($event.target).value)">
+            <option
+                *ngFor="let voice of availableVoices"
+                [value]="voice.id"
+                [selected]="voice.id === selectedVoiceModel">
+                {{ voice.visualName
+                }}{{ voice.id === selectedVoiceModel ? " (aktiv)" : "" }}
+            </option>
+        </select>
+    </div>
 </div>

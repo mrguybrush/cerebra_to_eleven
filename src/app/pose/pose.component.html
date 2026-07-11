@@ -1,12 +1,32 @@
 <div class="background-image pink-corner-frame mt-5">
-    <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1">
+    <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1 flex-wrap align-items-center">
         <div class="flex-grow-1 pl-2">Poses</div>
+        <button
+            type="button"
+            class="btn btn-regular btn-sm mr-2 mb-1"
+            data-test="BTN_Pose_Import"
+            (click)="importPoses()">
+            Importieren
+        </button>
+        <button
+            type="button"
+            class="btn btn-regular btn-sm mr-2 mb-1"
+            data-test="BTN_Pose_Export_All"
+            (click)="exportAllPoses()">
+            Alle exportieren
+        </button>
+        <button
+            type="button"
+            class="btn btn-regular btn-sm mr-2 mb-1 delete-all-button"
+            data-test="BTN_Pose_Delete_All"
+            (click)="deleteAllPoses()">
+            Alle löschen
+        </button>
         <button
             type="button"
             id="save-pose-button"
             data-test="BTN_Pose_Save_Current_Pose"
-            class="btn btn-regular"
-            data-test="BTN_Save_pose"
+            class="btn btn-regular mb-1"
             (click)="savePose()">
             Save current pose
         </button>
@@ -58,6 +78,16 @@
                 alt="rename-pose" />
         </button>
         <button
+            [attr.data-test]="'BTN_Pose_Export_' + pose.name"
+            class="rename-button flex-shrink-0"
+            title="Exportieren"
+            (click)="exportPose(pose)">
+            <img
+                class="rename-icon"
+                src="../../../assets/export.svg"
+                alt="export-pose" />
+        </button>
+        <button
             *ngIf="pose.deletable"
             [attr.data-test]="'BTN_Pose_Delete_' + pose.name"
             class="delete-button flex-shrink-0"
@@ -72,7 +102,171 @@
 
 </div>
 
-<div class="background-image pink-corner-frame mt-3">
+<ng-template
+    #modalContent
+    let-modal
+    id="template">
+    <div
+        class="row display-flex modal-header"
+        id="modal-header">
+        <div
+            class="col-10"
+            id="header-title">
+            <span id="header-title-text">{{modalTitle}}</span>
+        </div>
+        <div
+            class="col-2 text-right"
+            id="close-button">
+            <button
+                id="modal-close-button"
+                data-test="BTN_Close"
+                type="button"
+                (click)="modal.dismiss('Cross')"
+                class="btn">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="10"
+                    height="16">
+                    <text
+                        font-family="Titillium"
+                        fill="#FFF"
+                        font-weight="bold"
+                        font-size="16"
+                        y="11.062">
+                        X
+                    </text>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div
+        class="row m-2 mt-4 pr-2"
+        id="row-name">
+        <label
+            for="name-input"
+            class="col-3 mt-2 justify-content-end"
+            id="label-name"
+            >Name:</label
+        >
+        <input
+            ngbAutofocus
+            class="col-9"
+            type="text"
+            data-test="TXT_Name"
+            (keydown)="($event).key ==='Enter' ? modal.close('Save'): ''"
+            name="name-input"
+            [formControl]="nameFormControl"
+            id="name-input" />
+    </div>
+    <div class="row justify-content-center mt-2 mb-3">
+        <div class="col-3 align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular"
+                id="modal-save-button"
+                data-test="BTN_Save"
+                [disabled]="nameFormControl.invalid"
+                (keydown.enter)="modal.close('Save')"
+                (click)="modal.close('Save')">
+                Save
+            </button>
+        </div>
+        <div class="col-3 align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular"
+                id="modal-cancel-button"
+                data-test="BTN_Cancel"
+                (click)="modal.dismiss('Cancel')">
+                Cancel
+            </button>
+        </div>
+    </div>
+</ng-template>
+
+<!-- Confirmation for "delete all poses": unlocks only after solving
+     the arithmetic task, so it cannot be clicked through by accident. -->
+<ng-template
+    #deleteAllModalContent
+    let-modal
+    id="delete-all-template">
+    <div class="row display-flex modal-header">
+        <div class="col-10">
+            <span id="delete-all-title">Alle Posen löschen</span>
+        </div>
+        <div class="col-2 text-right">
+            <button
+                data-test="BTN_Close"
+                type="button"
+                (click)="modal.dismiss('Cross')"
+                class="btn">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="10"
+                    height="16">
+                    <text
+                        font-family="Titillium"
+                        fill="#FFF"
+                        font-weight="bold"
+                        font-size="16"
+                        y="11.062">
+                        X
+                    </text>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div class="m-3">
+        <p>
+            Damit werden <b>alle selbst erstellten Posen unwiderruflich
+            gelöscht</b> (Standard-Posen bleiben erhalten). Tipp: vorher
+            „Alle exportieren" als Sicherung.
+        </p>
+        <p>
+            Zur Bestätigung bitte diese Aufgabe im Kopf lösen:
+        </p>
+        <p
+            class="text-center"
+            style="font-size: 1.4rem; font-weight: bold"
+            data-test="TXT_Math_Question">
+            {{mathQuestion}}
+        </p>
+        <input
+            ngbAutofocus
+            class="w-100"
+            type="number"
+            placeholder="Ergebnis"
+            data-test="TXT_Math_Answer"
+            [formControl]="mathAnswerControl" />
+    </div>
+    <div class="row justify-content-center mt-2 mb-3">
+        <div class="col-4 align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular w-100"
+                data-test="BTN_Delete_All_Confirm"
+                [disabled]="!isMathAnswerCorrect()"
+                (click)="modal.close('Delete')">
+                Endgültig löschen
+            </button>
+        </div>
+        <div class="col-4 align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular w-100"
+                data-test="BTN_Delete_All_Cancel"
+                (click)="modal.dismiss('Cancel')">
+                Abbrechen
+            </button>
+        </div>
+    </div>
+</ng-template>
+
+<!-- Gestensteuerung (Kamera-basierte Gesten/Bewegungssequenzen-Aufnahme) ist
+     vorerst ausgeblendet - siehe showGestureFeatures im Component. -->
+<div
+    class="background-image pink-corner-frame mt-3"
+    *ngIf="showGestureFeatures">
     <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1">
         <div class="flex-grow-1 pl-2">Gestensteuerung</div>
     </div>
@@ -293,86 +487,4 @@
                 alt="delete-sequence" />
         </button>
     </div>
-
-    <ng-template
-        #modalContent
-        let-modal
-        id="template">
-        <div
-            class="row display-flex modal-header"
-            id="modal-header">
-            <div
-                class="col-10"
-                id="header-title">
-                <span id="header-title-text">{{modalTitle}}</span>
-            </div>
-            <div
-                class="col-2 text-right"
-                id="close-button">
-                <button
-                    id="modal-close-button"
-                    data-test="BTN_Close"
-                    type="button"
-                    (click)="modal.dismiss('Cross')"
-                    class="btn">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="10"
-                        height="16">
-                        <text
-                            font-family="Titillium"
-                            fill="#FFF"
-                            font-weight="bold"
-                            font-size="16"
-                            y="11.062">
-                            X
-                        </text>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div
-            class="row m-2 mt-4 pr-2"
-            id="row-name">
-            <label
-                for="name-input"
-                class="col-3 mt-2 justify-content-end"
-                id="label-name"
-                >Name:</label
-            >
-            <input
-                ngbAutofocus
-                class="col-9"
-                type="text"
-                data-test="TXT_Name"
-                (keydown)="($event).key ==='Enter' ? modal.close('Save'): ''"
-                name="name-input"
-                [formControl]="nameFormControl"
-                id="name-input" />
-        </div>
-        <div class="row justify-content-center mt-2 mb-3">
-            <div class="col-3 align-self-center">
-                <button
-                    type="button"
-                    class="btn btn-regular"
-                    id="modal-save-button"
-                    data-test="BTN_Save"
-                    [disabled]="nameFormControl.invalid"
-                    (keydown.enter)="modal.close('Save')"
-                    (click)="modal.close('Save')">
-                    Save
-                </button>
-            </div>
-            <div class="col-3 align-self-center">
-                <button
-                    type="button"
-                    class="btn btn-regular"
-                    id="modal-cancel-button"
-                    data-test="BTN_Cancel"
-                    (click)="modal.dismiss('Cancel')">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </ng-template>
 </div>

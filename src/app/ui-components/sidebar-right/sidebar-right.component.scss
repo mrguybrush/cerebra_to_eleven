@@ -1,9 +1,63 @@
 @import "src/styles";
 
+// Angular component hosts default to display:inline, which has no height -
+// every height:100% below it silently resolved to nothing, so the list
+// could never scroll (it just overflowed past the viewport with the
+// action buttons pushed out of reach). This single rule is what makes the
+// whole scroll layout work.
+:host {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
+.sidebar-right-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: $blue-dark-5;
+    padding: 1rem 0.5rem;
+}
+
+// pinned above the list, never scrolls away
+.sidebar-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar-action-button {
+    border: none;
+    border-radius: 5px;
+    background-color: $blue-dark-2;
+    color: $white-color;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 8px 12px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.sidebar-action-button:hover {
+    background-color: $violet-color;
+}
+
+// the only scrolling part
+.sidebar-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+}
+
 .element-div {
     border-radius: 5px;
     background-color: $blue-dark-2;
     min-height: 30px;
+    margin-bottom: 0.75rem;
 }
 
 label {
@@ -14,16 +68,13 @@ label {
 .element-div-active {
     background-color: $violet-color;
 }
+
 .element {
     color: $white-color;
     font-weight: bold;
     font-size: 1rem;
     display: inline-block;
     padding-top: 5px;
-}
-
-.sidebar-right-wrapper {
-    background-color: $blue-dark-5;
 }
 
 ::-webkit-scrollbar {
@@ -40,9 +91,11 @@ label {
     background-color: $grey-color;
     padding: 10%;
 }
+
 .dot-menu {
     font-size: 1.4em;
 }
+
 .dot-menu:hover {
     color: $black-color;
 }

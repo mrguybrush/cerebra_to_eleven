@@ -88,6 +88,10 @@ export class VoiceAssistantPersonalitySidebarRightComponent implements OnInit {
                     validators: [Validators.required],
                 },
             ),
+            cameraAccessEnabled: new FormControl(
+                this.personalityClone.cameraAccessEnabled ?? false,
+                {nonNullable: true},
+            ),
         });
         this.thresholdString = this.personalityClone.pauseThreshold.toFixed(1);
         this.messageHistoryNumber = this.personalityClone.messageHistory;
@@ -207,6 +211,8 @@ export class VoiceAssistantPersonalitySidebarRightComponent implements OnInit {
                 this.personalityFormSidebar.controls["gender"].value;
             this.personalityClone.assistantModelId =
                 this.personalityFormSidebar.controls["assistantModel"].value;
+            this.personalityClone.cameraAccessEnabled =
+                this.personalityFormSidebar.controls["cameraAccessEnabled"].value;
             this.voiceAssistantService.updatePersonalityById(
                 this.personalityClone!,
             );

@@ -1,0 +1,146 @@
+<div>
+    <div class="mb-3 pl-2 form-headline">
+        Programme und Posen den Lerngruppen zuordnen.
+    </div>
+    <div class="assignment-hint pl-2">
+        Ein Programm oder eine Pose kann nur einer Gruppe angehören. Zum
+        Verschieben einfach die Gruppe in der Dropdown-Liste wechseln - zum
+        Kopieren in eine weitere Gruppe die Zielgruppe rechts auswählen und
+        auf „Kopieren" klicken. Gesten und Bewegungssequenzen sind hier noch
+        nicht enthalten.
+    </div>
+
+    <table class="assignment-table">
+        <thead>
+            <tr>
+                <th
+                    class="sortable"
+                    data-test="TH_Sort_Name"
+                    (click)="sortBy('name')">
+                    Name
+                    <span *ngIf="sortColumn === 'name'">{{sortAscending ? "▲" : "▼"}}</span>
+                </th>
+                <th
+                    class="sortable"
+                    data-test="TH_Sort_Kind"
+                    (click)="sortBy('kind')">
+                    Typ
+                    <span *ngIf="sortColumn === 'kind'">{{sortAscending ? "▲" : "▼"}}</span>
+                </th>
+                <th
+                    class="sortable"
+                    data-test="TH_Sort_Group"
+                    (click)="sortBy('group')">
+                    Gruppe
+                    <span *ngIf="sortColumn === 'group'">{{sortAscending ? "▲" : "▼"}}</span>
+                </th>
+                <th>Kopieren nach</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr
+                *ngFor="let row of rows"
+                [attr.data-test]="'ROW_Assignment_' + row.name">
+                <td class="name-cell">
+                    <ng-container *ngIf="row.editingName === null">
+                        <span
+                            [ngClass]="{'name-locked': !row.deletable}"
+                            (dblclick)="startRename(row)"
+                            >{{row.name}}</span
+                        >
+                        <span
+                            *ngIf="!row.deletable"
+                            class="locked-hint"
+                            title="Standard-Eintrag, kann nicht geändert werden"
+                            >🔒</span
+                        >
+                    </ng-container>
+                    <ng-container *ngIf="row.editingName !== null">
+                        <input
+                            type="text"
+                            class="setting-text-input rename-input"
+                            [attr.data-test]="'TXT_Rename_' + row.name"
+                            [(ngModel)]="row.editingName"
+                            (keydown.enter)="confirmRename(row)"
+                            (keydown.escape)="cancelRename(row)"
+                            (blur)="confirmRename(row)" />
+                    </ng-container>
+                </td>
+                <td>{{row.kind === "program" ? "Programm" : "Pose"}}</td>
+                <td>
+                    <select
+                        class="setting-select"
+                        [attr.data-test]="'SEL_Group_' + row.name"
+                        [disabled]="!row.deletable"
+                        [value]="row.learningGroupId ?? ''"
+                        (change)="onGroupChange(row, $any($event.target).value)">
+                        <option value="">(keine Gruppe)</option>
+                        <option
+                            *ngFor="let group of groups"
+                            [value]="group.groupId">
+                            {{group.name}}
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select
+                            class="setting-select"
+                            [attr.data-test]="'SEL_CopyTarget_' + row.name"
+                            [(ngModel)]="row.copyTargetGroupId">
+                            <option value="">(keine Gruppe)</option>
+                            <option
+                                *ngFor="let group of groups"
+                                [value]="group.groupId">
+                                {{group.name}}
+                            </option>
+                        </select>
+                        <button
+                            type="button"
+                            class="btn btn-regular btn-sm"
+                            [attr.data-test]="'BTN_Copy_' + row.name"
+                            (click)="copyToGroup(row)">
+                            Kopieren
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div
+                        class="d-flex gap-2"
+                        *ngIf="row.deletable">
+                        <button
+                            type="button"
+                            class="rename-button flex-shrink-0"
+                            title="Umbenennen"
+                            [attr.data-test]="'BTN_Rename_' + row.name"
+                            (click)="startRename(row)">
+                            <img
+                                class="rename-icon"
+                                src="../../../assets/edit.svg"
+                                alt="rename" />
+                        </button>
+                        <button
+                            type="button"
+                            class="delete-button flex-shrink-0"
+                            title="Löschen"
+                            [attr.data-test]="'BTN_Delete_' + row.name"
+                            (click)="deleteRow(row)">
+                            <img
+                                class="delete-icon"
+                                src="../../../assets/delete.svg"
+                                alt="delete" />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr *ngIf="rows.length === 0">
+                <td
+                    colspan="5"
+                    class="text-center pt-3 pb-3">
+                    Keine Programme oder Posen vorhanden.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

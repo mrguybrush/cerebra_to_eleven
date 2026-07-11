@@ -1,10 +1,11 @@
-import {Component, OnInit} from "@angular/core";
+import {Component, OnInit, ViewChild} from "@angular/core";
 import {ActivatedRoute} from "@angular/router";
 import {Observable} from "rxjs";
 import {ProgramService} from "src/app/shared/services/program.service";
 import {ProgramCode} from "src/app/shared/types/program-code";
 import {ExecutionState, ProgramState} from "src/app/shared/types/program-state";
 import {ProgramLogLine} from "src/app/shared/types/program-log-line";
+import {ProgramWorkspaceComponent} from "./program-workspace/program-workspace.component";
 
 @Component({
     selector: "app-program-splitscreen",
@@ -12,6 +13,9 @@ import {ProgramLogLine} from "src/app/shared/types/program-log-line";
     styleUrls: ["./program-splitscreen.component.scss"],
 })
 export class ProgramSplitscreenComponent implements OnInit {
+    @ViewChild(ProgramWorkspaceComponent)
+    programWorkspace!: ProgramWorkspaceComponent;
+
     ExecutionState = ExecutionState;
 
     codePython: string = "";
@@ -68,7 +72,7 @@ export class ProgramSplitscreenComponent implements OnInit {
 
     runProgram() {
         this.saveCode();
-        this.inSplitMode = true;
+        this.setSplitMode(true);
         if (this.executionState === ExecutionState.STARTING) {
             return;
         } else if (this.executionState === ExecutionState.RUNNING) {
@@ -76,6 +80,21 @@ export class ProgramSplitscreenComponent implements OnInit {
         } else {
             this.programService.runProgram(this.programNumber);
         }
+    }
+
+    toggleSplitMode() {
+        this.setSplitMode(!this.inSplitMode);
+    }
+
+    /**
+     * The blocklyDiv's flex-basis jumps abruptly here (e.g. full height ->
+     * 50%) rather than being dragged gradually, which used to leave the
+     * Blockly workspace looking blank/misaligned until the user interacted
+     * with it - see ProgramWorkspaceComponent.handleLayoutTransition.
+     */
+    private setSplitMode(active: boolean) {
+        this.inSplitMode = active;
+        this.programWorkspace?.handleLayoutTransition();
     }
 
     onProgramInputReceived(input: string) {

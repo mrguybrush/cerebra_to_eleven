@@ -20,7 +20,7 @@
                         <div
                             id="tooltip-smart-connect-disabled"
                             data-toggle="tooltip"
-                            [title]="smartConnectActive ? '' : 'Enable SmartConnect to start the Voice-Assistant' ">
+                            [title]="canActivateVoiceAssistant() ? '' : 'In den Einstellungen einen Smart-API-Token hinterlegen oder ein Modell ohne Token (Gemini / Lokales Netzwerk-LLM) wählen' ">
                             <button
                                 class="btn border-0 p-0"
                                 id="sidebar-right-toggle-voice-assistant"
@@ -28,7 +28,7 @@
                                 type="button"
                                 value="{{turnedOn}}"
                                 (click)="toggleVoiceAssistant()"
-                                [disabled]="!smartConnectActive">
+                                [disabled]="!canActivateVoiceAssistant()">
                                 <img
                                     [src]="turnedOn ? '../../assets/toggle-switch-right.png' : '../../assets/toggle-switch-left.png' "
                                     alt="Toggle for turning the Voice Assistant on and off" />

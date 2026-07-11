@@ -11,6 +11,11 @@ export enum UrlConstants {
     HOST_IP = "/host-ip",
     RGB_BUTTON = "/button-programs",
     VOICE_SETTINGS = "/voice-assistant/voice-settings",
+    LLM_SETTINGS = "/voice-assistant/llm-settings",
+    VERIFY_GEMINI_KEY = "/voice-assistant/llm-settings/verify-gemini-key",
     GESTURE = "/gesture-control/gestures",
     MOVEMENT_SEQUENCE = "/gesture-control/sequences",
+    JOINT_MAPPING = "/gesture-control/joint-mapping",
+    VOICE_RECORDINGS = "/voice-recordings",
+    LEARNING_GROUPS = "/learning-groups",
 }

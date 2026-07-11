@@ -18,6 +18,7 @@ import {VoiceAssistant} from "src/app/shared/types/voice-assistant";
 import {VoiceAssistantState} from "../../shared/types/voice-assistant-state";
 import {Location} from "@angular/common";
 import {TokenService} from "src/app/shared/services/token.service";
+import {AssistantModel} from "src/app/shared/types/assistantModel";
 
 @Component({
     selector: "app-voice-assistant-chat",
@@ -40,7 +41,9 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
     currentChatId: string | null = "";
     voiceAssistantActivationToggle = new FormControl(false);
     chatSubjectSubscription!: Subscription;
+    private personalitiesSubscription!: Subscription;
     smartConnectActive = false;
+    private assistantModels: AssistantModel[] = [];
 
     constructor(
         private readonly modalService: NgbModal,
@@ -77,6 +80,33 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         this.tokenService.tokenStatus$.subscribe((response) => {
             this.smartConnectActive = response.tokenActive;
         });
+        this.voiceAssistantService.assistantModelsSubject.subscribe(
+            (models) => {
+                this.assistantModels = models;
+            },
+        );
+        this.voiceAssistantService.getAllAssistantModels();
+        // this.personality is otherwise only (re-)assigned inside the
+        // route.paramMap subscription below, i.e. on navigation - it never
+        // picked up changes made elsewhere (e.g. switching the Chat-LLM in
+        // Settings updates the personality's assistantModelId in the
+        // service's cache, but this component kept its stale reference from
+        // before the change), so canActivateVoiceAssistant() kept seeing the
+        // old model and refused to unlock the toggle even with a valid key.
+        this.personalitiesSubscription =
+            this.voiceAssistantService.personalitiesSubject.subscribe(
+                (personalities) => {
+                    if (!this.personalityId) {
+                        return;
+                    }
+                    const updated = personalities.find(
+                        (p) => p.personalityId === this.personalityId,
+                    );
+                    if (updated) {
+                        this.personality = updated;
+                    }
+                },
+            );
         this.route.paramMap.subscribe((_params) => {
             const routeParts: string[] = this.router.url.split("/");
             this.currentChatId = routeParts[routeParts.length - 1];
@@ -182,6 +212,23 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** The assistant can be switched on when the smart-connect token is
+     * active OR the current personality uses a model that needs no tryb
+     * cloud access (Gemini has its own key, the local-network LLM none). */
+    canActivateVoiceAssistant(): boolean {
+        if (this.smartConnectActive) {
+            return true;
+        }
+        const model = this.assistantModels.find(
+            (m) => m.id === this.personality?.assistantModelId,
+        );
+        if (!model) {
+            return false;
+        }
+        const apiName = model.apiName.toLowerCase();
+        return apiName.includes("gemini") || apiName === "local-llm";
+    }
+
     toggleVoiceAssistant() {
         const turnedOn = !this.voiceAssistantActivationToggle.value;
         const nextState: VoiceAssistantState = {turnedOn, chatId: ""};
@@ -223,6 +270,7 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.chatSubjectSubscription.unsubscribe();
+        this.personalitiesSubscription.unsubscribe();
     }
 
     optionCallbackMethods = [

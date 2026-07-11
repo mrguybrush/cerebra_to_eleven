@@ -1,0 +1,95 @@
+<div class="all-joints-container">
+    <!-- Kopf: keine links/rechts-Seite, volle Breite -->
+    <table class="joints-table">
+        <tr *ngFor="let row of headRows">
+            <td class="joint-label">{{row.label}}</td>
+            <td
+                class="joint-slider-cell"
+                colspan="3">
+                <div class="slider-wrap">
+                    <input
+                        type="checkbox"
+                        class="invert-checkbox"
+                        title="Schieberichtung umkehren"
+                        [attr.data-test]="'CHK_Invert_' + row.motor"
+                        [checked]="invertedMotors[row.motor]"
+                        (change)="toggleInvert(row.motor, $any($event.target).checked)" />
+                    <input
+                        type="range"
+                        class="joint-slider"
+                        [class.inverted]="invertedMotors[row.motor]"
+                        [attr.data-test]="'SLD_All_' + row.motor"
+                        [min]="motorRanges[row.motor].min"
+                        [max]="motorRanges[row.motor].max"
+                        [value]="motorValues[row.motor]"
+                        (input)="onSliderInput(row.motor, $any($event.target).value)" />
+                    <span class="joint-value">{{degrees(row.motor)}}&deg;</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Arme/Hände gespiegelt: linke Spalte = RECHTE Roboterseite, rechte
+         Spalte = LINKE Roboterseite (wie man vor dem Roboter steht) -->
+    <table class="joints-table mt-3">
+        <tr>
+            <th></th>
+            <th>Rechte Seite (Roboter)</th>
+            <th>Linke Seite (Roboter)</th>
+        </tr>
+        <tr *ngFor="let row of mirroredRows">
+            <td class="joint-label">{{row.label}}</td>
+            <td class="joint-slider-cell">
+                <div class="slider-wrap">
+                    <input
+                        type="checkbox"
+                        class="invert-checkbox"
+                        title="Schieberichtung umkehren"
+                        [attr.data-test]="'CHK_Invert_' + row.rightMotor"
+                        [checked]="invertedMotors[row.rightMotor]"
+                        (change)="toggleInvert(row.rightMotor, $any($event.target).checked)" />
+                    <input
+                        type="range"
+                        class="joint-slider"
+                        [class.inverted]="invertedMotors[row.rightMotor]"
+                        [attr.data-test]="'SLD_All_' + row.rightMotor"
+                        [min]="motorRanges[row.rightMotor].min"
+                        [max]="motorRanges[row.rightMotor].max"
+                        [value]="motorValues[row.rightMotor]"
+                        (input)="onSliderInput(row.rightMotor, $any($event.target).value)" />
+                    <span class="joint-value">{{degrees(row.rightMotor)}}&deg;</span>
+                </div>
+            </td>
+            <td class="joint-slider-cell">
+                <div class="slider-wrap">
+                    <input
+                        type="checkbox"
+                        class="invert-checkbox"
+                        title="Schieberichtung umkehren"
+                        [attr.data-test]="'CHK_Invert_' + row.leftMotor"
+                        [checked]="invertedMotors[row.leftMotor]"
+                        (change)="toggleInvert(row.leftMotor, $any($event.target).checked)" />
+                    <input
+                        type="range"
+                        class="joint-slider"
+                        [class.inverted]="invertedMotors[row.leftMotor]"
+                        [attr.data-test]="'SLD_All_' + row.leftMotor"
+                        [min]="motorRanges[row.leftMotor].min"
+                        [max]="motorRanges[row.leftMotor].max"
+                        [value]="motorValues[row.leftMotor]"
+                        (input)="onSliderInput(row.leftMotor, $any($event.target).value)" />
+                    <span class="joint-value">{{degrees(row.leftMotor)}}&deg;</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="all-joints-hint">
+        Spalten sind gespiegelt (Blick auf den Roboter): links bedienst du
+        seine rechte Seite, rechts seine linke. Der Hand-Slider öffnet und
+        schließt alle Finger der jeweiligen Hand gemeinsam; darunter lässt
+        sich jeder Finger einzeln steuern. Das Häkchen vor jedem Slider
+        kehrt nur dessen Schieberichtung um (rein visuell, wirkt sich nicht
+        auf die Bewegung des Roboters aus).
+    </div>
+</div>

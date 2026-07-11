@@ -21,19 +21,26 @@ import {ProgramSplitscreenComponent} from "./program/program-overview/program-ma
 import {programCodeResolver} from "./program/program-overview/program-manager/program-splitscreen/resolver/program-code.resolver";
 import {PoseComponent} from "./pose/pose.component";
 import {MotionCaptureComponent} from "./motion-capture/motion-capture.component";
+import {VoiceRecordingComponent} from "./voice-recording/voice-recording.component";
+import {AllJointsComponent} from "./joint-control/all-joints/all-joints.component";
 import {HardwareIdComponent} from "./system/hardware-id/hardware-id.component";
 import {RgbLedButtonComponent} from "./program/program-overview/rgb-led-button/rgb-led-button.component";
 import {ProgramOverviewComponent} from "./program/program-overview/program-overview.component";
 import {SystemComponent} from "./system/system.component";
-import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
-import {LogsComponent} from "./system/logs/logs.component";
 import {SettingsComponent} from "./system/settings/settings.component";
+import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
 
 const routes: Routes = [
     {
         path: "joint-control",
         component: JointControlComponent,
         children: [
+            {
+                // static route BEFORE :joint-name, so "all" is never
+                // treated as (and rejected by the guard as) a joint name
+                path: "all",
+                component: AllJointsComponent,
+            },
             {
                 path: ":joint-name",
                 component: JointControlCoreComponent,
@@ -55,22 +62,18 @@ const routes: Routes = [
         component: SystemComponent,
         children: [
             {
-                path: "diagnose",
-                component: DiagnoseComponent,
-            },
-            {
-                path: "logs",
-                component: LogsComponent,
+                path: "settings",
+                component: SettingsComponent,
             },
             {
                 path: "hardware-ids",
                 component: HardwareIdComponent,
             },
             {
-                path: "settings",
-                component: SettingsComponent,
+                path: "program-assignment",
+                component: ProgramAssignmentComponent,
             },
-            {path: "", redirectTo: "diagnose", pathMatch: "full"},
+            {path: "", redirectTo: "settings", pathMatch: "full"},
         ],
     },
     {
@@ -80,6 +83,10 @@ const routes: Routes = [
     {
         path: "motion-capture",
         component: MotionCaptureComponent,
+    },
+    {
+        path: "voice-recording",
+        component: VoiceRecordingComponent,
     },
     {
         path: "camera",

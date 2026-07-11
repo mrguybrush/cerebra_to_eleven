@@ -2,3 +2,13 @@
     container-type: size;
     height: calc(100vh - 10vh);
 }
+
+// .full-height is a flex row (Bootstrap .row); flex items default to
+// min-height: auto, so they grow to fit their content instead of
+// respecting the row's fixed height - this silently defeated the sidebar's
+// own overflow-y: auto (nothing to actually overflow, since the column just
+// stretched taller than the viewport instead of clipping). Without this,
+// a long program/personality list is simply unreachable past the fold.
+.full-height > * {
+    min-height: 0;
+}

@@ -9,7 +9,7 @@ import {
 } from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
-import {Observable, from, map} from "rxjs";
+import {Observable, concatMap, from, map} from "rxjs";
 import {PoseService} from "src/app/shared/services/pose.service";
 import {Pose} from "src/app/shared/types/pose";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -35,6 +35,8 @@ import {
 
 const GESTURE_EXPORT_KIND = "pib-gesture";
 const SEQUENCE_EXPORT_KIND = "pib-movement-sequence";
+const POSE_EXPORT_KIND = "pib-pose";
+const POSE_COLLECTION_EXPORT_KIND = "pib-pose-collection";
 
 @Component({
     selector: "app-pose",
@@ -43,6 +45,9 @@ const SEQUENCE_EXPORT_KIND = "pib-movement-sequence";
 })
 export class PoseComponent implements OnInit {
     @ViewChild("modalContent") modalContent: TemplateRef<any> | undefined;
+    @ViewChild("deleteAllModalContent") deleteAllModalContent:
+        | TemplateRef<any>
+        | undefined;
     @ViewChildren("renameButton") renameButtons:
         | QueryList<ElementRef<HTMLButtonElement>>
         | undefined;
@@ -63,6 +68,16 @@ export class PoseComponent implements OnInit {
     });
 
     selectedPoseId?: string;
+
+    // Camera-based gesture/movement-sequence capture is temporarily hidden
+    // (still fully implemented underneath) until it's ready for general use.
+    showGestureFeatures = false;
+
+    // Safety check for "delete all poses": the user must solve a (deliberately
+    // annoying) mental-arithmetic task before the delete button unlocks.
+    mathQuestion = "";
+    mathAnswerControl: FormControl<string | null> = new FormControl("");
+    private mathExpectedAnswer = 0;
 
     // Gesture control (see plan: "Gestensteuerung" section on this page)
     captureMode: CaptureMode = "static";
@@ -272,6 +287,121 @@ export class PoseComponent implements OnInit {
                 this.selectPose(pose);
             });
         });
+    }
+
+    exportPose(pose: Pose) {
+        this.poseService.getPoseForExport(pose.poseId).subscribe((data) => {
+            downloadJson(`pose_${safeFilename(data.name)}`, {
+                kind: POSE_EXPORT_KIND,
+                ...data,
+            });
+        });
+    }
+
+    exportAllPoses() {
+        this.poseService.getAllPosesForExport().subscribe((poses) => {
+            if (poses.length === 0) {
+                this.toast("Keine Posen vorhanden");
+                return;
+            }
+            downloadJson("alle_posen", {
+                kind: POSE_COLLECTION_EXPORT_KIND,
+                poses,
+            });
+        });
+    }
+
+    /** Imports a single-pose file OR an all-poses collection file. */
+    importPoses() {
+        pickJsonFile()
+            .then((raw) => {
+                if (!raw) return;
+                const data = raw as {
+                    kind: string;
+                    name?: string;
+                    motorPositions?: MotorPosition[];
+                    poses?: {name: string; motorPositions: MotorPosition[]}[];
+                };
+                let items: {name: string; motorPositions: MotorPosition[]}[];
+                if (data.kind === POSE_EXPORT_KIND && data.motorPositions) {
+                    items = [
+                        {name: data.name ?? "Pose", motorPositions: data.motorPositions},
+                    ];
+                } else if (
+                    data.kind === POSE_COLLECTION_EXPORT_KIND &&
+                    Array.isArray(data.poses)
+                ) {
+                    items = data.poses;
+                } else {
+                    throw new Error("Keine gültige Posen-Datei.");
+                }
+                if (items.some((item) => !item.name || !item.motorPositions)) {
+                    throw new Error("Posen-Datei ist unvollständig.");
+                }
+                from(items)
+                    .pipe(
+                        concatMap((item) =>
+                            this.poseService.importPose(
+                                item.name,
+                                item.motorPositions,
+                            ),
+                        ),
+                    )
+                    .subscribe({
+                        complete: () =>
+                            this.toast(
+                                items.length === 1
+                                    ? "Pose importiert"
+                                    : `${items.length} Posen importiert`,
+                            ),
+                        error: (err) =>
+                            this.toast("Import fehlgeschlagen: " + String(err)),
+                    });
+            })
+            .catch((err) => this.toast(String(err.message ?? err)));
+    }
+
+    /** Opens the delete-all confirmation; deletion only happens after the
+     * math task is solved correctly (the delete button stays locked). */
+    deleteAllPoses() {
+        const a = 13 + Math.floor(Math.random() * 77); // 13..89
+        const b = 13 + Math.floor(Math.random() * 77);
+        const c = 111 + Math.floor(Math.random() * 888); // 111..998
+        this.mathExpectedAnswer = a * b + c;
+        this.mathQuestion = `${a} × ${b} + ${c} = ?`;
+        this.mathAnswerControl.setValue("");
+        from(
+            this.modalService.open(this.deleteAllModalContent, {
+                ariaLabelledBy: "delete-all-poses",
+                size: "md",
+                windowClass: "cerebra-modal",
+                backdropClass: "cerebra-modal-backdrop",
+            }).result,
+        ).subscribe({
+            next: () => {
+                if (!this.isMathAnswerCorrect()) {
+                    this.toast("Falsche Antwort – nichts gelöscht.");
+                    return;
+                }
+                this.poseService.deleteAllPoses().subscribe((count) => {
+                    this.toast(
+                        count === 0
+                            ? "Keine löschbaren Posen vorhanden."
+                            : `${count} Pose(n) gelöscht.`,
+                    );
+                });
+            },
+            error: () => {
+                // modal dismissed - nothing to do
+            },
+        });
+    }
+
+    isMathAnswerCorrect(): boolean {
+        return (
+            parseInt(this.mathAnswerControl.value ?? "", 10) ===
+            this.mathExpectedAnswer
+        );
     }
 
     renamePose(pose: Pose) {

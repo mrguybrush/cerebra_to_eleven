@@ -108,6 +108,7 @@ export class RosService implements IRosService {
     > = new BehaviorSubject<SolidStateRelayState | undefined>(undefined);
     gestureCaptureResultReceiver$: Subject<string> = new Subject<string>();
     gestureRetargetTargetsReceiver$: Subject<string> = new Subject<string>();
+    gestureRetargetCandidatesReceiver$: Subject<string> = new Subject<string>();
 
     private ros!: ROSLIB.Ros;
 
@@ -130,6 +131,7 @@ export class RosService implements IRosService {
     private gestureCaptureControlTopic!: ROSLIB.Topic;
     private gestureCaptureResultTopic!: ROSLIB.Topic;
     private gestureRetargetTargetsTopic!: ROSLIB.Topic;
+    private gestureRetargetCandidatesTopic!: ROSLIB.Topic;
     private browserPoseLandmarksTopic!: ROSLIB.Topic;
     private audioStreamTopic!: ROSLIB.Topic;
     private getMicConfigurationService!: ROSLIB.Service;
@@ -293,6 +295,10 @@ export class RosService implements IRosService {
             rosTopics.gestureRetargetTargets,
             rosDataTypes.string,
         );
+        this.gestureRetargetCandidatesTopic = this.createRosTopic(
+            rosTopics.gestureRetargetCandidates,
+            rosDataTypes.string,
+        );
         this.browserPoseLandmarksTopic = this.createRosTopic(
             rosTopics.browserPoseLandmarks,
             rosDataTypes.string,
@@ -394,6 +400,10 @@ export class RosService implements IRosService {
         this.subscribeDefaultRosMessageTopic(
             this.gestureRetargetTargetsTopic,
             this.gestureRetargetTargetsReceiver$,
+        );
+        this.subscribeDefaultRosMessageTopic(
+            this.gestureRetargetCandidatesTopic,
+            this.gestureRetargetCandidatesReceiver$,
         );
 
         this.subscribeVoiceAssistantStateTopic();
@@ -892,13 +902,30 @@ export class RosService implements IRosService {
         this.gestureCaptureControlTopic.publish(message);
     }
 
-    publishPoseLandmarks(landmarks: {
-        [name: string]: [number, number, number, number];
-    }) {
+    /** Tells the backend to immediately re-read the calibrated joint
+     * mapping from the DB, so a just-saved calibration applies right away
+     * even if mirroring is already running. */
+    reloadGestureMapping() {
+        if (!this.gestureCaptureControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({action: "reload_mapping"}),
+        });
+        this.gestureCaptureControlTopic.publish(message);
+    }
+
+    publishPoseLandmarks(
+        landmarks: {[name: string]: [number, number, number, number]},
+        hands?: {[side: string]: {[name: string]: [number, number, number]}},
+    ) {
         if (!this.browserPoseLandmarksTopic) {
             return;
         }
-        const message = new ROSLIB.Message({data: JSON.stringify(landmarks)});
+        const message = new ROSLIB.Message({
+            data: JSON.stringify({pose: landmarks, hands: hands ?? {}}),
+        });
         this.browserPoseLandmarksTopic.publish(message);
     }
 

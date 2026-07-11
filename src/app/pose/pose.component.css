@@ -127,3 +127,9 @@ button:focus {
 .unselected .apply-button {
     border-color: #344864;
 }
+
+/* "Alle löschen" is destructive - make it visually distinct. */
+.delete-all-button {
+    border-color: #e10072;
+    color: #ff9ecb;
+}

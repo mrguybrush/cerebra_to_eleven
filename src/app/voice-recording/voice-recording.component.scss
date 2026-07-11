@@ -1,0 +1,122 @@
+* {
+    color: white;
+}
+
+.opacity-hint {
+    opacity: 0.6;
+    font-size: 0.9rem;
+}
+
+.recording-box {
+    max-width: 620px;
+}
+
+.record-button {
+    min-width: 220px;
+}
+
+.insecure-context-hint {
+    border: 2px solid #e10072;
+    border-radius: 8px;
+    background-color: rgba(225, 0, 114, 0.1);
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+}
+
+.insecure-context-hint code {
+    background-color: #344864;
+    border-radius: 3px;
+    padding: 1px 5px;
+    word-break: break-all;
+}
+
+.recording-active {
+    border-color: #e10072;
+    background-color: rgba(225, 0, 114, 0.2);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.recorded-panel audio {
+    width: 100%;
+    max-width: 420px;
+    display: block;
+}
+
+.name-input {
+    color: white;
+    background-color: #344864;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    min-width: 220px;
+}
+
+.upload-label {
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.pose-item {
+    border: none;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 10px;
+    overflow: visible;
+    background-color: #041939;
+}
+
+.apply-button {
+    width: 40px;
+    height: 40px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border: 2px solid #344864;
+    background-color: #041939;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.apply-button:hover {
+    cursor: pointer;
+}
+
+.pose-label {
+    padding-left: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recording-size {
+    opacity: 0.6;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+.delete-button {
+    border: none;
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-icon {
+    width: 20px;
+    height: 20px;
+}

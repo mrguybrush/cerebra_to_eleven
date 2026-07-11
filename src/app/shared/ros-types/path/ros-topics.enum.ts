@@ -18,6 +18,7 @@ export enum rosTopics {
     gestureCaptureControl = "/gesture_capture_control",
     gestureCaptureResult = "/gesture_capture_result",
     gestureRetargetTargets = "/gesture_retarget_targets",
+    gestureRetargetCandidates = "/gesture_retarget_candidates",
     browserPoseLandmarks = "/browser_pose_landmarks",
     audioStream = "/audio_stream",
 }

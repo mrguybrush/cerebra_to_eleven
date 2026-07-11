@@ -12,6 +12,8 @@ import {
     PoseSource,
 } from "src/app/shared/services/browser-pose-tracker.service";
 import {RosService} from "src/app/shared/services/ros-service/ros.service";
+import {JointMappingService} from "src/app/shared/services/joint-mapping.service";
+import {JointMappingEntry, JointSide} from "src/app/shared/types/joint-mapping";
 
 // Bone connections between the named landmarks the tracker exposes -
 // drawn as the line skeleton over the live image (green body, pink head
@@ -72,6 +74,27 @@ const DEFAULT_SELECTED_JOINTS = [
     "elbow_right",
 ];
 
+// Matches gesture_control/retargeting.py's MOTOR_TO_CANDIDATE exactly - the
+// calibration wizard needs to know which raw candidate (computed for BOTH
+// tracked sides) feeds a given motor, to show its live left/right values.
+const MOTOR_TO_CANDIDATE_KEY: {[motor: string]: string} = {
+    elbow_left: "elbow",
+    elbow_right: "elbow",
+    shoulder_vertical_left: "shoulder_vertical",
+    shoulder_vertical_right: "shoulder_vertical",
+    shoulder_horizontal_left: "shoulder_horizontal",
+    shoulder_horizontal_right: "shoulder_horizontal",
+    upper_arm_left_rotation: "upper_arm_rotation",
+    upper_arm_right_rotation: "upper_arm_rotation",
+    lower_arm_left_rotation: "lower_arm_rotation",
+    lower_arm_right_rotation: "lower_arm_rotation",
+};
+
+interface CalibrationEntry {
+    sourceSide: JointSide;
+    invert: boolean;
+}
+
 /**
  * Dedicated live motion-capture view: the camera image (robot camera or
  * own webcam) with the detected skeleton drawn over it in real time, plus
@@ -107,19 +130,32 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
     jointRows = JOINT_ROWS;
     selectedJoints = new Set<string>(DEFAULT_SELECTED_JOINTS);
     liveTargets: {[motor: string]: number} = {};
+    handsDetected$: Observable<{left: boolean; right: boolean}>;
+
+    // --- Kalibrierungs-Assistent: schrittweise, manuelle Zuordnung von
+    // erkannter Koerperseite -> Robotermotor, siehe startCalibration(). ---
+    calibrating = false;
+    calibrationStepIndex = 0;
+    calibrationAssignment: {[motor: string]: CalibrationEntry} = {};
+    liveCandidates: {[candidateKey: string]: {left: number | null; right: number | null}} =
+        {};
+    calibrationSaved = false;
 
     private frameSubscription?: Subscription;
     private targetsSubscription?: Subscription;
+    private candidatesSubscription?: Subscription;
     private frameImage = new Image();
 
     constructor(
         private tracker: BrowserPoseTrackerService,
         private rosService: RosService,
+        private jointMappingService: JointMappingService,
     ) {
         this.jointAngles$ = this.tracker.jointAngles$;
         this.error$ = this.tracker.error$;
         this.framesReceived$ = this.tracker.framesReceived$;
         this.landmarkerReady$ = this.tracker.landmarkerReady$;
+        this.handsDetected$ = this.tracker.handsDetected$;
     }
 
     ngAfterViewInit(): void {
@@ -138,6 +174,16 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
                     }
                 },
             );
+        this.candidatesSubscription =
+            this.rosService.gestureRetargetCandidatesReceiver$.subscribe(
+                (json: string) => {
+                    try {
+                        this.liveCandidates = JSON.parse(json) ?? {};
+                    } catch {
+                        this.liveCandidates = {};
+                    }
+                },
+            );
         // If tracking is already running (started on another page), just
         // reflect that instead of forcing a restart.
         this.running = this.tracker.isRunning();
@@ -150,6 +196,7 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy(): void {
         this.frameSubscription?.unsubscribe();
         this.targetsSubscription?.unsubscribe();
+        this.candidatesSubscription?.unsubscribe();
         this.setMotorsActive(false);
         // Leaving the page stops tracking - it exists for live viewing, and
         // an ongoing gesture capture on the Poses page keeps its own tracker
@@ -187,6 +234,100 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
     liveDegrees(motor: string): number | null {
         const centideg = this.liveTargets[motor];
         return centideg === undefined ? null : centideg / 100;
+    }
+
+    // --- Kalibrierungs-Assistent ---
+    // Behebt "erkannte Armbewegung landet auf dem falschen Arm": statt einer
+    // festen Annahme (gleiche Seite) sieht der Nutzer hier live BEIDE Seiten
+    // (links/rechts) für jedes Gelenk und wählt selbst, welche seine ist -
+    // inkl. Vorzeichen-Umkehr, falls die Bewegung seitenverkehrt ausschlägt.
+
+    get calibrationJoint(): JointRow {
+        return this.jointRows[this.calibrationStepIndex];
+    }
+
+    get calibrationCandidateKey(): string {
+        return MOTOR_TO_CANDIDATE_KEY[this.calibrationJoint.motor];
+    }
+
+    get calibrationLiveLeft(): number | null {
+        return this.liveCandidates[this.calibrationCandidateKey]?.left ?? null;
+    }
+
+    get calibrationLiveRight(): number | null {
+        return this.liveCandidates[this.calibrationCandidateKey]?.right ?? null;
+    }
+
+    get calibrationCurrentEntry(): CalibrationEntry {
+        return this.calibrationAssignment[this.calibrationJoint.motor];
+    }
+
+    /** Loads the saved mapping (or defaults: same-side, not inverted) and
+     * opens the wizard at the first joint. Tracking must already be running
+     * so the live left/right numbers actually move. */
+    startCalibration() {
+        this.calibrationAssignment = {};
+        for (const row of this.jointRows) {
+            const defaultSide: JointSide = row.motor.includes("_left")
+                ? "left"
+                : "right";
+            this.calibrationAssignment[row.motor] = {
+                sourceSide: defaultSide,
+                invert: false,
+            };
+        }
+        this.jointMappingService.getMapping().subscribe((entries) => {
+            for (const entry of entries) {
+                if (this.calibrationAssignment[entry.motorName]) {
+                    this.calibrationAssignment[entry.motorName] = {
+                        sourceSide: entry.sourceSide,
+                        invert: entry.invert,
+                    };
+                }
+            }
+        });
+        this.calibrationStepIndex = 0;
+        this.calibrating = true;
+    }
+
+    calibrationSelectSide(side: JointSide) {
+        this.calibrationCurrentEntry.sourceSide = side;
+    }
+
+    calibrationSetInvert(invert: boolean) {
+        this.calibrationCurrentEntry.invert = invert;
+    }
+
+    calibrationNext() {
+        if (this.calibrationStepIndex < this.jointRows.length - 1) {
+            this.calibrationStepIndex++;
+        } else {
+            this.finishCalibration();
+        }
+    }
+
+    calibrationBack() {
+        if (this.calibrationStepIndex > 0) {
+            this.calibrationStepIndex--;
+        }
+    }
+
+    cancelCalibration() {
+        this.calibrating = false;
+    }
+
+    private finishCalibration() {
+        const entries: JointMappingEntry[] = this.jointRows.map((row) => ({
+            motorName: row.motor,
+            sourceSide: this.calibrationAssignment[row.motor].sourceSide,
+            invert: this.calibrationAssignment[row.motor].invert,
+        }));
+        this.jointMappingService.saveMapping(entries).subscribe(() => {
+            this.rosService.reloadGestureMapping();
+            this.calibrating = false;
+            this.calibrationSaved = true;
+            setTimeout(() => (this.calibrationSaved = false), 3000);
+        });
     }
 
     start() {

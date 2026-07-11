@@ -35,7 +35,7 @@
             id="toggle-btn"
             data-test="TGL_Split_Screen"
             class="workspaceButton"
-            (click)="inSplitMode = !inSplitMode">
+            (click)="toggleSplitMode()">
             <img
                 [src]="inSplitMode ? TOGGLE_RIGHT : TOGGLE_LEFT"
                 alt="Toggle for switching between normal and split screen view" />

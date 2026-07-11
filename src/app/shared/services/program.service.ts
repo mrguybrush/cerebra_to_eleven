@@ -14,6 +14,14 @@ import {
 } from "../ros-types/action/run-program";
 import {ProgramLogLine} from "../types/program-log-line";
 
+/** Row shape for the "Programme" assignment table - includes the
+ * group id the normal program list doesn't expose. */
+export interface ProgramAssignment {
+    programNumber: string;
+    name: string;
+    learningGroupId: string | null;
+}
+
 @Injectable({
     providedIn: "root",
 })
@@ -104,6 +112,33 @@ export class ProgramService {
             this.apiService.delete(UrlConstants.PROGRAM + `/${programNumber}`),
             (_) => this.deleteProgram(programNumber),
         );
+    }
+
+    /** All programs regardless of the active group, with their group
+     * assignment - for the "Programme" admin table. */
+    getAllProgramsForAssignment(): Observable<ProgramAssignment[]> {
+        return this.apiService
+            .get(`${UrlConstants.PROGRAM}?all=true`)
+            .pipe(map((dto) => dto["programs"]));
+    }
+
+    setProgramGroup(
+        programNumber: string,
+        learningGroupId: string | null,
+    ): Observable<ProgramAssignment> {
+        return this.apiService.patch(
+            `${UrlConstants.PROGRAM}/${programNumber}/learning-group`,
+            {learningGroupId},
+        );
+    }
+
+    copyProgramToGroup(
+        programNumber: string,
+        learningGroupId: string | null,
+    ): Observable<ProgramAssignment> {
+        return this.apiService.post(`${UrlConstants.PROGRAM}/${programNumber}/copy`, {
+            learningGroupId,
+        });
     }
 
     getCodeByProgramNumber(programNumber: string): Observable<ProgramCode> {

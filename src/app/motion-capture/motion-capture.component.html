@@ -2,6 +2,8 @@
     <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1 align-items-center flex-wrap">
         <div class="flex-grow-1 pl-2">Bewegungserfassung</div>
 
+        <app-head-joystick class="mr-2 mb-1"></app-head-joystick>
+
         <select
             class="mr-2 mb-1"
             data-test="SEL_Motion_Capture_Source"
@@ -63,7 +65,9 @@
         class="m-3"
         style="font-size: 0.85rem; opacity: 0.7">
         MediaPipe bereit: {{(landmarkerReady$ | async) ? "ja" : "nein"}} |
-        Bilder empfangen: {{framesReceived$ | async}}
+        Bilder empfangen: {{framesReceived$ | async}} |
+        Hände erkannt:
+        {{(handsDetected$ | async)?.left ? "links " : ""}}{{(handsDetected$ | async)?.right ? "rechts" : ""}}{{!(handsDetected$ | async)?.left && !(handsDetected$ | async)?.right ? "nein" : ""}}
     </div>
 
     <div class="d-flex flex-row m-3 flex-wrap align-items-start">
@@ -80,7 +84,18 @@
         </div>
 
         <div class="mb-3 angle-box">
-            <div class="pb-2 font-weight-bold">Robotergelenke</div>
+            <div class="d-flex align-items-center pb-2">
+                <div class="flex-grow-1 font-weight-bold">Robotergelenke</div>
+                <button
+                    type="button"
+                    class="btn btn-regular btn-sm"
+                    data-test="BTN_Start_Calibration"
+                    [disabled]="!running"
+                    title="Ordnet Schritt für Schritt zu, welche erkannte Körperseite welches Gelenk steuert"
+                    (click)="startCalibration()">
+                    Zuordnung kalibrieren
+                </button>
+            </div>
             <table
                 class="angle-table joint-table"
                 data-test="TABLE_Motion_Capture_Joints">
@@ -111,6 +126,93 @@
                 eine Person erkannt wird; die Dreh-Gelenke brauchen einen
                 angewinkelten Arm.
             </div>
+            <div
+                *ngIf="calibrationSaved"
+                class="text-success mt-1"
+                data-test="TXT_Calibration_Saved">
+                Zuordnung gespeichert.
+            </div>
+        </div>
+    </div>
+
+    <!-- Kalibrierungs-Assistent: schrittweise, manuelle Zuordnung von
+         erkannter Körperseite zu Robotermotor (siehe motion-capture.component.ts) -->
+    <div
+        *ngIf="calibrating"
+        class="calibration-panel m-3"
+        data-test="PANEL_Calibration">
+        <div class="d-flex align-items-center pb-2">
+            <div class="flex-grow-1 font-weight-bold">
+                Kalibrierung {{calibrationStepIndex + 1}} / {{jointRows.length}}:
+                {{calibrationJoint.label}}
+            </div>
+            <button
+                type="button"
+                class="btn btn-regular btn-sm"
+                data-test="BTN_Calibration_Cancel"
+                (click)="cancelCalibration()">
+                Abbrechen
+            </button>
+        </div>
+        <p class="calibration-hint">
+            Bewege dich und beobachte, welcher der beiden Werte unten reagiert
+            - klicke dann auf die passende Seite. Reagiert der Wert in die
+            falsche Richtung, zusätzlich "Invertieren" anhaken.
+        </p>
+        <div class="d-flex flex-row calibration-sides">
+            <button
+                type="button"
+                class="calibration-side-btn"
+                data-test="BTN_Calibration_Left"
+                [class.calibration-side-selected]="calibrationCurrentEntry.sourceSide === 'left'"
+                (click)="calibrationSelectSide('left')">
+                <div>Linke Seite</div>
+                <div class="calibration-live-value">
+                    {{calibrationLiveLeft !== null ? (calibrationLiveLeft | number: "1.0-0") + "°" : "–"}}
+                </div>
+            </button>
+            <button
+                type="button"
+                class="calibration-side-btn"
+                data-test="BTN_Calibration_Right"
+                [class.calibration-side-selected]="calibrationCurrentEntry.sourceSide === 'right'"
+                (click)="calibrationSelectSide('right')">
+                <div>Rechte Seite</div>
+                <div class="calibration-live-value">
+                    {{calibrationLiveRight !== null ? (calibrationLiveRight | number: "1.0-0") + "°" : "–"}}
+                </div>
+            </button>
+        </div>
+        <div class="form-check mt-2">
+            <input
+                id="calibration-invert-checkbox"
+                data-test="CHK_Calibration_Invert"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="calibrationCurrentEntry.invert"
+                (change)="calibrationSetInvert($any($event.target).checked)" />
+            <label
+                class="form-check-label"
+                for="calibration-invert-checkbox">
+                Invertieren (Bewegung geht in die falsche Richtung)
+            </label>
+        </div>
+        <div class="d-flex flex-row mt-3">
+            <button
+                type="button"
+                class="btn btn-regular btn-sm mr-2"
+                data-test="BTN_Calibration_Back"
+                [disabled]="calibrationStepIndex === 0"
+                (click)="calibrationBack()">
+                Zurück
+            </button>
+            <button
+                type="button"
+                class="btn btn-regular btn-sm"
+                data-test="BTN_Calibration_Next"
+                (click)="calibrationNext()">
+                {{calibrationStepIndex < jointRows.length - 1 ? "Weiter" : "Fertig & speichern"}}
+            </button>
         </div>
     </div>
 </div>

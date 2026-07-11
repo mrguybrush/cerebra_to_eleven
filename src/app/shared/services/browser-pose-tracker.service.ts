@@ -1,7 +1,24 @@
 import {Injectable} from "@angular/core";
-import {FilesetResolver, PoseLandmarker} from "@mediapipe/tasks-vision";
+import {
+    FilesetResolver,
+    HandLandmarker,
+    PoseLandmarker,
+} from "@mediapipe/tasks-vision";
 import {BehaviorSubject, Subscription} from "rxjs";
 import {RosService} from "./ros-service/ros.service";
+
+// MediaPipe Hand Landmarker's 21-point indices, used to compute a proper
+// palm-orientation (for lower-arm/wrist rotation) instead of the coarse
+// pinky/index approximation previously derived from the 3 low-fidelity hand
+// keypoints the Pose model exposes. Names match what retargeting.py expects
+// under points["hands"][side][name].
+const HAND_KP_NAMES: {[index: number]: string} = {
+    0: "wrist",
+    5: "index_mcp",
+    9: "middle_mcp",
+    13: "ring_mcp",
+    17: "pinky_mcp",
+};
 
 // MediaPipe Pose's 33-point landmark indices - matches BODY_KP in
 // gesture_control/vendor_mediapipe_utils.py exactly, since both sides need
@@ -105,8 +122,15 @@ export class BrowserPoseTrackerService {
     framesReceived$ = new BehaviorSubject<number>(0);
     framesDrawn$ = new BehaviorSubject<number>(0);
     landmarkerReady$ = new BehaviorSubject<boolean>(false);
+    /** Which hands are currently detected - shown in the UI so it's obvious
+     * when hand-tracking-based rotation candidates are actually available. */
+    handsDetected$ = new BehaviorSubject<{left: boolean; right: boolean}>({
+        left: false,
+        right: false,
+    });
 
     private poseLandmarker?: PoseLandmarker;
+    private handLandmarker?: HandLandmarker;
     private landmarkerRunningMode?: "IMAGE" | "VIDEO";
     private imageElement?: HTMLImageElement;
     private videoElement?: HTMLVideoElement;
@@ -182,10 +206,15 @@ export class BrowserPoseTrackerService {
         this.framesDrawn$.next(0);
         this.landmarkerReady$.next(false);
         this.smoothedAngles = {};
+        this.handsDetected$.next({left: false, right: false});
     }
 
     private async initLandmarker(mode: "IMAGE" | "VIDEO"): Promise<void> {
-        if (this.poseLandmarker && this.landmarkerRunningMode === mode) {
+        if (
+            this.poseLandmarker &&
+            this.handLandmarker &&
+            this.landmarkerRunningMode === mode
+        ) {
             return;
         }
         // Self-hosted (see Dockerfile) - no external CDN needed at runtime.
@@ -201,6 +230,14 @@ export class BrowserPoseTrackerService {
             },
             runningMode: mode,
             numPoses: 1,
+        });
+        this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+                modelAssetPath: "assets/mediapipe/hand_landmarker.task",
+                delegate: "CPU",
+            },
+            runningMode: mode,
+            numHands: 2,
         });
         this.landmarkerRunningMode = mode;
     }
@@ -244,7 +281,10 @@ export class BrowserPoseTrackerService {
                     this.frameAspect = img.naturalWidth / img.naturalHeight;
                 }
                 const result = this.poseLandmarker!.detect(img);
-                this.handleResult(result.landmarks);
+                const handResult = this.handLandmarker?.detect(img) as
+                    | HandResult
+                    | undefined;
+                this.handleResult(result.landmarks, handResult);
             } finally {
                 this.busy = false;
             }
@@ -288,18 +328,26 @@ export class BrowserPoseTrackerService {
         }
 
         const result = this.poseLandmarker.detectForVideo(this.videoElement, performance.now());
-        this.handleResult(result.landmarks);
+        const handResult = this.handLandmarker?.detectForVideo(
+            this.videoElement,
+            performance.now(),
+        ) as HandResult | undefined;
+        this.handleResult(result.landmarks, handResult);
 
         this.animationFrameId = requestAnimationFrame(this.webcamDetectLoop);
     };
 
     // --- Shared: landmark result -> named dict -> angles + publish ---
 
-    private handleResult(landmarksPerPose: {x: number; y: number; z: number; visibility?: number}[][]) {
+    private handleResult(
+        landmarksPerPose: {x: number; y: number; z: number; visibility?: number}[][],
+        handResult?: HandResult,
+    ) {
         if (landmarksPerPose.length === 0) {
             this.landmarks$.next([]);
             this.jointAngles$.next({});
             this.smoothedAngles = {};
+            this.handsDetected$.next({left: false, right: false});
             return;
         }
         const landmarks = landmarksPerPose[0];
@@ -327,7 +375,53 @@ export class BrowserPoseTrackerService {
         }
         this.landmarks$.next(namedList);
         this.jointAngles$.next(this.computeBodyAngles(namedList));
-        this.rosService.publishPoseLandmarks(named);
+
+        const hands = this.extractHands(handResult);
+        this.rosService.publishPoseLandmarks(named, hands.payload);
+        this.handsDetected$.next(hands.detected);
+    }
+
+    /**
+     * Converts the Hand Landmarker's per-hand results into
+     * {left: {name: [x,y,z]}, right: {...}}, aspect-corrected like the pose
+     * points. IMPORTANT: MediaPipe's handedness classifier assumes a
+     * mirrored (selfie-style) input image; both our sources (robot camera
+     * and raw webcam feed) are NOT mirrored, so the label is inverted here
+     * to get the person's true anatomical hand - see MediaPipe Hand
+     * Landmarker docs ("handedness ... assumes the input image is mirrored").
+     */
+    private extractHands(handResult?: HandResult): {
+        payload: {[side: string]: {[name: string]: [number, number, number]}};
+        detected: {left: boolean; right: boolean};
+    } {
+        const payload: {[side: string]: {[name: string]: [number, number, number]}} = {};
+        const detected = {left: false, right: false};
+        if (!handResult) {
+            return {payload, detected};
+        }
+        // Field name changed across @mediapipe/tasks-vision versions
+        // ("handedness" in earlier previews, "handednesses" from the GA
+        // release onward) - read whichever is present rather than pinning
+        // to one.
+        const handednessPerHand = handResult.handednesses ?? handResult.handedness ?? [];
+        for (let i = 0; i < handResult.landmarks.length; i++) {
+            const rawLabel = handednessPerHand[i]?.[0]?.categoryName;
+            if (!rawLabel) {
+                continue;
+            }
+            const side = rawLabel === "Left" ? "right" : "left"; // mirror-correction, see above
+            const points: {[name: string]: [number, number, number]} = {};
+            for (const [indexStr, name] of Object.entries(HAND_KP_NAMES)) {
+                const lm = handResult.landmarks[i][Number(indexStr)];
+                if (!lm) {
+                    continue;
+                }
+                points[name] = [lm.x * this.frameAspect, lm.y, lm.z * this.frameAspect];
+            }
+            payload[side] = points;
+            detected[side as "left" | "right"] = true;
+        }
+        return {payload, detected};
     }
 
     /**
@@ -394,6 +488,17 @@ interface Vec3 {
     x: number;
     y: number;
     z: number;
+}
+
+// Shape of HandLandmarker's detect()/detectForVideo() result that this
+// service actually uses. Declared loosely (both possible handedness field
+// names optional) rather than importing the SDK's own result type, since
+// the field was renamed across @mediapipe/tasks-vision versions - see
+// extractHands() above.
+interface HandResult {
+    landmarks: {x: number; y: number; z: number}[][];
+    handedness?: {categoryName: string}[][];
+    handednesses?: {categoryName: string}[][];
 }
 
 /** Interior angle in degrees at vertex b, formed by points a-b-c (3D). */

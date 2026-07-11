@@ -1,4 +1,5 @@
 import {Injectable} from "@angular/core";
+import {MatSnackBar} from "@angular/material/snack-bar";
 import {ApiService} from "./api.service";
 import {
     VoiceAssistant,
@@ -40,6 +41,7 @@ export class VoiceAssistantService implements SidebarService {
         private apiService: ApiService,
         private rosService: RosService,
         private chatService: ChatService,
+        private matSnackBarService: MatSnackBar,
     ) {
         this.getAllPersonalities();
         this.getAllAssistantModels();
@@ -81,6 +83,7 @@ export class VoiceAssistantService implements SidebarService {
                     m.description,
                     m.assistantModelId,
                     m.messageHistory,
+                    m.cameraAccessEnabled,
                 ),
             );
         });
@@ -157,6 +160,7 @@ export class VoiceAssistantService implements SidebarService {
             )
             .pipe(
                 catchError((err) => {
+                    this.showSaveError();
                     return throwError(() => {
                         console.log(err);
                     });
@@ -181,6 +185,14 @@ export class VoiceAssistantService implements SidebarService {
             )
             .pipe(
                 catchError((err) => {
+                    // Without this, a failed save (e.g. backend briefly
+                    // unreachable) looked to the user like their choice
+                    // "reverted by itself" on the next page load - the UI
+                    // had already applied it optimistically, but the
+                    // backend never actually got the change - see the
+                    // Gemini/Tryb connection-type radio button in
+                    // settings.component.ts.
+                    this.showSaveError();
                     return throwError(() => {
                         console.log(err);
                     });
@@ -198,6 +210,7 @@ export class VoiceAssistantService implements SidebarService {
             .delete(UrlConstants.PERSONALITY + `/${id}`)
             .pipe(
                 catchError((err) => {
+                    this.showSaveError();
                     return throwError(() => {
                         console.log(err);
                     });
@@ -206,6 +219,14 @@ export class VoiceAssistantService implements SidebarService {
             .subscribe(() => {
                 this.deletePersonality(id);
             });
+    }
+
+    private showSaveError() {
+        this.matSnackBarService.open(
+            "Änderung konnte nicht gespeichert werden (Server nicht erreichbar). Bitte erneut versuchen.",
+            "",
+            {panelClass: "cerebra-toast", duration: 4000},
+        );
     }
 
     getSubject(): Observable<SidebarElement[]> {

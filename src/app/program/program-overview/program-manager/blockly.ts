@@ -367,16 +367,19 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
 <sep></sep>
 <category name="%{BKY_PIB_CAT_MOTORIC}" colour="355">
     <block type="move_motor"></block>
+    <block type="get_motor_current"></block>
     <block type="move_to_pose"></block>
     <block type="run_gesture"></block>
     <block type="run_movement_sequence"></block>
 </category>
 <category name="%{BKY_PIB_CAT_LANGUAGE}" colour="260">
     <block type="play_audio_from_speech"></block>
+    <block type="play_wav"></block>
 </category>
 <category name="%{BKY_PIB_CAT_VISUAL}" colour="200">
     <block type="face_detector_start_stop"></block>
     <block type="face_detector_running"></block>
+    <block type="set_eyes_emotion"></block>
 </category>
 <category name="%{BKY_PIB_CAT_BUTTONS}" colour="45">
     <block type="set_rgb_button_color">

@@ -37,7 +37,6 @@ import {MotorPositionComponent} from "./joint-control/joint-control-core/motor-p
 import {SaveConfirmationComponent} from "./program/program-overview/program-manager/save-confirmation/save-confirmation.component";
 import {PythonCodeComponent} from "./program/program-overview/program-manager/program-splitscreen/python-code/python-code.component";
 import {ConsoleComponent} from "./program/program-overview/program-manager/program-splitscreen/console/console.component";
-import {SmartConnectComponent} from "./ui-components/smart-connect/smart-connect.component";
 import {NgOptimizedImage} from "@angular/common";
 import {PoseComponent} from "./pose/pose.component";
 import {MotionCaptureComponent} from "./motion-capture/motion-capture.component";
@@ -45,12 +44,14 @@ import {MarkdownModule} from "ngx-markdown";
 import {HardwareIdComponent} from "./system/hardware-id/hardware-id.component";
 import {RelayControlComponent} from "./ui-components/relay-control/relay-control.component";
 import {IpRetrieverComponent} from "./ui-components/ip-retriever/ip-retriever.component";
+import {HeadJoystickComponent} from "./ui-components/head-joystick/head-joystick.component";
+import {VoiceRecordingComponent} from "./voice-recording/voice-recording.component";
+import {AllJointsComponent} from "./joint-control/all-joints/all-joints.component";
 import {RgbLedButtonComponent} from "./program/program-overview/rgb-led-button/rgb-led-button.component";
 import {ProgramOverviewComponent} from "./program/program-overview/program-overview.component";
 import {SystemComponent} from "./system/system.component";
-import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
-import {LogsComponent} from "./system/logs/logs.component";
 import {SettingsComponent} from "./system/settings/settings.component";
+import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
 
 @NgModule({
     declarations: [
@@ -80,16 +81,17 @@ import {SettingsComponent} from "./system/settings/settings.component";
         VoiceAssistantPersonalitySidebarRightComponent,
         PoseComponent,
         MotionCaptureComponent,
-        SmartConnectComponent,
         HardwareIdComponent,
         RelayControlComponent,
         IpRetrieverComponent,
+        HeadJoystickComponent,
+        VoiceRecordingComponent,
+        AllJointsComponent,
         RgbLedButtonComponent,
         ProgramOverviewComponent,
         SystemComponent,
-        DiagnoseComponent,
-        LogsComponent,
         SettingsComponent,
+        ProgramAssignmentComponent,
     ],
     imports: [
         BrowserModule,

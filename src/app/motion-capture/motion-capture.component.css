@@ -108,3 +108,43 @@ select {
     opacity: 0.8;
     margin-top: 4px;
 }
+
+.calibration-panel {
+    border: 2px solid #e10072;
+    border-radius: 8px;
+    padding: 14px 16px;
+    max-width: 620px;
+    background-color: rgba(225, 0, 114, 0.08);
+}
+
+.calibration-hint {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.calibration-sides {
+    gap: 10px;
+}
+
+.calibration-side-btn {
+    flex: 1;
+    background-color: #344864;
+    border: 2px solid #344864;
+    border-radius: 8px;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.calibration-side-btn.calibration-side-selected {
+    border-color: #e10072;
+    background-color: rgba(225, 0, 114, 0.2);
+}
+
+.calibration-live-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    margin-top: 4px;
+}

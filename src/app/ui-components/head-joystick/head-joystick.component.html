@@ -1,0 +1,17 @@
+<div
+    class="joystick-wrapper"
+    title="Kopf steuern (Ziehen = umschauen)">
+    <div
+        #base
+        class="joystick-base"
+        data-test="JOY_Head"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)">
+        <div
+            class="joystick-knob"
+            [class.joystick-knob-active]="dragging"
+            [style.transform]="'translate(' + knobX + 'px, ' + knobY + 'px)'"></div>
+    </div>
+</div>

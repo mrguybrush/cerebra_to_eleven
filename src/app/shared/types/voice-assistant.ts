@@ -8,6 +8,7 @@ export class VoiceAssistant implements SidebarElement {
     pauseThreshold: number;
     assistantModelId: number;
     messageHistory: number;
+    cameraAccessEnabled: boolean;
 
     constructor(
         personalityId: string,
@@ -17,6 +18,7 @@ export class VoiceAssistant implements SidebarElement {
         description?: string,
         assistantModelId?: number,
         messageHistory?: number,
+        cameraAccessEnabled?: boolean,
     ) {
         this.personalityId = personalityId;
         this.name = name;
@@ -25,6 +27,7 @@ export class VoiceAssistant implements SidebarElement {
         this.pauseThreshold = pauseThreshold;
         this.assistantModelId = assistantModelId ?? -1;
         this.messageHistory = messageHistory ?? 10;
+        this.cameraAccessEnabled = cameraAccessEnabled ?? false;
     }
     getName(): string {
         return this.name;
@@ -42,6 +45,7 @@ export class VoiceAssistant implements SidebarElement {
             String(this.description),
             Number(this.assistantModelId),
             Number(this.messageHistory),
+            Boolean(this.cameraAccessEnabled),
         );
     }
 }
@@ -75,6 +79,7 @@ export function parseVoiceAssistantToDto(
         pauseThreshold: voiceAssistant.pauseThreshold,
         assistantModelId: voiceAssistant.assistantModelId,
         messageHistory: voiceAssistant.messageHistory,
+        cameraAccessEnabled: voiceAssistant.cameraAccessEnabled,
     } as VoiceAssistantDto;
 }
 
@@ -89,5 +94,6 @@ export function parseDtoToVoiceAssistant(
         dummyVoiceAssistant.description,
         dummyVoiceAssistant.assistantModelId,
         dummyVoiceAssistant.messageHistory,
+        dummyVoiceAssistant.cameraAccessEnabled,
     );
 }

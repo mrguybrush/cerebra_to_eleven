@@ -18,6 +18,12 @@ export class ApiService {
         return this.http.post(this.baseUrl + url, requestBody);
     }
 
+    /** For file uploads (multipart/form-data) - HttpClient sets the
+     * correct Content-Type/boundary automatically for a FormData body. */
+    postFile(url: string, formData: FormData): Observable<any> {
+        return this.http.post(this.baseUrl + url, formData);
+    }
+
     put(url: string, requestBody: object): Observable<any> {
         return this.http.put(this.baseUrl + url, requestBody);
     }

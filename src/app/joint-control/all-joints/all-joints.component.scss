@@ -1,0 +1,73 @@
+.all-joints-container {
+    color: white;
+    padding: 0.5rem;
+}
+
+.joints-table {
+    width: 100%;
+    max-width: 980px;
+    border-collapse: collapse;
+}
+
+.joints-table th {
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    padding: 4px 10px;
+}
+
+.joints-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #344864;
+}
+
+.joint-label {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 1%;
+}
+
+.joint-slider-cell {
+    min-width: 220px;
+}
+
+.slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.joint-slider {
+    flex: 1 1 auto;
+    accent-color: #e10072;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+// Purely visual flip - the browser still reports the correct value at the
+// thumb's (now mirrored) position, no value-math needed on our side.
+.joint-slider.inverted {
+    transform: scaleX(-1);
+}
+
+.invert-checkbox {
+    flex: 0 0 auto;
+    accent-color: #e10072;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.joint-value {
+    font-variant-numeric: tabular-nums;
+    min-width: 3.5rem;
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+.all-joints-hint {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-top: 10px;
+    max-width: 720px;
+}
