@@ -1,4 +1,4 @@
 [submodule "pib-blockly"]
 	path = src/app/program/pib-blockly
-	url = https://github.com/mrguybrush/pib-blockly-mod.git
+	url = git@github-pib-blockly-mod:mrguybrush/pib-blockly-mod.git
 	branch = main
