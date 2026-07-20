@@ -25,7 +25,7 @@
             class="col-10"
             id="header-title">
             <span id="header-title-text"
-                >{{ uuid?"EDIT ":"ADD "}}PERSONALITY</span
+                >{{ uuid ? ('voiceAssistant.editPersonaTitle' | translate) : ('voiceAssistant.addPersonaTitle' | translate) }}</span
             >
         </div>
         <div
@@ -63,7 +63,7 @@
                 for="name-input"
                 class="col-3 mt-2 justify-content-end"
                 id="label-name"
-                >Name</label
+                >{{ 'common.name' | translate }}</label
             >
             <input
                 [ngClass]="(!this.personalityForm.controls['name-input'].valid && !this.personalityForm.controls['name-input'].pristine) ? 'invalid-form' : '' "
@@ -80,7 +80,7 @@
                 formControlName="assistantModel"
                 class="form-select"
                 data-test="DDN_Voice_Assistant_Model"
-                aria-label="Voice-assistant language model">
+                [attr.aria-label]="'voiceAssistant.modelAriaLabel' | translate">
                 <option
                     *ngFor="let model of models"
                     [value]="model.id ">
@@ -101,7 +101,7 @@
                 <label
                     for="new-radio-female"
                     id="new-label-radio-female"
-                    >Female</label
+                    >{{ 'voiceAssistant.female' | translate }}</label
                 >
             </div>
             <div
@@ -116,19 +116,18 @@
                 <label
                     for="new-radio-male"
                     id="new-label-radio-male"
-                    >Male</label
+                    >{{ 'voiceAssistant.male' | translate }}</label
                 >
             </div>
         </div>
         <div
             class="row m-2"
-            id="row-pause-threshold"
-            lang="en-US">
+            id="row-pause-threshold">
             <label
                 for="name-input"
                 class="col-6 mt-1"
                 id="label-pause-threshold"
-                >Pause threshold</label
+                >{{ 'voiceAssistant.pauseThreshold' | translate }}</label
             >
             <div class="col-3">
                 <div class="row">
@@ -166,13 +165,12 @@
         </div>
         <div
             class="row m-2"
-            id="row-message-history"
-            lang="en-US">
+            id="row-message-history">
             <label
                 for="name-input"
                 class="col-6 mt-1"
                 id="label-message-history"
-                >Message history</label
+                >{{ 'voiceAssistant.messageHistory' | translate }}</label
             >
             <div class="col-3">
                 <div class="row">
@@ -218,7 +216,7 @@
                     data-test="BTN_Save"
                     (keydown.enter)="savePersonality()"
                     (click)="savePersonality()">
-                    Save
+                    {{ 'common.save' | translate }}
                 </button>
             </div>
             <div class="col-3 align-self-center">
@@ -228,7 +226,7 @@
                     id="modal-cancel-button"
                     data-test="BTN_Cancel"
                     (click)="closeModal()">
-                    Cancel
+                    {{ 'common.cancel' | translate }}
                 </button>
             </div>
         </div>

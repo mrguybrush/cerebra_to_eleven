@@ -9,7 +9,7 @@
             <div
                 class="pt-4 text-center"
                 style="background-color: #041939">
-                <label class="p-1 text-break">Voice interaction</label>
+                <label class="p-1 text-break">{{ 'voiceAssistant.voiceInteraction' | translate }}</label>
                 <div class="row">
                     <div class="col text-right">
                         <img
@@ -20,7 +20,7 @@
                         <div
                             id="tooltip-smart-connect-disabled"
                             data-toggle="tooltip"
-                            [title]="canActivateVoiceAssistant() ? '' : 'In den Einstellungen einen Smart-API-Token hinterlegen oder ein Modell ohne Token (Gemini / Lokales Netzwerk-LLM) wählen' ">
+                            [title]="canActivateVoiceAssistant() ? '' : ('voiceAssistant.smartApiTokenTooltip' | translate)">
                             <button
                                 class="btn border-0 p-0"
                                 id="sidebar-right-toggle-voice-assistant"
@@ -31,7 +31,7 @@
                                 [disabled]="!canActivateVoiceAssistant()">
                                 <img
                                     [src]="turnedOn ? '../../assets/toggle-switch-right.png' : '../../assets/toggle-switch-left.png' "
-                                    alt="Toggle for turning the Voice Assistant on and off" />
+                                    [attr.alt]="'voiceAssistant.toggleAlt' | translate" />
                             </button>
                         </div>
                     </div>
@@ -44,7 +44,7 @@
                         *ngIf="turnedOn && (activeChatId !== currentChatId)"
                         data-test="LNK_Jump_to_Active_Chat"
                         [routerLink]="['/', 'voice-assistant', activePersonalityId, 'chat', activeChatId]"
-                        >Jump to active chat
+                        >{{ 'voiceAssistant.jumpToActiveChat' | translate }}
                     </a>
                 </div>
             </div>
@@ -72,7 +72,7 @@
         <div
             class="col-10"
             id="header-title">
-            <span id="header-title-text">ADD CHAT</span>
+            <span id="header-title-text">{{ 'voiceAssistant.addChatTitle' | translate }}</span>
         </div>
         <div
             class="col-2 text-right"
@@ -106,7 +106,7 @@
             for="name-input"
             class="col-3 mt-2 justify-content-end"
             id="label-name"
-            >Name</label
+            >{{ 'common.name' | translate }}</label
         >
         <input
             ngbAutofocus
@@ -127,7 +127,7 @@
                 data-test="BTN_Save"
                 (keydown.enter)="saveChat()"
                 (click)="saveChat()">
-                Save
+                {{ 'common.save' | translate }}
             </button>
         </div>
         <div class="col-3 align-self-center">
@@ -137,7 +137,7 @@
                 class="btn btn-regular"
                 id="modal-cancel-button"
                 (click)="closeModal()">
-                Cancel
+                {{ 'common.cancel' | translate }}
             </button>
         </div>
     </div>

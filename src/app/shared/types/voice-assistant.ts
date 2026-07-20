@@ -9,6 +9,7 @@ export class VoiceAssistant implements SidebarElement {
     assistantModelId: number;
     messageHistory: number;
     cameraAccessEnabled: boolean;
+    movementAccessEnabled: boolean;
 
     constructor(
         personalityId: string,
@@ -19,6 +20,7 @@ export class VoiceAssistant implements SidebarElement {
         assistantModelId?: number,
         messageHistory?: number,
         cameraAccessEnabled?: boolean,
+        movementAccessEnabled?: boolean,
     ) {
         this.personalityId = personalityId;
         this.name = name;
@@ -28,6 +30,7 @@ export class VoiceAssistant implements SidebarElement {
         this.assistantModelId = assistantModelId ?? -1;
         this.messageHistory = messageHistory ?? 10;
         this.cameraAccessEnabled = cameraAccessEnabled ?? false;
+        this.movementAccessEnabled = movementAccessEnabled ?? false;
     }
     getName(): string {
         return this.name;
@@ -46,6 +49,7 @@ export class VoiceAssistant implements SidebarElement {
             Number(this.assistantModelId),
             Number(this.messageHistory),
             Boolean(this.cameraAccessEnabled),
+            Boolean(this.movementAccessEnabled),
         );
     }
 }
@@ -80,6 +84,7 @@ export function parseVoiceAssistantToDto(
         assistantModelId: voiceAssistant.assistantModelId,
         messageHistory: voiceAssistant.messageHistory,
         cameraAccessEnabled: voiceAssistant.cameraAccessEnabled,
+        movementAccessEnabled: voiceAssistant.movementAccessEnabled,
     } as VoiceAssistantDto;
 }
 
@@ -95,5 +100,6 @@ export function parseDtoToVoiceAssistant(
         dummyVoiceAssistant.assistantModelId,
         dummyVoiceAssistant.messageHistory,
         dummyVoiceAssistant.cameraAccessEnabled,
+        dummyVoiceAssistant.movementAccessEnabled,
     );
 }

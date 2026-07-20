@@ -13,7 +13,7 @@
                 for="personality-sidebar-persona-name-input"
                 class="pt-1 row label-text-center"
                 id="personality-sidebar-persona-name-label"
-                >Persona name</label
+                >{{ 'voiceAssistant.personaNameLabel' | translate }}</label
             >
             <input
                 class="row input col-11 ml-0"
@@ -25,13 +25,13 @@
         </div>
         <div class="row mt-sm-3 mt-xl-4">
             <div class="col-11 pl-0">
-                <label id="model">Assistant Model</label>
+                <label id="model">{{ 'voiceAssistant.assistantModelLabel' | translate }}</label>
                 <select
                     formControlName="assistantModel"
                     id="voice-assistant-model-select-right-sidebar"
                     data-test="DDN_Voice_Assistant_Model"
                     class="form-select"
-                    aria-label="Voice-assistant language model">
+                    [attr.aria-label]="'voiceAssistant.modelAriaLabel' | translate">
                     <option
                         *ngFor="let model of models"
                         [value]="model.id">
@@ -52,12 +52,28 @@
                     class="form-check-label"
                     for="personality-sidebar-camera-access-checkbox"
                     id="personality-sidebar-label-camera-access"
-                    >Kamerazugriff während des Sprechens (nur Gemini)</label
+                    >{{ 'voiceAssistant.cameraAccessLabel' | translate }}</label
+                >
+            </div>
+        </div>
+        <div class="row mt-sm-3 mt-xl-4">
+            <div class="form-check col-11 pl-0">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="personality-sidebar-movement-access-checkbox"
+                    data-test="CHK_Movement_Access"
+                    formControlName="movementAccessEnabled" />
+                <label
+                    class="form-check-label"
+                    for="personality-sidebar-movement-access-checkbox"
+                    id="personality-sidebar-label-movement-access"
+                    >{{ 'voiceAssistant.movementAccessLabel' | translate }}</label
                 >
             </div>
         </div>
         <div class="row pl-1 mt-sm-3 mt-xl-4">
-            <label id="personality-sidebar-label-name">Voice gender</label>
+            <label id="personality-sidebar-label-name">{{ 'voiceAssistant.voiceGenderLabel' | translate }}</label>
             <div class="col-sm-6 col-xl-12 pl-0">
                 <div
                     class="col-4"
@@ -72,7 +88,7 @@
                         class="pl-4 radioHover marginFemale"
                         for="personality-sidebar-radio-female"
                         id="personality-sidebar-label-radio-female"
-                        >Female</label
+                        >{{ 'voiceAssistant.female' | translate }}</label
                     >
                 </div>
             </div>
@@ -90,7 +106,7 @@
                         class="pl-4 radioHover marginMale"
                         for="personality-sidebar-radio-male"
                         id="personality-sidebar-label-radio-male"
-                        >Male</label
+                        >{{ 'voiceAssistant.male' | translate }}</label
                     >
                 </div>
             </div>
@@ -102,7 +118,7 @@
                 for="personality-sidebar-pause-threshold-input"
                 class="row pr-3"
                 id="personality-sidebar-label-pause-threshold"
-                >Pause threshold<br />(in s)</label
+                ><span [innerHTML]="'voiceAssistant.pauseThresholdWithUnit' | translate"></span></label
             >
             <div class="row pl-0">
                 <div class="col pl-0 number-input">
@@ -113,7 +129,7 @@
                         id="personality-sidebar-pause-threshold-input"
                         data-test="TXT_Threshold"
                         step="0.1"
-                        alt="The waiting period of not receiving any voice input before voice assistants starts to answer"
+                        [attr.alt]="'voiceAssistant.pauseThresholdAlt' | translate"
                         [(ngModel)]="thresholdString"
                         [ngModelOptions]="{standalone: true}"
                         (ngModelChange)="adjustThreshold()" />
@@ -143,7 +159,7 @@
                 for="personality-sidebar-message-history-input"
                 class="row pr-3"
                 id="personality-sidebar-label-message-history"
-                >Message history<br />(in messages)</label
+                ><span [innerHTML]="'voiceAssistant.messageHistoryWithUnit' | translate"></span></label
             >
             <div class="row pl-0">
                 <div class="col pl-0 number-input">
@@ -154,7 +170,7 @@
                         id="personality-sidebar-message-history-input"
                         data-test="TXT_Message_history"
                         step="0.1"
-                        alt="The number of messages which were send to LLM for better answers"
+                        [attr.alt]="'voiceAssistant.messageHistoryAlt' | translate"
                         [(ngModel)]="messageHistoryNumber"
                         [ngModelOptions]="{standalone: true}"
                         (ngModelChange)="adjustHistory()" />
@@ -184,7 +200,7 @@
                 data-test="BTN_Delete_Persona"
                 class="btn btn-regular delete p-sm-1 p-xl-3"
                 (click)="deletePersonality()">
-                Delete persona
+                {{ 'voiceAssistant.deletePersona' | translate }}
             </button>
         </div>
     </form>

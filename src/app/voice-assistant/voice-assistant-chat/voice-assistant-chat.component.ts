@@ -19,6 +19,7 @@ import {VoiceAssistantState} from "../../shared/types/voice-assistant-state";
 import {Location} from "@angular/common";
 import {TokenService} from "src/app/shared/services/token.service";
 import {AssistantModel} from "src/app/shared/types/assistantModel";
+import {TranslateService} from "@ngx-translate/core";
 
 @Component({
     selector: "app-voice-assistant-chat",
@@ -52,6 +53,7 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         private readonly voiceAssistantService: VoiceAssistantService,
         private readonly route: ActivatedRoute,
         private readonly tokenService: TokenService,
+        private readonly translateService: TranslateService,
         location: Location,
     ) {
         location.onUrlChange((url, _state) => {
@@ -67,7 +69,7 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
                 this.voiceAssistantActivationToggle.setValue(state.turnedOn);
                 this.turnedOn = state.turnedOn;
                 const deleteChat = this.dropdownCallbackMethods.find(
-                    (e) => e.label === "Delete chat",
+                    (e) => e.label === this.deleteChatLabel,
                 );
                 if (deleteChat) {
                     deleteChat.disabled = this.turnedOn;
@@ -248,7 +250,7 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         });
 
         const deleteChat = this.dropdownCallbackMethods.find(
-            (e) => e.label === "Delete chat",
+            (e) => e.label === this.deleteChatLabel,
         );
         if (deleteChat) {
             deleteChat.disabled = this.turnedOn;
@@ -261,7 +263,7 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         });
         const numberOfChats = filteredChats.length;
         const deleteChat = this.dropdownCallbackMethods.find(
-            (e) => e.label === "Delete chat",
+            (e) => e.label === this.deleteChatLabel,
         );
         if (deleteChat && !this.turnedOn) {
             deleteChat.disabled = numberOfChats <= 1;
@@ -273,10 +275,14 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
         this.personalitiesSubscription.unsubscribe();
     }
 
+    private readonly deleteChatLabel = this.translateService.instant(
+        "voiceAssistant.deleteChat",
+    );
+
     optionCallbackMethods = [
         {
             icon: "",
-            label: "New chat",
+            label: this.translateService.instant("voiceAssistant.newChat"),
             clickCallback: this.openAddModal.bind(this),
             disabled: false,
         },
@@ -285,13 +291,13 @@ export class VoiceAssistantChatComponent implements OnInit, OnDestroy {
     dropdownCallbackMethods = [
         {
             icon: "../../assets/edit.svg",
-            label: "Rename",
+            label: this.translateService.instant("common.rename"),
             clickCallback: this.openEditModal.bind(this),
             disabled: false,
         },
         {
             icon: "../../assets/delete.svg",
-            label: "Delete chat",
+            label: this.deleteChatLabel,
             clickCallback: this.deleteChat.bind(this),
             disabled: false,
         },

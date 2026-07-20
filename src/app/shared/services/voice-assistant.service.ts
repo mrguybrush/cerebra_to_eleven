@@ -84,6 +84,7 @@ export class VoiceAssistantService implements SidebarService {
                     m.assistantModelId,
                     m.messageHistory,
                     m.cameraAccessEnabled,
+                    m.movementAccessEnabled,
                 ),
             );
         });
