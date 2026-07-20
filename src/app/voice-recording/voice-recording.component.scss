@@ -93,6 +93,20 @@
     cursor: pointer;
 }
 
+// "Auf pib abspielen": Robotersymbol statt Text - der Text sprengte die
+// feste 40x40-Button-Box und hing drueber.
+.play-on-pib-button {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.play-on-pib-icon {
+    width: 22px;
+    height: 24px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
 .pose-label {
     padding-left: 12px;
     white-space: nowrap;

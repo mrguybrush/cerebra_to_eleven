@@ -1,38 +1,126 @@
 <div class="background-image pink-corner-frame mt-5">
     <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1 flex-wrap align-items-center">
-        <div class="flex-grow-1 pl-2">Poses</div>
+        <div class="flex-grow-1 pl-2">{{ 'nav.pose' | translate }}</div>
+        <button
+            type="button"
+            id="save-pose-button"
+            data-test="BTN_Pose_Save_Current_Pose"
+            class="btn btn-regular mr-2 mb-1"
+            (click)="savePose()">
+            {{ 'pose.saveCurrent' | translate }}
+        </button>
         <button
             type="button"
             class="btn btn-regular btn-sm mr-2 mb-1"
             data-test="BTN_Pose_Import"
             (click)="importPoses()">
-            Importieren
+            {{ 'common.import' | translate }}
         </button>
         <button
             type="button"
             class="btn btn-regular btn-sm mr-2 mb-1"
             data-test="BTN_Pose_Export_All"
             (click)="exportAllPoses()">
-            Alle exportieren
+            {{ 'pose.exportAll' | translate }}
         </button>
         <button
             type="button"
-            class="btn btn-regular btn-sm mr-2 mb-1 delete-all-button"
+            class="btn btn-regular btn-sm mb-1 delete-all-button"
             data-test="BTN_Pose_Delete_All"
             (click)="deleteAllPoses()">
-            Alle löschen
-        </button>
-        <button
-            type="button"
-            id="save-pose-button"
-            data-test="BTN_Pose_Save_Current_Pose"
-            class="btn btn-regular mb-1"
-            (click)="savePose()">
-            Save current pose
+            {{ 'pose.deleteAll' | translate }}
         </button>
     </div>
+
+    <!-- Gesichtsausdruck: setzt die Augen auf dem pib-Display direkt um -->
+    <div class="d-flex flex-row m-3 pb-2 pl-1 pr-1 flex-wrap align-items-center">
+        <div class="pl-2 mr-3">{{ 'pose.emotionTitle' | translate }}</div>
+        <button
+            *ngFor="let emotion of emotions"
+            type="button"
+            class="btn btn-regular btn-sm mr-2 mb-1"
+            [attr.data-test]="'BTN_Emotion_' + emotion.value"
+            (click)="setEmotion(emotion.value)">
+            {{emotion.labelKey | translate}}
+        </button>
+        <button
+            *ngFor="let expression of customExpressions$ | async"
+            type="button"
+            class="btn btn-regular btn-sm mr-2 mb-1"
+            [attr.data-test]="'BTN_Custom_Expression_' + expression.expressionId"
+            (click)="playCustomExpression(expression.expressionId)">
+            {{expression.name}}
+        </button>
+        <a
+            routerLink="/pose/facial-expression"
+            class="ml-2 mb-1"
+            data-test="LNK_Manage_Facial_Expressions"
+            >{{ 'pose.manageFacialExpressions' | translate }}</a
+        >
+    </div>
+
+    <!-- Text aussprechen: spielt den eingegebenen Satz ueber pibs
+         Lautsprecher ab (play_audio_from_speech, derselbe Service wie der
+         Blockly-Block "als ... sage ..."). -->
+    <div class="d-flex flex-row m-3 pb-2 pl-1 pr-1 flex-wrap align-items-center">
+        <input
+            type="text"
+            class="speech-input"
+            data-test="TXT_Speech_Input"
+            [formControl]="speechFormControl"
+            [placeholder]="'pose.speechPlaceholder' | translate"
+            (keydown.enter)="sendSpeech()" />
+        <button
+            type="button"
+            class="btn btn-regular btn-sm ml-2 mb-1"
+            data-test="BTN_Speech_Send"
+            [disabled]="!speechFormControl.value?.trim()"
+            (click)="sendSpeech()">
+            {{ 'pose.speechSend' | translate }}
+        </button>
+    </div>
+
+    <!-- Globales Bewegungstempo: skaliert velocity/acceleration/deceleration
+         jedes Motors fuer JEDE Bewegung (manuelle Steuerung, Posen,
+         Programme) - siehe MovementSettingsService. Der Slider aendert nur
+         die Anzeige; erst "Speichern" wendet den Wert an. -->
+    <div class="d-flex flex-row m-3 pb-2 pl-1 pr-1 flex-wrap align-items-center">
+        <div class="pl-2 mr-3">{{ 'pose.speedTitle' | translate }}</div>
+        <input
+            type="range"
+            [min]="minSpeedPercent"
+            [max]="maxSpeedPercent$ | async"
+            step="1"
+            data-test="SLD_Movement_Speed"
+            [value]="pendingSpeedPercent"
+            (input)="onSpeedSliderInput($any($event.target).value)" />
+        <span
+            class="ml-2 mr-3"
+            data-test="TXT_Movement_Speed_Value"
+            >{{pendingSpeedPercent}}%</span
+        >
+        <button
+            type="button"
+            class="btn btn-regular btn-sm"
+            data-test="BTN_Movement_Speed_Save"
+            (click)="saveSpeedPercent()">
+            {{ 'common.save' | translate }}
+        </button>
+        <span
+            *ngIf="speedSaved"
+            class="ml-2 speed-saved-hint"
+            data-test="TXT_Movement_Speed_Saved"
+            >{{ 'pose.speedSaved' | translate }}</span
+        >
+    </div>
+
+    <div
+        cdkDropList
+        (cdkDropListDropped)="dropPose($event)">
     <div
         *ngFor="let pose of poses | async"
+        cdkDrag
+        cdkDragLockAxis="y"
         class="pose-item d-flex flex-row mt-1 mb-2"
         [ngClass]="pose.poseId === selectedPoseId ? 'selected' : 'unselected'">
         <button
@@ -58,7 +146,7 @@
             #updateButton
             class="update-button flex-shrink-0"
             data-test="BTN_Update_pose"
-            title="Update pose"
+            [title]="'pose.updateTooltip' | translate"
             (click)="updatePoseMotorPositions(pose)">
             <img
                 class="update-icon"
@@ -80,7 +168,7 @@
         <button
             [attr.data-test]="'BTN_Pose_Export_' + pose.name"
             class="rename-button flex-shrink-0"
-            title="Exportieren"
+            [title]="'common.export' | translate"
             (click)="exportPose(pose)">
             <img
                 class="rename-icon"
@@ -98,6 +186,7 @@
                 src="../../../assets/delete.svg"
                 alt="delete-pose" />
         </button>
+    </div>
     </div>
 
 </div>
@@ -146,7 +235,7 @@
             for="name-input"
             class="col-3 mt-2 justify-content-end"
             id="label-name"
-            >Name:</label
+            >{{ 'common.name' | translate }}:</label
         >
         <input
             ngbAutofocus
@@ -158,8 +247,10 @@
             [formControl]="nameFormControl"
             id="name-input" />
     </div>
+    <!-- col-auto statt col-3: die festen 25%-Spalten waren schmaler als die
+         Buttons, wodurch "Abbrechen" den "Speichern"-Button ueberlappte. -->
     <div class="row justify-content-center mt-2 mb-3">
-        <div class="col-3 align-self-center">
+        <div class="col-auto align-self-center">
             <button
                 type="button"
                 class="btn btn-regular"
@@ -168,17 +259,17 @@
                 [disabled]="nameFormControl.invalid"
                 (keydown.enter)="modal.close('Save')"
                 (click)="modal.close('Save')">
-                Save
+                {{ 'common.save' | translate }}
             </button>
         </div>
-        <div class="col-3 align-self-center">
+        <div class="col-auto align-self-center">
             <button
                 type="button"
                 class="btn btn-regular"
                 id="modal-cancel-button"
                 data-test="BTN_Cancel"
                 (click)="modal.dismiss('Cancel')">
-                Cancel
+                {{ 'common.cancel' | translate }}
             </button>
         </div>
     </div>
@@ -192,7 +283,7 @@
     id="delete-all-template">
     <div class="row display-flex modal-header">
         <div class="col-10">
-            <span id="delete-all-title">Alle Posen löschen</span>
+            <span id="delete-all-title">{{ 'pose.deleteAllTitle' | translate }}</span>
         </div>
         <div class="col-2 text-right">
             <button
@@ -217,13 +308,9 @@
         </div>
     </div>
     <div class="m-3">
+        <p [innerHTML]="'pose.deleteAllWarning' | translate"></p>
         <p>
-            Damit werden <b>alle selbst erstellten Posen unwiderruflich
-            gelöscht</b> (Standard-Posen bleiben erhalten). Tipp: vorher
-            „Alle exportieren" als Sicherung.
-        </p>
-        <p>
-            Zur Bestätigung bitte diese Aufgabe im Kopf lösen:
+            {{ 'pose.mathPrompt' | translate }}
         </p>
         <p
             class="text-center"
@@ -235,7 +322,7 @@
             ngbAutofocus
             class="w-100"
             type="number"
-            placeholder="Ergebnis"
+            [placeholder]="'pose.resultPlaceholder' | translate"
             data-test="TXT_Math_Answer"
             [formControl]="mathAnswerControl" />
     </div>
@@ -247,7 +334,7 @@
                 data-test="BTN_Delete_All_Confirm"
                 [disabled]="!isMathAnswerCorrect()"
                 (click)="modal.close('Delete')">
-                Endgültig löschen
+                {{ 'pose.deleteAllConfirmBtn' | translate }}
             </button>
         </div>
         <div class="col-4 align-self-center">
@@ -256,7 +343,7 @@
                 class="btn btn-regular w-100"
                 data-test="BTN_Delete_All_Cancel"
                 (click)="modal.dismiss('Cancel')">
-                Abbrechen
+                {{ 'common.cancel' | translate }}
             </button>
         </div>
     </div>
@@ -268,7 +355,7 @@
     class="background-image pink-corner-frame mt-3"
     *ngIf="showGestureFeatures">
     <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1">
-        <div class="flex-grow-1 pl-2">Gestensteuerung</div>
+        <div class="flex-grow-1 pl-2">{{ 'pose.gestureControlTitle' | translate }}</div>
     </div>
 
     <div class="d-flex flex-row m-3 align-items-center flex-wrap" id="gesture-capture-controls">
@@ -277,17 +364,17 @@
             data-test="SEL_Gesture_Capture_Mode"
             [(ngModel)]="captureMode"
             [disabled]="(capturing$ | async) ?? false">
-            <option value="static">Statisch (einzelne Geste)</option>
-            <option value="dynamic">Dynamisch (Bewegungssequenz)</option>
+            <option value="static">{{ 'pose.staticOption' | translate }}</option>
+            <option value="dynamic">{{ 'pose.dynamicOption' | translate }}</option>
         </select>
         <select
             class="mr-2 mb-2"
             data-test="SEL_Gesture_Pose_Source"
-            title="Woher die Kamerabilder für die Erkennung kommen"
+            [title]="'pose.poseSourceTooltip' | translate"
             [(ngModel)]="poseSource"
             [disabled]="(capturing$ | async) ?? false">
-            <option value="robot">Kamera vom Roboter</option>
-            <option value="webcam">Eigene Webcam</option>
+            <option value="robot">{{ 'pose.robotCamera' | translate }}</option>
+            <option value="webcam">{{ 'pose.ownWebcam' | translate }}</option>
         </select>
         <input
             type="number"
@@ -298,7 +385,7 @@
             data-test="TXT_Gesture_Capture_Duration"
             [(ngModel)]="captureDurationS"
             [disabled]="(capturing$ | async) ?? false" />
-        <span class="mr-2 mb-2">Sekunden</span>
+        <span class="mr-2 mb-2">{{ 'pose.seconds' | translate }}</span>
 
         <button
             *ngIf="!(capturing$ | async)"
@@ -306,7 +393,7 @@
             class="btn btn-regular mb-2"
             data-test="BTN_Gesture_Capture_Start"
             (click)="startCapture()">
-            Start
+            {{ 'common.start' | translate }}
         </button>
         <button
             *ngIf="capturing$ | async"
@@ -314,7 +401,7 @@
             class="btn btn-regular mb-2"
             data-test="BTN_Gesture_Capture_Stop"
             (click)="stopCapture()">
-            Stopp ({{remainingSeconds$ | async}}s)
+            {{ 'pose.stopWithSeconds' | translate: {seconds: (remainingSeconds$ | async)} }}
         </button>
     </div>
 
@@ -331,9 +418,11 @@
         class="m-3"
         style="font-size: 0.85rem; opacity: 0.8"
         data-test="TXT_Gesture_Debug_Status">
-        Debug: MediaPipe bereit: {{(landmarkerReady$ | async) ? "ja" : "nein"}} |
-        Bilder empfangen: {{framesReceived$ | async}} |
-        Bilder gezeichnet: {{framesDrawn$ | async}}
+        {{ 'pose.debugStatus' | translate: {
+            ready: (landmarkerReady$ | async) ? ('pose.yes' | translate) : ('pose.no' | translate),
+            received: (framesReceived$ | async),
+            drawn: (framesDrawn$ | async)
+        } }}
     </div>
 
     <div
@@ -341,41 +430,41 @@
         class="d-flex flex-row m-3 flex-wrap"
         id="gesture-capture-preview">
         <div class="mr-4 mb-2">
-            <div class="pb-1">Canvas (mit erkannten Punkten)</div>
+            <div class="pb-1">{{ 'pose.canvasWithPoints' | translate }}</div>
             <canvas
                 #previewCanvas
                 data-test="CANVAS_Gesture_Preview"
                 style="max-width: 480px; width: 100%; border-radius: 6px; background: #000;"></canvas>
         </div>
         <div class="mr-4 mb-2" *ngIf="rawFrame$ | async as raw">
-            <div class="pb-1">Rohbild (zum Vergleich)</div>
+            <div class="pb-1">{{ 'pose.rawFrame' | translate }}</div>
             <img
                 [src]="raw"
                 data-test="IMG_Gesture_Raw_Frame"
                 style="max-width: 320px; width: 100%; border-radius: 6px;" />
         </div>
         <div class="mb-2">
-            <div class="pb-2">Erkannte Gelenkwinkel</div>
+            <div class="pb-2">{{ 'pose.detectedJointAngles' | translate }}</div>
             <table class="joint-angle-table">
                 <tr *ngFor="let entry of jointAngles$ | async | keyvalue">
                     <td class="pr-3">{{entry.key}}</td>
                     <td>{{entry.value | number: "1.0-0"}}&deg;</td>
                 </tr>
                 <tr *ngIf="(jointAngles$ | async | keyvalue)?.length === 0">
-                    <td>Keine Person erkannt</td>
+                    <td>{{ 'pose.noPersonDetected' | translate }}</td>
                 </tr>
             </table>
         </div>
     </div>
 
     <div class="d-flex flex-row m-3 pb-1 pl-2 align-items-center">
-        <span class="flex-grow-1">Gesten</span>
+        <span class="flex-grow-1">{{ 'pose.gestures' | translate }}</span>
         <button
             type="button"
             class="btn btn-regular btn-sm"
             data-test="BTN_Gesture_Import"
             (click)="importGesture()">
-            Importieren
+            {{ 'common.import' | translate }}
         </button>
     </div>
     <div
@@ -409,7 +498,7 @@
         <button
             [attr.data-test]="'BTN_Gesture_Export_' + gesture.name"
             class="rename-button flex-shrink-0"
-            title="Exportieren"
+            [title]="'common.export' | translate"
             (click)="exportGesture(gesture)">
             <img
                 class="rename-icon"
@@ -429,13 +518,13 @@
     </div>
 
     <div class="d-flex flex-row m-3 pb-1 pl-2 align-items-center">
-        <span class="flex-grow-1">Bewegungssequenzen</span>
+        <span class="flex-grow-1">{{ 'pose.movementSequences' | translate }}</span>
         <button
             type="button"
             class="btn btn-regular btn-sm"
             data-test="BTN_Sequence_Import"
             (click)="importSequence()">
-            Importieren
+            {{ 'common.import' | translate }}
         </button>
     </div>
     <div
@@ -469,7 +558,7 @@
         <button
             [attr.data-test]="'BTN_Sequence_Export_' + sequence.name"
             class="rename-button flex-shrink-0"
-            title="Exportieren"
+            [title]="'common.export' | translate"
             (click)="exportSequence(sequence)">
             <img
                 class="rename-icon"

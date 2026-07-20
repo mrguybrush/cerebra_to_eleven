@@ -97,6 +97,19 @@ export class PoseService {
         });
     }
 
+    /** Drag&Drop-Umsortierung: lokal verschieben und die komplette neue
+     * Reihenfolge im Backend persistieren (pose.sort_index). */
+    public reorderPoses(previousIndex: number, currentIndex: number) {
+        const [moved] = this.poses.splice(previousIndex, 1);
+        this.poses.splice(currentIndex, 0, moved);
+        this.publishPoses();
+        this.apiService
+            .put(`${UrlConstants.POSE}/order`, {
+                poseIds: this.poses.map((pose) => pose.poseId),
+            })
+            .subscribe();
+    }
+
     public applyPose(poseId: string) {
         const pose = this.getCachedPoseOfId(poseId);
         if (!pose?.active) return;

@@ -4,7 +4,9 @@ import {Observable} from "rxjs";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {VoiceRecordingService} from "src/app/shared/services/voice-recording.service";
 import {VoiceRecording} from "src/app/shared/types/voice-recording";
+import {RosService} from "src/app/shared/services/ros-service/ros.service";
 import {toWavBlob} from "src/app/shared/services/wav-encoder.util";
+import {TranslateService} from "@ngx-translate/core";
 
 type RecordingState = "idle" | "recording" | "recorded";
 
@@ -40,6 +42,8 @@ export class VoiceRecordingComponent implements OnDestroy {
     constructor(
         private voiceRecordingService: VoiceRecordingService,
         private matSnackBarService: MatSnackBar,
+        private rosService: RosService,
+        private readonly translateService: TranslateService,
     ) {
         this.recordings$ = this.voiceRecordingService.recordingsSubject;
     }
@@ -70,7 +74,9 @@ export class VoiceRecordingComponent implements OnDestroy {
     async startRecording(): Promise<void> {
         if (!this.isSecureContext) {
             this.toast(
-                "Aufnahme braucht eine sichere Verbindung (HTTPS oder localhost) - der Browser blockiert Mikrofonzugriff über http://.",
+                this.translateService.instant(
+                    "voiceRecording.insecureConnectionError",
+                ),
             );
             return;
         }
@@ -80,7 +86,9 @@ export class VoiceRecordingComponent implements OnDestroy {
             });
         } catch (err) {
             this.toast(
-                "Mikrofonzugriff nicht möglich: " + String((err as Error).message ?? err),
+                this.translateService.instant("voiceRecording.micAccessFailed", {
+                    error: String((err as Error).message ?? err),
+                }),
             );
             return;
         }
@@ -119,8 +127,9 @@ export class VoiceRecordingComponent implements OnDestroy {
             this.wavBlob = await toWavBlob(rawBlob);
         } catch (err) {
             this.toast(
-                "Aufnahme konnte nicht verarbeitet werden: " +
-                    String((err as Error).message ?? err),
+                this.translateService.instant("voiceRecording.processingFailed", {
+                    error: String((err as Error).message ?? err),
+                }),
             );
             this.state = "idle";
             return;
@@ -151,14 +160,15 @@ export class VoiceRecordingComponent implements OnDestroy {
         this.voiceRecordingService.upload(filename, this.wavBlob).subscribe({
             next: () => {
                 this.uploading = false;
-                this.toast("Aufnahme gespeichert");
+                this.toast(this.translateService.instant("voiceRecording.saved"));
                 this.discardRecording();
             },
             error: (err) => {
                 this.uploading = false;
                 this.toast(
-                    "Speichern fehlgeschlagen: " +
-                        (err?.error?.error ?? err?.message ?? String(err)),
+                    this.translateService.instant("voiceRecording.saveFailed", {
+                        error: err?.error?.error ?? err?.message ?? String(err),
+                    }),
                 );
             },
         });
@@ -171,21 +181,23 @@ export class VoiceRecordingComponent implements OnDestroy {
         if (!file) {
             return;
         }
-        if (!file.name.toLowerCase().endsWith(".wav")) {
-            this.toast("Nur .wav-Dateien werden unterstützt.");
+        const lowerName = file.name.toLowerCase();
+        if (!lowerName.endsWith(".wav") && !lowerName.endsWith(".mp3")) {
+            this.toast(this.translateService.instant("voiceRecording.onlyWavMp3"));
             return;
         }
         this.uploading = true;
         this.voiceRecordingService.upload(file.name, file).subscribe({
             next: () => {
                 this.uploading = false;
-                this.toast("Datei hochgeladen");
+                this.toast(this.translateService.instant("voiceRecording.fileUploaded"));
             },
             error: (err) => {
                 this.uploading = false;
                 this.toast(
-                    "Upload fehlgeschlagen: " +
-                        (err?.error?.error ?? err?.message ?? String(err)),
+                    this.translateService.instant("voiceRecording.uploadFailed", {
+                        error: err?.error?.error ?? err?.message ?? String(err),
+                    }),
                 );
             },
         });
@@ -193,11 +205,12 @@ export class VoiceRecordingComponent implements OnDestroy {
 
     deleteRecording(recording: VoiceRecording): void {
         this.voiceRecordingService.delete(recording.filename).subscribe({
-            next: () => this.toast("Gelöscht"),
+            next: () => this.toast(this.translateService.instant("voiceRecording.deleted")),
             error: (err) =>
                 this.toast(
-                    "Löschen fehlgeschlagen: " +
-                        (err?.error?.error ?? err?.message ?? String(err)),
+                    this.translateService.instant("voiceRecording.deleteFailed", {
+                        error: err?.error?.error ?? err?.message ?? String(err),
+                    }),
                 ),
         });
     }
@@ -205,6 +218,18 @@ export class VoiceRecordingComponent implements OnDestroy {
     togglePlay(recording: VoiceRecording): void {
         this.playingFilename =
             this.playingFilename === recording.filename ? null : recording.filename;
+    }
+
+    /** Spielt die Aufnahme auf pibs eigenem Lautsprecher ab (statt im
+     * Browser) - via play_audio_from_file-Service des Voice-Assistant-
+     * Containers, der die Aufnahmen read-only gemountet hat. */
+    playOnRobot(recording: VoiceRecording): void {
+        this.rosService.playRecordingOnRobot(recording.filename);
+        this.matSnackBarService.open(
+            this.translateService.instant("voiceRecording.playingOnPib"),
+            "",
+            {panelClass: "cerebra-toast", duration: 2000},
+        );
     }
 
     recordingUrl(recording: VoiceRecording): string {

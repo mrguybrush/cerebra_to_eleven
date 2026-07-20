@@ -1,0 +1,146 @@
+<div class="container-fluid p-3">
+    <a routerLink="/pose" data-test="LNK_Back_To_Pose">{{
+        "facialExpression.backToPose" | translate
+    }}</a>
+    <h2>{{ "facialExpression.title" | translate }}</h2>
+    <p class="text-muted">{{ "facialExpression.description" | translate }}</p>
+
+    <div class="row align-items-end mb-4 new-expression-form">
+        <div class="col-auto">
+            <label for="new-expression-name">{{
+                "common.name" | translate
+            }}</label>
+            <input
+                id="new-expression-name"
+                type="text"
+                class="form-control"
+                data-test="TXT_New_Facial_Expression_Name"
+                [formControl]="newNameFormControl" />
+        </div>
+        <div class="col-auto">
+            <label for="new-expression-gif">{{
+                "facialExpression.gifFile" | translate
+            }}</label>
+            <input
+                id="new-expression-gif"
+                type="file"
+                class="form-control"
+                accept=".gif"
+                data-test="FILE_New_Facial_Expression_Gif"
+                (change)="onNewGifSelected($event)" />
+        </div>
+        <div class="col-auto">
+            <button
+                type="button"
+                class="btn btn-regular"
+                data-test="BTN_Add_Facial_Expression"
+                [disabled]="
+                    newNameFormControl.invalid || !newGifFile || creating
+                "
+                (click)="createExpression()">
+                {{ "common.add" | translate }}
+            </button>
+        </div>
+    </div>
+
+    <div
+        cdkDropList
+        cdkDropListOrientation="horizontal"
+        class="tile-grid"
+        (cdkDropListDropped)="dropExpression($event)">
+        <div
+            *ngFor="let expression of expressions$ | async"
+            cdkDrag
+            class="tile"
+            data-test="TILE_Facial_Expression">
+            <img
+                [src]="previewUrl(expression)"
+                [alt]="expression.name"
+                class="tile-preview" />
+            <div class="tile-name">{{ expression.name }}</div>
+            <div class="tile-actions">
+                <button
+                    type="button"
+                    class="btn btn-sm btn-regular"
+                    data-test="BTN_Rename_Facial_Expression"
+                    (click)="renameExpression(expression)">
+                    {{ "common.rename" | translate }}
+                </button>
+                <label class="btn btn-sm btn-regular mb-0">
+                    {{ "facialExpression.replaceGif" | translate }}
+                    <input
+                        type="file"
+                        accept=".gif"
+                        hidden
+                        (change)="replaceGif(expression, $event)" />
+                </label>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-regular"
+                    data-test="BTN_Delete_Facial_Expression"
+                    (click)="deleteExpression(expression)">
+                    {{ "common.delete" | translate }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #renameModalContent let-modal>
+    <div class="row display-flex modal-header" id="modal-header">
+        <div class="col-10" id="header-title">
+            <span id="header-title-text">{{ modalTitle }}</span>
+        </div>
+        <div class="col-2 text-right" id="close-button">
+            <button
+                id="modal-close-button"
+                type="button"
+                (click)="modal.dismiss('Cross')"
+                class="btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="16">
+                    <text
+                        font-family="Titillium"
+                        fill="#FFF"
+                        font-weight="bold"
+                        font-size="16"
+                        y="11.062">
+                        X
+                    </text>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div class="row m-2 mt-4 pr-2" id="row-name">
+        <label
+            for="facial-expression-name-input"
+            class="col-3 mt-2 justify-content-end"
+            >{{ "common.name" | translate }}:</label
+        >
+        <input
+            ngbAutofocus
+            class="col-9"
+            type="text"
+            (keydown)="($event).key === 'Enter' ? modal.close('Save') : ''"
+            [formControl]="nameFormControl"
+            id="facial-expression-name-input" />
+    </div>
+    <div class="row justify-content-center mt-2 mb-3">
+        <div class="col-auto align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular"
+                [disabled]="nameFormControl.invalid"
+                (click)="modal.close('Save')">
+                {{ "common.save" | translate }}
+            </button>
+        </div>
+        <div class="col-auto align-self-center">
+            <button
+                type="button"
+                class="btn btn-regular"
+                (click)="modal.dismiss('Cancel')">
+                {{ "common.cancel" | translate }}
+            </button>
+        </div>
+    </div>
+</ng-template>

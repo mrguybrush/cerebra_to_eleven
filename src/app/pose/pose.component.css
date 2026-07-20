@@ -133,3 +133,16 @@ button:focus {
     border-color: #e10072;
     color: #ff9ecb;
 }
+
+/* Kurze "Gespeichert"-Rueckmeldung neben dem Bewegungstempo-Speichern-Knopf. */
+.speed-saved-hint {
+    color: #7CFC98;
+    font-size: 0.85rem;
+}
+
+/* Textfeld zum Aussprechen - deutlich breiter als der Browser-Default,
+   damit auch laengere Saetze bequem lesbar bleiben. */
+.speech-input {
+    width: 420px;
+    max-width: 90vw;
+}

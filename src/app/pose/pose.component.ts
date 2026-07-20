@@ -9,8 +9,11 @@ import {
 } from "@angular/core";
 import {FormControl, Validators} from "@angular/forms";
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
+import {CdkDragDrop} from "@angular/cdk/drag-drop";
 import {Observable, concatMap, from, map} from "rxjs";
 import {PoseService} from "src/app/shared/services/pose.service";
+import {MovementSettingsService} from "src/app/shared/services/movement-settings.service";
+import {RosService} from "src/app/shared/services/ros-service/ros.service";
 import {Pose} from "src/app/shared/types/pose";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {GestureService} from "src/app/shared/services/gesture.service";
@@ -32,6 +35,9 @@ import {
     pickJsonFile,
     safeFilename,
 } from "src/app/shared/services/file-transfer.util";
+import {TranslateService} from "@ngx-translate/core";
+import {FacialExpressionService} from "src/app/shared/services/facial-expression.service";
+import {FacialExpression} from "src/app/shared/types/facial-expression";
 
 const GESTURE_EXPORT_KIND = "pib-gesture";
 const SEQUENCE_EXPORT_KIND = "pib-movement-sequence";
@@ -57,7 +63,17 @@ export class PoseComponent implements OnInit {
     gestures!: Observable<Gesture[]>;
     sequences!: Observable<MovementSequence[]>;
 
+    // Zusaetzlich zu den fest einprogrammierten Emotionen (siehe unten):
+    // vom Nutzer selbst angelegte Gesichtsausdruecke (Verwaltungsseite
+    // "Gesichtsausdruecke"), Wiedergabe per rohen GIF-Bytes statt fester
+    // ImageId - siehe facial-expression.service.ts play().
+    customExpressions$: Observable<FacialExpression[]>;
+
     modalTitle = "";
+
+    // Text-Feld unter "Gesichtsausdruck": beliebigen Text auf pibs
+    // Lautsprecher aussprechen (siehe sendSpeech()).
+    speechFormControl: FormControl<string | null> = new FormControl("");
 
     nameFormControl: FormControl<string | null> = new FormControl("", {
         validators: [
@@ -72,6 +88,22 @@ export class PoseComponent implements OnInit {
     // Camera-based gesture/movement-sequence capture is temporarily hidden
     // (still fully implemented underneath) until it's ready for general use.
     showGestureFeatures = false;
+
+    // Gesichtsausdruck-Buttons: values = ImageId-Konstanten aus
+    // datatypes/msg/ImageId.msg (2=animiert/neutral, 3=froehlich, 4=traurig,
+    // 5=wuetend, 6=ueberrascht, 7=muede, 8=verliebt, 9=begeistert, 10=cool,
+    // 11=zwinkernd) - published auf display_image.
+    emotions = [
+        {labelKey: "pose.emotions.neutral", value: 2},
+        {labelKey: "pose.emotions.happy", value: 3},
+        {labelKey: "pose.emotions.sad", value: 4},
+        {labelKey: "pose.emotions.angry", value: 5},
+        {labelKey: "pose.emotions.surprised", value: 6},
+        {labelKey: "pose.emotions.sleepy", value: 7},
+        {labelKey: "pose.emotions.star", value: 9},
+        {labelKey: "pose.emotions.cool", value: 10},
+        {labelKey: "pose.emotions.wink", value: 11},
+    ];
 
     // Safety check for "delete all poses": the user must solve a (deliberately
     // annoying) mental-arithmetic task before the delete button unlocks.
@@ -96,6 +128,15 @@ export class PoseComponent implements OnInit {
 
     private previewImage = new Image();
 
+    // Bewegungstempo-Regler: der Slider aendert nur diesen lokalen Wert
+    // (Live-Anzeige), erst der "Speichern"-Knopf wendet ihn tatsaechlich auf
+    // den Roboter an (setMovementSpeed). maxSpeedPercent$ begrenzt den
+    // Slider auf das in den System-Einstellungen gesetzte Limit.
+    pendingSpeedPercent = 100;
+    maxSpeedPercent$: Observable<number>;
+    readonly minSpeedPercent = 10;
+    speedSaved = false;
+
     constructor(
         private poseService: PoseService,
         private gestureService: GestureService,
@@ -104,7 +145,13 @@ export class PoseComponent implements OnInit {
         private browserPoseTrackerService: BrowserPoseTrackerService,
         private modalService: NgbModal,
         private matSnackBarService: MatSnackBar,
+        private rosService: RosService,
+        private readonly translateService: TranslateService,
+        private movementSettingsService: MovementSettingsService,
+        private facialExpressionService: FacialExpressionService,
     ) {
+        this.customExpressions$ = this.facialExpressionService.expressionsSubject;
+        this.maxSpeedPercent$ = this.movementSettingsService.maxSpeedPercent$;
         this.capturing$ = this.gestureCaptureService.capturing$;
         this.jointAngles$ = this.browserPoseTrackerService.jointAngles$;
         this.poseTrackerError$ = this.browserPoseTrackerService.error$;
@@ -119,6 +166,12 @@ export class PoseComponent implements OnInit {
         this.poses = this.poseService.getPosesObservable();
         this.gestures = this.gestureService.getGesturesObservable();
         this.sequences = this.movementSequenceService.getSequencesObservable();
+
+        // Regler mit dem tatsaechlich gespeicherten Tempo vorbelegen (auch
+        // wenn es z.B. per Blockly geaendert wurde).
+        this.movementSettingsService.speedPercent$.subscribe((percent) => {
+            this.pendingSpeedPercent = percent;
+        });
 
         this.browserPoseTrackerService.frame$.subscribe((dataUrl) => {
             if (dataUrl) {
@@ -135,13 +188,16 @@ export class PoseComponent implements OnInit {
                 const motorPositions: MotorPosition[] = Object.entries(
                     result.positions,
                 ).map(([motorName, position]) => ({motorName, position}));
-                this.getNameInput("Save gesture", "New gesture").subscribe(
-                    (name) => this.gestureService.saveGesture(name, motorPositions).subscribe(),
+                this.getNameInput(
+                    this.translateService.instant("pose.saveGestureTitle"),
+                    this.translateService.instant("pose.newGestureDefault"),
+                ).subscribe((name) =>
+                    this.gestureService.saveGesture(name, motorPositions).subscribe(),
                 );
             } else if (result.mode === "dynamic" && result.frames) {
                 this.getNameInput(
-                    "Save movement sequence",
-                    "New movement sequence",
+                    this.translateService.instant("pose.saveMovementSequenceTitle"),
+                    this.translateService.instant("pose.newMovementSequenceDefault"),
                 ).subscribe((name) =>
                     this.movementSequenceService
                         .saveSequence(name, result.sampleRateHz ?? 10, result.frames!)
@@ -163,7 +219,7 @@ export class PoseComponent implements OnInit {
             .catch((err) => {
                 console.error("could not start pose tracking", err);
                 this.matSnackBarService.open(
-                    "Gestenerkennung konnte nicht gestartet werden (siehe Browser-Konsole).",
+                    this.translateService.instant("pose.trackingStartFailed"),
                     "",
                     {panelClass: "cerebra-toast", duration: 4000},
                 );
@@ -182,7 +238,10 @@ export class PoseComponent implements OnInit {
         if (!gesture.deletable) {
             return;
         }
-        this.getNameInput("Rename gesture", gesture.name).subscribe((name) => {
+        this.getNameInput(
+            this.translateService.instant("pose.renameGestureTitle"),
+            gesture.name,
+        ).subscribe((name) => {
             this.gestureService.renameGesture(gesture.gestureId, name);
         });
     }
@@ -212,11 +271,15 @@ export class PoseComponent implements OnInit {
                     motorPositions: MotorPosition[];
                 };
                 if (data.kind !== GESTURE_EXPORT_KIND || !data.motorPositions) {
-                    throw new Error("Keine gültige Gesten-Datei.");
+                    throw new Error(
+                        this.translateService.instant("pose.invalidGestureFile"),
+                    );
                 }
                 this.gestureService
                     .saveGesture(data.name, data.motorPositions)
-                    .subscribe(() => this.toast("Geste importiert"));
+                    .subscribe(() =>
+                        this.toast(this.translateService.instant("pose.gestureImported")),
+                    );
             })
             .catch((err) => this.toast(String(err.message ?? err)));
     }
@@ -247,11 +310,15 @@ export class PoseComponent implements OnInit {
                     frames: {timestampMs: number; positions: {[m: string]: number}}[];
                 };
                 if (data.kind !== SEQUENCE_EXPORT_KIND || !data.frames) {
-                    throw new Error("Keine gültige Bewegungssequenz-Datei.");
+                    throw new Error(
+                        this.translateService.instant("pose.invalidSequenceFile"),
+                    );
                 }
                 this.movementSequenceService
                     .saveSequence(data.name, data.sampleRateHz ?? 10, data.frames)
-                    .subscribe(() => this.toast("Bewegungssequenz importiert"));
+                    .subscribe(() =>
+                        this.toast(this.translateService.instant("pose.sequenceImported")),
+                    );
             })
             .catch((err) => this.toast(String(err.message ?? err)));
     }
@@ -267,7 +334,10 @@ export class PoseComponent implements OnInit {
         if (!sequence.deletable) {
             return;
         }
-        this.getNameInput("Rename movement sequence", sequence.name).subscribe(
+        this.getNameInput(
+            this.translateService.instant("pose.renameMovementSequenceTitle"),
+            sequence.name,
+        ).subscribe(
             (name) => {
                 this.movementSequenceService.renameSequence(
                     sequence.sequenceId,
@@ -282,11 +352,60 @@ export class PoseComponent implements OnInit {
     }
 
     savePose() {
-        this.getNameInput("Add new pose", "New pose").subscribe((name) => {
+        this.getNameInput(
+            this.translateService.instant("pose.addNewPoseTitle"),
+            this.translateService.instant("pose.newPoseDefault"),
+        ).subscribe((name) => {
             this.poseService.saveCurrentPose(name).subscribe((pose) => {
                 this.selectPose(pose);
             });
         });
+    }
+
+    /** Gesichtsausdruck-Button: setzt die Augen auf dem pib-Display. */
+    setEmotion(imageIdValue: number) {
+        this.rosService.setDisplayEmotion(imageIdValue);
+    }
+
+    playCustomExpression(expressionId: string) {
+        this.facialExpressionService.play(expressionId);
+    }
+
+    /** Textfeld unter "Gesichtsausdruck": spricht den eingegebenen Text auf
+     * pibs Lautsprecher aus. */
+    sendSpeech(): void {
+        const text = this.speechFormControl.value?.trim();
+        if (!text) {
+            return;
+        }
+        this.rosService.playAudioFromSpeech(text, "Female", "German");
+        // Bewusst NICHT geleert - man will denselben (oder nur leicht
+        // geaenderten) Text oft mehrmals hintereinander aussprechen lassen.
+    }
+
+    /** Slider bewegt: nur den lokalen Anzeigewert aendern, noch NICHT
+     * anwenden (das macht erst "Speichern"). */
+    onSpeedSliderInput(value: string): void {
+        this.pendingSpeedPercent = Number(value);
+        this.speedSaved = false;
+    }
+
+    /** "Speichern"-Knopf: wendet das eingestellte Bewegungstempo tatsaechlich
+     * auf den Roboter an (und persistiert es). Gilt fuer jede folgende
+     * Bewegung - manuelle Gelenksteuerung, Posen, Programme. */
+    saveSpeedPercent(): void {
+        this.movementSettingsService.setSpeedPercent(this.pendingSpeedPercent);
+        this.speedSaved = true;
+        setTimeout(() => (this.speedSaved = false), 2500);
+    }
+
+    /** Drag&Drop-Sortierung der Posen-Liste - Reihenfolge wird sofort in
+     * der Datenbank gespeichert (pose.sort_index). */
+    dropPose(event: CdkDragDrop<Pose[]>) {
+        if (event.previousIndex === event.currentIndex) {
+            return;
+        }
+        this.poseService.reorderPoses(event.previousIndex, event.currentIndex);
     }
 
     exportPose(pose: Pose) {
@@ -301,7 +420,7 @@ export class PoseComponent implements OnInit {
     exportAllPoses() {
         this.poseService.getAllPosesForExport().subscribe((poses) => {
             if (poses.length === 0) {
-                this.toast("Keine Posen vorhanden");
+                this.toast(this.translateService.instant("pose.noPosesToExport"));
                 return;
             }
             downloadJson("alle_posen", {
@@ -333,10 +452,14 @@ export class PoseComponent implements OnInit {
                 ) {
                     items = data.poses;
                 } else {
-                    throw new Error("Keine gültige Posen-Datei.");
+                    throw new Error(
+                        this.translateService.instant("pose.invalidPoseFile"),
+                    );
                 }
                 if (items.some((item) => !item.name || !item.motorPositions)) {
-                    throw new Error("Posen-Datei ist unvollständig.");
+                    throw new Error(
+                        this.translateService.instant("pose.incompletePoseFile"),
+                    );
                 }
                 from(items)
                     .pipe(
@@ -351,11 +474,20 @@ export class PoseComponent implements OnInit {
                         complete: () =>
                             this.toast(
                                 items.length === 1
-                                    ? "Pose importiert"
-                                    : `${items.length} Posen importiert`,
+                                    ? this.translateService.instant(
+                                          "pose.poseImportedSingular",
+                                      )
+                                    : this.translateService.instant(
+                                          "pose.poseImportedPlural",
+                                          {count: items.length},
+                                      ),
                             ),
                         error: (err) =>
-                            this.toast("Import fehlgeschlagen: " + String(err)),
+                            this.toast(
+                                this.translateService.instant("pose.importFailed", {
+                                    error: String(err),
+                                }),
+                            ),
                     });
             })
             .catch((err) => this.toast(String(err.message ?? err)));
@@ -380,14 +512,23 @@ export class PoseComponent implements OnInit {
         ).subscribe({
             next: () => {
                 if (!this.isMathAnswerCorrect()) {
-                    this.toast("Falsche Antwort – nichts gelöscht.");
+                    this.toast(
+                        this.translateService.instant(
+                            "pose.wrongAnswerNothingDeleted",
+                        ),
+                    );
                     return;
                 }
                 this.poseService.deleteAllPoses().subscribe((count) => {
                     this.toast(
                         count === 0
-                            ? "Keine löschbaren Posen vorhanden."
-                            : `${count} Pose(n) gelöscht.`,
+                            ? this.translateService.instant(
+                                  "pose.noDeletablePoses",
+                              )
+                            : this.translateService.instant(
+                                  "pose.posesDeletedCount",
+                                  {count},
+                              ),
                     );
                 });
             },
@@ -409,7 +550,10 @@ export class PoseComponent implements OnInit {
             return;
         }
         this.selectPose(pose);
-        this.getNameInput("Rename pose", pose.name).subscribe((name) => {
+        this.getNameInput(
+            this.translateService.instant("pose.renamePoseTitle"),
+            pose.name,
+        ).subscribe((name) => {
             this.poseService.renamePose(pose.poseId, name);
         });
     }
@@ -433,10 +577,11 @@ export class PoseComponent implements OnInit {
         }
         this.selectPose(pose);
         this.poseService.updatePoseMotorPositions(pose.poseId).subscribe(() => {
-            this.matSnackBarService.open("Pose updated successfully", "", {
-                panelClass: "cerebra-toast",
-                duration: 3000,
-            });
+            this.matSnackBarService.open(
+                this.translateService.instant("pose.poseUpdatedSuccessfully"),
+                "",
+                {panelClass: "cerebra-toast", duration: 3000},
+            );
         });
     }
 
