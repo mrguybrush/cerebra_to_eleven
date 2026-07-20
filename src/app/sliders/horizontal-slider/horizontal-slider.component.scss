@@ -37,6 +37,11 @@ span {
     user-select: none;
 }
 
+circle:focus-visible {
+    outline: 2px solid $white-color;
+    outline-offset: 2px;
+}
+
 .bubble-input,
 .bubble-span,
 .bubble-span-left,

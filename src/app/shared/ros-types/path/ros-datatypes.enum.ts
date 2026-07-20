@@ -8,6 +8,7 @@ export enum rosDataTypes {
     string = "std_msgs/String",
     // msg
     motorSettings = "datatypes/msg/MotorSettings",
+    movementSettings = "datatypes/msg/MovementSettings",
     chatMessage = "datatypes/msg/ChatMessage",
     voiceAssistantState = "datatypes/msg/VoiceAssistantState",
     chatIsListening = "datatypes/msg/ChatIsListening",
@@ -18,8 +19,10 @@ export enum rosDataTypes {
     proxyRunProgramStatus = "datatypes/msg/ProxyRunProgramStatus",
     programInput = "datatypes/msg/ProgramInput",
     solidStateRelayState = "datatypes/msg/SolidStateRelayState",
+    displayImage = "datatypes/msg/DisplayImage",
     // srv
     applyMotorSettings = "datatypes/srv/ApplyMotorSettings",
+    applyMovementSettings = "datatypes/srv/ApplyMovementSettings",
     proxyRunProgramStart = "datatypes/srv/ProxyStartProgram",
     proxyRunProgramStop = "datatypes/srv/ProxyStopProgram",
     setVoiceAssistantState = "datatypes/srv/SetVoiceAssistantState",
@@ -32,6 +35,8 @@ export enum rosDataTypes {
     encryptToken = "datatypes/srv/EncryptToken",
     decryptToken = "datatypes/srv/DecryptToken",
     setSolidStateRelayState = "datatypes/srv/SetSolidStateRelayState",
+    playAudioFromFile = "datatypes/srv/PlayAudioFromFile",
+    playAudioFromSpeech = "datatypes/srv/PlayAudioFromSpeech",
     // action
     runProgram = "datatypes/action/RunProgram",
 }

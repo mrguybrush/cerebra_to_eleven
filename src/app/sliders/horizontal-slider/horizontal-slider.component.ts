@@ -330,4 +330,22 @@ export class HorizontalSliderComponent
             this.unselectSlider();
         }
     }
+
+    /** Lets a focused thumb (click/tab onto its circle) be moved with the
+     * arrow keys, same step size as dragging - this slider is custom-drawn
+     * (SVG), so it doesn't get that for free like a native <input
+     * type="range"> would. */
+    onThumbKeydown(event: KeyboardEvent, thumb: SliderThumb): void {
+        let delta = 0;
+        if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+            delta = this.step;
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+            delta = -this.step;
+        } else {
+            return;
+        }
+        event.preventDefault();
+        this.setThumbValue(thumb, thumb.valueSanitized + delta);
+        this.sendEvent();
+    }
 }

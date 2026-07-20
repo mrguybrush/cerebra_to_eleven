@@ -218,7 +218,6 @@
     <span
         *ngIf="rangeFormControl.errors"
         style="color: red; font-size: 13px; content:''">
-        {{ name }} must be a number and can not be empty, minus or greater than
-        {{ maxValue }}
+        {{ 'jointControl.sliderRangeError' | translate: {name: name, max: maxValue} }}
     </span>
 </div>

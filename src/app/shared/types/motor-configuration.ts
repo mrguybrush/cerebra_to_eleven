@@ -47,7 +47,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "tilt_forward_motor",
         motorPathName: MotorPathName.TILT_FORWARD,
-        label: "Tilt Forward",
+        label: "jointControl.motors.tiltForward",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -60,7 +60,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "turn_head_motor",
         motorPathName: MotorPathName.TURN_HEAD,
-        label: "Head Rotation",
+        label: "jointControl.motors.headRotation",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -73,7 +73,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "thumb_right_stretch",
         motorPathName: MotorPathName.THUMB_RIGHT_STRETCH,
-        label: "Thumb",
+        label: "jointControl.motors.thumb",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -86,7 +86,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "thumb_right_opposition",
         motorPathName: MotorPathName.THUMB_RIGHT_OPPOSITION,
-        label: "Thumb Opposition",
+        label: "jointControl.motors.thumbOpposition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -99,7 +99,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "index_right_stretch",
         motorPathName: MotorPathName.INDEX_RIGHT_STRETCH,
-        label: "Index Finger",
+        label: "jointControl.motors.indexFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -112,7 +112,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "middle_right_stretch",
         motorPathName: MotorPathName.MIDDLE_RIGHT_STRETCH,
-        label: "Middle Finger",
+        label: "jointControl.motors.middleFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -125,7 +125,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "ring_right_stretch",
         motorPathName: MotorPathName.RING_RIGHT_STRECTH,
-        label: "Ring Finger",
+        label: "jointControl.motors.ringFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -138,7 +138,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "pinky_right_stretch",
         motorPathName: MotorPathName.PINKY_RIGHT_STRECTH,
-        label: "Pinky",
+        label: "jointControl.motors.pinky",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -151,7 +151,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "all_fingers_right",
         motorPathName: MotorPathName.ALL_FINGERS_RIGHT,
-        label: "Open/Close all fingers",
+        label: "jointControl.motors.allFingers",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -164,7 +164,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "thumb_left_stretch",
         motorPathName: MotorPathName.THUMB_LEFT_STRETCH,
-        label: "Thumb",
+        label: "jointControl.motors.thumb",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -177,7 +177,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "thumb_left_opposition",
         motorPathName: MotorPathName.THUMB_LEFT_OPPOSITION,
-        label: "Thumb Opposition",
+        label: "jointControl.motors.thumbOpposition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -190,7 +190,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "index_left_stretch",
         motorPathName: MotorPathName.INDEX_LEFT_STRETCH,
-        label: "Index Finger",
+        label: "jointControl.motors.indexFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -203,7 +203,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "middle_left_stretch",
         motorPathName: MotorPathName.MIDDLE_LEFT_STRETCH,
-        label: "Middle Finger",
+        label: "jointControl.motors.middleFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -216,7 +216,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "ring_left_stretch",
         motorPathName: MotorPathName.RING_LEFT_STRECTH,
-        label: "Ring Finger",
+        label: "jointControl.motors.ringFinger",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -229,7 +229,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "pinky_left_stretch",
         motorPathName: MotorPathName.PINKY_LEFT_STRECTH,
-        label: "Pinky",
+        label: "jointControl.motors.pinky",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -242,7 +242,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "all_fingers_left",
         motorPathName: MotorPathName.ALL_FINGERS_LEFT,
-        label: "Open/Close all fingers",
+        label: "jointControl.motors.allFingers",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -255,7 +255,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "shoulder_horizontal_left",
         motorPathName: MotorPathName.SHOULDER_HORIZONTAL_LEFT,
-        label: "Shoulder Horizontal",
+        label: "jointControl.motors.shoulderHorizontal",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -268,7 +268,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "shoulder_vertical_left",
         motorPathName: MotorPathName.SHOULDER_VERTICAL_LEFT,
-        label: "Shoulder Vertical",
+        label: "jointControl.motors.shoulderVertical",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -281,7 +281,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "upper_arm_left_rotation",
         motorPathName: MotorPathName.UPPER_ARM_LEFT_ROTATION,
-        label: "Upper Arm Rotation",
+        label: "jointControl.motors.upperArmRotation",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -294,7 +294,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "elbow_left",
         motorPathName: MotorPathName.ELBOW_LEFT,
-        label: "Elbow Position",
+        label: "jointControl.motors.elbowPosition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -307,7 +307,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "lower_arm_left_rotation",
         motorPathName: MotorPathName.LOWER_ARM_LEFT_ROTATION,
-        label: "Lower Arm Rotation",
+        label: "jointControl.motors.lowerArmRotation",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -320,7 +320,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "wrist_left",
         motorPathName: MotorPathName.WRIST_LEFT,
-        label: "Wrist Position",
+        label: "jointControl.motors.wristPosition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -333,7 +333,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "shoulder_horizontal_right",
         motorPathName: MotorPathName.SHOULDER_HORIZONTAL_RIGHT,
-        label: "Shoulder Horizontal",
+        label: "jointControl.motors.shoulderHorizontal",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -346,7 +346,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "shoulder_vertical_right",
         motorPathName: MotorPathName.SHOULDER_VERTICAL_RIGHT,
-        label: "Shoulder Vertical",
+        label: "jointControl.motors.shoulderVertical",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -359,7 +359,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "upper_arm_right_rotation",
         motorPathName: MotorPathName.UPPER_ARM_RIGHT_ROTATION,
-        label: "Upper Arm Rotation",
+        label: "jointControl.motors.upperArmRotation",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -372,7 +372,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "elbow_right",
         motorPathName: MotorPathName.ELBOW_RIGHT,
-        label: "Elbow Position",
+        label: "jointControl.motors.elbowPosition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -385,7 +385,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "lower_arm_right_rotation",
         motorPathName: MotorPathName.LOWER_ARM_RIGHT_ROTATION,
-        label: "Lower Arm Rotation",
+        label: "jointControl.motors.lowerArmRotation",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",
@@ -398,7 +398,7 @@ export const motors: MotorConfiguration[] = [
     {
         motorName: "wrist_right",
         motorPathName: MotorPathName.WRIST_RIGHT,
-        label: "Wrist Position",
+        label: "jointControl.motors.wristPosition",
         sliderIconLeft: "/joint-control/slider-icons/minimum.svg",
         sliderIconRight: "/joint-control/slider-icons/maximum.svg",
         captionLeft: "",

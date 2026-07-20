@@ -83,6 +83,12 @@
                 [attr.cx]="thumb.position"
                 [attr.cy]="thumbRadius"
                 [attr.r]="thumbRadius"
+                tabindex="0"
+                role="slider"
+                [attr.aria-valuemin]="leftValue < rightValue ? leftValue : rightValue"
+                [attr.aria-valuemax]="leftValue < rightValue ? rightValue : leftValue"
+                [attr.aria-valuenow]="thumb.valueSanitized"
+                (keydown)="onThumbKeydown($event, thumb)"
                 fill="#e10072" />
         </svg>
     </div>

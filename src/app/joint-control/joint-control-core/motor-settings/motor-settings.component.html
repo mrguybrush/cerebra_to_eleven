@@ -5,7 +5,7 @@
             [id]="'settings-' + motor.motorPathName"
             src="../../../../assets/joint-control/other/settings-icon.svg"
             (click)="openPopup(content)"
-            alt="settings-icon"
+            [attr.alt]="'jointControl.settings' | translate"
             [attr.data-test]="'BTN_Motor_Settings_' + motor.motorPathName" />
     </div>
     <div
@@ -27,7 +27,7 @@
     id="ng-template">
     <div class="row display-flex modal-header">
         <div class="col">
-            <span>MOTOR SETTINGS</span>
+            <span>{{ 'jointControl.motorSettingsTitle' | translate }}</span>
         </div>
         <div class="col text-right">
             <button
@@ -54,7 +54,7 @@
     <div class="row display-flex mt-5 mb-3">
         <div class="row">
             <div class="col text-right">
-                <span class="align-middle"> SPEED SETTINGS </span>
+                <span class="align-middle"> {{ 'jointControl.speedSettings' | translate }} </span>
             </div>
             <div class="col col-md-auto d-flex justify-content-center">
                 <button
@@ -64,11 +64,11 @@
                     data-test="BTN_Motor_Settings_Toggle_Extended">
                     <img
                         [src]="'../../assets/toggle-switch-' + (displayExtended ? 'right' : 'left') + '.png'"
-                        alt="Toggle for switching between speed settings and extended values" />
+                        [attr.alt]="'jointControl.speedToggleAlt' | translate" />
                 </button>
             </div>
             <div class="col text-left">
-                <span class="align-middle"> EXTENDED VALUES </span>
+                <span class="align-middle"> {{ 'jointControl.extendedValues' | translate }} </span>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@
                 [trackHeight]="16"
                 [step]="1"
                 [unitLong]="'μs'"
-                [name]="'Pulse width'"
+                [name]="'jointControl.pulseWidth' | translate"
                 [attr.data-test]="'SLD_Motor_Settings_Pulse_Width'"
                 [displayName]="true"
                 [defaultValues]="[settings.pulseWidthMin, settings.pulseWidthMax]"
@@ -103,7 +103,7 @@
                 [step]="1"
                 [unitShort]="'°'"
                 [unitLong]="'°/100'"
-                [name]="'Degree'"
+                [name]="'jointControl.degree' | translate"
                 [attr.data-test]="'SLD_Motor_Settings_Degree_Range'"
                 [displayName]="true"
                 [defaultValues]="[settings.rotationRangeMin, settings.rotationRangeMax]"
@@ -116,7 +116,7 @@
         class="row display-flex justify-content-center">
         <div class="col-9">
             <app-horizontal-slider
-                [name]="'Period'"
+                [name]="'jointControl.period' | translate"
                 [attr.data-test]="'SLD_Motor_Settings_Period'"
                 [displayName]="true"
                 [leftValue]="0"
@@ -145,7 +145,7 @@
                 <label
                     class="form-check-label"
                     for="invertMotor"
-                    >Invert motor</label
+                    >{{ 'jointControl.invertMotor' | translate }}</label
                 >
             </div>
         </div>
@@ -156,7 +156,7 @@
         style="height: 500px;">
         <div class="col-3 h-100 ml-2 mr-2 ">
             <app-vertical-slider
-                name="Velocity"
+                [name]="'jointControl.velocity' | translate"
                 data-test="SLD_Motor_Settings_Velocity"
                 [messageReceiver$]="velocitySubject$"
                 (sliderEvent)="setVelocity($event)"
@@ -167,7 +167,7 @@
         </div>
         <div class="col-3 h-100 ml-2 mr-2">
             <app-vertical-slider
-                name="Acceleration"
+                [name]="'jointControl.acceleration' | translate"
                 data-test="SLD_Motor_Settings_Acceleration"
                 [messageReceiver$]="accelerationSubject$"
                 (sliderEvent)="setAcceleration($event)"
@@ -177,7 +177,7 @@
         </div>
         <div class="col-3 h-100 ml-2 mr-2">
             <app-vertical-slider
-                name="Deceleration"
+                [name]="'jointControl.deceleration' | translate"
                 data-test="SLD_Motor_Settings_Deceleration"
                 [messageReceiver$]="decelerationSubject$"
                 (sliderEvent)="setDeceleration($event)"

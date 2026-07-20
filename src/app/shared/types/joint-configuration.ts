@@ -25,7 +25,7 @@ export enum JointPathName {
 export const joints: JointConfiguration[] = [
     {
         jointPathName: JointPathName.HEAD,
-        label: "Head",
+        label: "jointControl.joints.head",
         background: "/joint-control/background/head_background.png",
         reversed: false,
         segmentHeight: 0.1508620689655172,
@@ -37,7 +37,7 @@ export const joints: JointConfiguration[] = [
     },
     {
         jointPathName: JointPathName.LEFT_HAND,
-        label: "Left Hand",
+        label: "jointControl.joints.leftHand",
         background: "/joint-control/background/hand_left_background.png",
         reversed: true,
         segmentHeight: 0.1301724137931034,
@@ -54,7 +54,7 @@ export const joints: JointConfiguration[] = [
     },
     {
         jointPathName: JointPathName.RIGHT_HAND,
-        label: "Right Hand",
+        label: "jointControl.joints.rightHand",
         background: "/joint-control/background/hand_right_background.png",
         reversed: false,
         segmentHeight: 0.1301724137931034,
@@ -71,7 +71,7 @@ export const joints: JointConfiguration[] = [
     },
     {
         jointPathName: JointPathName.LEFT_ARM,
-        label: "Left Arm",
+        label: "jointControl.joints.leftArm",
         background: "/joint-control/background/arm_left_background.png",
         reversed: true,
         segmentHeight: 0.1318965517241379,
@@ -87,7 +87,7 @@ export const joints: JointConfiguration[] = [
     },
     {
         jointPathName: JointPathName.RIGHT_ARM,
-        label: "Right Arm",
+        label: "jointControl.joints.rightArm",
         background: "/joint-control/background/arm_right_background.png",
         reversed: false,
         segmentHeight: 0.1318965517241379,

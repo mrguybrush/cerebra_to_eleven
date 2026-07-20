@@ -1,5 +1,5 @@
 <div class="row m-0 pl-3 pr-0 pt-0 pb-1 head-line">
-    Select a touch point to adjust.
+    {{ 'jointControl.selectTouchpoint' | translate }}
 </div>
 <div
     class="d-flex m-0 p-0"
@@ -9,9 +9,9 @@
             class="row m-0 p-0 d-flex align-items-end pb-2"
             [ngClass]="joint.reversed ? 'flex-row-reverse' : 'flex-row'"
             [style]="'height: ' + ((joint.segmentOffset - joint.segmentHeight/2) * 100) + '%;'">
-            <div class="col-3 sidebar-label m-0 p-0">Settings</div>
-            <div class="col-3 sidebar-label m-0 p-0">Active</div>
-            <div class="col-3 sidebar-label m-0 p-0">Current</div>
+            <div class="col-3 sidebar-label m-0 p-0">{{ 'jointControl.settings' | translate }}</div>
+            <div class="col-3 sidebar-label m-0 p-0">{{ 'jointControl.active' | translate }}</div>
+            <div class="col-3 sidebar-label m-0 p-0">{{ 'jointControl.current' | translate }}</div>
         </div>
         <div
             *ngFor="let motor of displayMotors"
@@ -43,18 +43,18 @@
             <div class="touchpoint-wrapper">
                 <div
                     class="m-0 p-0 pe-none touchpoint-background"
-                    alt="backgorund for touchpoint"></div>
+                    [attr.alt]="'jointControl.touchpointBackgroundAlt' | translate"></div>
                 <div
                     [id]="'touch-area-' + motor.motorPathName"
                     [attr.data-test]="'BTN_Touchpoint_' + motor.motorPathName"
                     class="m-0 p-0 touch-area pe-auto"
-                    alt="touch-area of touchpoint"></div>
+                    [attr.alt]="'jointControl.touchAreaAlt' | translate"></div>
             </div>
         </a>
         <img
             class="img-fluid joint-background m-0 p-0"
             [src]="'../../../assets' + joint.background"
-            alt="cursor for joint" />
+            [attr.alt]="'jointControl.cursorAlt' | translate" />
     </div>
 </div>
 <div class="row m-0 p-0 pb-5">

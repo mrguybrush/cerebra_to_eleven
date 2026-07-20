@@ -1,5 +1,6 @@
 export enum rosServices {
     applyMotorSettings = "/apply_motor_settings",
+    applyMovementSettings = "/apply_movement_settings",
     proxyRunProgramStart = "/proxy_run_program_start",
     proxyRunProgramStop = "/proxy_run_program_stop",
     getVoiceAssistantState = "/get_voice_assistant_state",
@@ -12,4 +13,6 @@ export enum rosServices {
     applyJointTrajectory = "/apply_joint_trajectory",
     getMicConfiguration = "/get_mic_configuration",
     setSolidStateRelayState = "/set_solid_state_relay_state",
+    playAudioFromFile = "/play_audio_from_file",
+    playAudioFromSpeech = "/play_audio_from_speech",
 }

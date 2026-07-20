@@ -5,13 +5,40 @@
             data-test="CHK_Show_Motor_Current"
             [checked]="showMotorCurrent"
             (change)="showMotorCurrent = $any($event.target).checked" />
-        Motorstrom anzeigen
+        {{ 'jointControl.allJointsPage.showMotorCurrent' | translate }}
     </label>
+    <label
+        class="show-current-toggle"
+        [title]="'jointControl.allJointsPage.mirrorTooltip' | translate">
+        <input
+            type="checkbox"
+            data-test="CHK_Mirror_Movements"
+            [checked]="mirrorMovements"
+            (change)="mirrorMovements = $any($event.target).checked" />
+        {{ 'jointControl.allJointsPage.mirrorMovements' | translate }}
+    </label>
+    <label
+        *ngIf="systemVisible"
+        class="show-current-toggle"
+        [title]="'jointControl.allJointsPage.jointLimitsTooltip' | translate">
+        <input
+            type="checkbox"
+            data-test="CHK_Joint_Limits_Mode"
+            [checked]="jointLimitsMode"
+            (change)="toggleJointLimitsMode($any($event.target).checked)" />
+        {{ 'jointControl.allJointsPage.jointLimitsMode' | translate }}
+    </label>
+
+    <div
+        *ngIf="jointLimitsMode"
+        class="all-joints-hint joint-limits-hint">
+        {{ 'jointControl.allJointsPage.jointLimitsHint' | translate }}
+    </div>
 
     <!-- Kopf: keine links/rechts-Seite, volle Breite -->
     <table class="joints-table">
         <tr *ngFor="let row of headRows">
-            <td class="joint-label">{{row.label}}</td>
+            <td class="joint-label">{{row.label | translate}}</td>
             <td
                 class="joint-slider-cell"
                 colspan="3">
@@ -19,12 +46,13 @@
                     <input
                         type="checkbox"
                         class="invert-checkbox"
-                        title="Schieberichtung umkehren"
+                        [title]="'jointControl.allJointsPage.invertTooltip' | translate"
                         [attr.data-test]="'CHK_Invert_' + row.motor"
                         [checked]="invertedMotors[row.motor]"
                         (change)="toggleInvert(row.motor, $any($event.target).checked)" />
                     <input
                         type="range"
+                        step="100"
                         class="joint-slider"
                         [class.inverted]="invertedMotors[row.motor]"
                         [attr.data-test]="'SLD_All_' + row.motor"
@@ -40,6 +68,50 @@
                         >{{motorCurrents[row.motor]}} mA</span
                     >
                 </div>
+                <div
+                    *ngIf="jointLimitsMode && !isAggregateMotor(row.motor)"
+                    class="joint-limits-controls">
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Min_' + row.motor"
+                        (click)="setLimitFromCurrentPosition(row.motor, 'min')">
+                        {{ 'jointControl.allJointsPage.setAsMin' | translate }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Min_' + row.motor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.motor, 'min')">
+                        −5&deg;
+                    </button>
+                    <span class="joint-limits-range"
+                        >[{{hundredthsToDegrees(motorRanges[row.motor].min)}}&deg;
+                        …
+                        {{hundredthsToDegrees(motorRanges[row.motor].max)}}&deg;]</span
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Max_' + row.motor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.motor, 'max')">
+                        +5&deg;
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Max_' + row.motor"
+                        (click)="setLimitFromCurrentPosition(row.motor, 'max')">
+                        {{ 'jointControl.allJointsPage.setAsMax' | translate }}
+                    </button>
+                    <span
+                        *ngIf="limitError[row.motor]"
+                        class="joint-limits-error"
+                        >{{ limitError[row.motor] | translate }}</span
+                    >
+                </div>
             </td>
         </tr>
     </table>
@@ -49,22 +121,23 @@
     <table class="joints-table mt-3">
         <tr>
             <th></th>
-            <th>Rechte Seite (Roboter)</th>
-            <th>Linke Seite (Roboter)</th>
+            <th>{{ 'jointControl.allJointsPage.rightSideRobot' | translate }}</th>
+            <th>{{ 'jointControl.allJointsPage.leftSideRobot' | translate }}</th>
         </tr>
         <tr *ngFor="let row of mirroredRows">
-            <td class="joint-label">{{row.label}}</td>
+            <td class="joint-label">{{row.label | translate}}</td>
             <td class="joint-slider-cell">
                 <div class="slider-wrap">
                     <input
                         type="checkbox"
                         class="invert-checkbox"
-                        title="Schieberichtung umkehren"
+                        [title]="'jointControl.allJointsPage.invertTooltip' | translate"
                         [attr.data-test]="'CHK_Invert_' + row.rightMotor"
                         [checked]="invertedMotors[row.rightMotor]"
                         (change)="toggleInvert(row.rightMotor, $any($event.target).checked)" />
                     <input
                         type="range"
+                        step="100"
                         class="joint-slider"
                         [class.inverted]="invertedMotors[row.rightMotor]"
                         [attr.data-test]="'SLD_All_' + row.rightMotor"
@@ -80,18 +153,63 @@
                         >{{motorCurrents[row.rightMotor]}} mA</span
                     >
                 </div>
+                <div
+                    *ngIf="jointLimitsMode && !isAggregateMotor(row.rightMotor)"
+                    class="joint-limits-controls">
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Min_' + row.rightMotor"
+                        (click)="setLimitFromCurrentPosition(row.rightMotor, 'min')">
+                        {{ 'jointControl.allJointsPage.setAsMin' | translate }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Min_' + row.rightMotor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.rightMotor, 'min')">
+                        −5&deg;
+                    </button>
+                    <span class="joint-limits-range"
+                        >[{{hundredthsToDegrees(motorRanges[row.rightMotor].min)}}&deg;
+                        …
+                        {{hundredthsToDegrees(motorRanges[row.rightMotor].max)}}&deg;]</span
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Max_' + row.rightMotor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.rightMotor, 'max')">
+                        +5&deg;
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Max_' + row.rightMotor"
+                        (click)="setLimitFromCurrentPosition(row.rightMotor, 'max')">
+                        {{ 'jointControl.allJointsPage.setAsMax' | translate }}
+                    </button>
+                    <span
+                        *ngIf="limitError[row.rightMotor]"
+                        class="joint-limits-error"
+                        >{{ limitError[row.rightMotor] | translate }}</span
+                    >
+                </div>
             </td>
             <td class="joint-slider-cell">
                 <div class="slider-wrap">
                     <input
                         type="checkbox"
                         class="invert-checkbox"
-                        title="Schieberichtung umkehren"
+                        [title]="'jointControl.allJointsPage.invertTooltip' | translate"
                         [attr.data-test]="'CHK_Invert_' + row.leftMotor"
                         [checked]="invertedMotors[row.leftMotor]"
                         (change)="toggleInvert(row.leftMotor, $any($event.target).checked)" />
                     <input
                         type="range"
+                        step="100"
                         class="joint-slider"
                         [class.inverted]="invertedMotors[row.leftMotor]"
                         [attr.data-test]="'SLD_All_' + row.leftMotor"
@@ -107,16 +225,55 @@
                         >{{motorCurrents[row.leftMotor]}} mA</span
                     >
                 </div>
+                <div
+                    *ngIf="jointLimitsMode && !isAggregateMotor(row.leftMotor)"
+                    class="joint-limits-controls">
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Min_' + row.leftMotor"
+                        (click)="setLimitFromCurrentPosition(row.leftMotor, 'min')">
+                        {{ 'jointControl.allJointsPage.setAsMin' | translate }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Min_' + row.leftMotor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.leftMotor, 'min')">
+                        −5&deg;
+                    </button>
+                    <span class="joint-limits-range"
+                        >[{{hundredthsToDegrees(motorRanges[row.leftMotor].min)}}&deg;
+                        …
+                        {{hundredthsToDegrees(motorRanges[row.leftMotor].max)}}&deg;]</span
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Widen_Max_' + row.leftMotor"
+                        [title]="'jointControl.allJointsPage.widenTooltip' | translate"
+                        (click)="widenLimit(row.leftMotor, 'max')">
+                        +5&deg;
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-regular btn-sm limit-btn"
+                        [attr.data-test]="'BTN_Set_Max_' + row.leftMotor"
+                        (click)="setLimitFromCurrentPosition(row.leftMotor, 'max')">
+                        {{ 'jointControl.allJointsPage.setAsMax' | translate }}
+                    </button>
+                    <span
+                        *ngIf="limitError[row.leftMotor]"
+                        class="joint-limits-error"
+                        >{{ limitError[row.leftMotor] | translate }}</span
+                    >
+                </div>
             </td>
         </tr>
     </table>
 
     <div class="all-joints-hint">
-        Spalten sind gespiegelt (Blick auf den Roboter): links bedienst du
-        seine rechte Seite, rechts seine linke. Der Hand-Slider öffnet und
-        schließt alle Finger der jeweiligen Hand gemeinsam; darunter lässt
-        sich jeder Finger einzeln steuern. Das Häkchen vor jedem Slider
-        kehrt nur dessen Schieberichtung um (rein visuell, wirkt sich nicht
-        auf die Bewegung des Roboters aus).
+        {{ 'jointControl.allJointsPage.hint' | translate }}
     </div>
 </div>

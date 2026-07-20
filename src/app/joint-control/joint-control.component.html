@@ -8,7 +8,7 @@
                 data-test="LNK_Joint_All"
                 class="nav-link sidebar-btn"
                 routerLink="all">
-                Alle Gelenke
+                {{ 'jointControl.allJoints' | translate }}
             </a>
         </li>
         <li
@@ -20,7 +20,7 @@
                 [attr.data-test]="'LNK_Joint_' + joint.jointPathName"
                 class="nav-link sidebar-btn"
                 [routerLink]="joint.jointPathName">
-                {{joint.label}}
+                {{joint.label | translate}}
             </a>
         </li>
     </ul>
