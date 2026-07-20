@@ -371,8 +371,6 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
     <block type="get_motor_current"></block>
     <block type="set_movement_speed"></block>
     <block type="move_to_pose"></block>
-    <block type="run_gesture"></block>
-    <block type="run_movement_sequence"></block>
 </category>
 <category name="%{BKY_PIB_CAT_LANGUAGE}" colour="260">
     <block type="play_audio_from_speech"></block>

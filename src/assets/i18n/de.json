@@ -117,6 +117,7 @@
       "system": "„System“ ausblenden",
       "systemLinkLabel": "Direktlink zum System-Bereich:",
       "systemLinkWarning": "Sobald „System“ ausgeblendet ist, verschwindet der Menüpunkt aus der Navigation – dieser Link bleibt der einzige Weg dorthin zurück. Am besten jetzt kopieren und aufbewahren.",
+      "systemHidesJointLimitsHint": "Achtung: Wenn „System“ ausgeblendet wird, verschwindet auch „Gelenkgrenzen einstellen“ unter Gelenksteuerung → Alle Gelenke.",
       "copyLink": "Link kopieren",
       "linkCopied": "Kopiert."
     }

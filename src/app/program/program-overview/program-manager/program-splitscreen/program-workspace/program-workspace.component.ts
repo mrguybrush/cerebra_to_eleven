@@ -22,10 +22,6 @@ import {GuardsCheckStart, Router} from "@angular/router";
 import {Subscription} from "rxjs";
 import {PoseService} from "src/app/shared/services/pose.service";
 import {Pose} from "src/app/shared/types/pose";
-import {GestureService} from "src/app/shared/services/gesture.service";
-import {Gesture} from "src/app/shared/types/gesture";
-import {MovementSequenceService} from "src/app/shared/services/movement-sequence.service";
-import {MovementSequence} from "src/app/shared/types/movement-sequence";
 import {BlocklyLanguageService} from "src/app/shared/services/blockly-language.service";
 import {VoiceRecordingService} from "src/app/shared/services/voice-recording.service";
 import {VoiceRecording} from "src/app/shared/types/voice-recording";
@@ -76,8 +72,6 @@ export class ProgramWorkspaceComponent
     constructor(
         private router: Router,
         private poseService: PoseService,
-        private gestureService: GestureService,
-        private movementSequenceService: MovementSequenceService,
         private blocklyLanguageService: BlocklyLanguageService,
         private voiceRecordingService: VoiceRecordingService,
         private facialExpressionService: FacialExpressionService,
@@ -127,17 +121,6 @@ export class ProgramWorkspaceComponent
                   ]);
         });
 
-        this.gestureService.getGesturesObservable().subscribe((gestures) => {
-            gestures.length > 0
-                ? this.updateGestureBlockDropdown(gestures)
-                : this.updateGestureBlockDropdown([
-                      new Gesture(
-                          this.blocklyLanguageService.msg("PIB_NO_GESTURE_AVAILABLE"),
-                          "NO GESTURE",
-                      ),
-                  ]);
-        });
-
         this.voiceRecordingService.recordingsSubject.subscribe((recordings) => {
             recordings.length > 0
                 ? this.updatePlayWavBlockDropdown(recordings)
@@ -147,21 +130,6 @@ export class ProgramWorkspaceComponent
         this.facialExpressionService.expressionsSubject.subscribe(
             (expressions) => this.updateEmotionBlockDropdown(expressions),
         );
-
-        this.movementSequenceService
-            .getSequencesObservable()
-            .subscribe((sequences) => {
-                sequences.length > 0
-                    ? this.updateMovementSequenceBlockDropdown(sequences)
-                    : this.updateMovementSequenceBlockDropdown([
-                          new MovementSequence(
-                              this.blocklyLanguageService.msg(
-                                  "PIB_NO_MOVEMENT_SEQUENCE_AVAILABLE",
-                              ),
-                              "NO SEQUENCE",
-                          ),
-                      ]);
-            });
 
         // Blockly.Msg is already populated for the current language by
         // BlocklyLanguageService (applied in its constructor), so the
@@ -330,17 +298,6 @@ export class ProgramWorkspaceComponent
         }
     }
 
-    updateGestureBlockDropdown(gestures: Gesture[]): void {
-        const gestureOptions = gestures.map((gesture) => [
-            gesture.name,
-            gesture.gestureId,
-        ]);
-        Blockly.Blocks["run_gesture"].getGestures = () => gestureOptions;
-        if (this.workspace) {
-            this.workspaceContent = this.codeVisual;
-        }
-    }
-
     updatePlayWavBlockDropdown(recordings: VoiceRecording[]): void {
         const wavOptions =
             recordings.length > 0
@@ -382,15 +339,4 @@ export class ProgramWorkspaceComponent
         }
     }
 
-    updateMovementSequenceBlockDropdown(sequences: MovementSequence[]): void {
-        const sequenceOptions = sequences.map((sequence) => [
-            sequence.name,
-            sequence.sequenceId,
-        ]);
-        Blockly.Blocks["run_movement_sequence"].getMovementSequences = () =>
-            sequenceOptions;
-        if (this.workspace) {
-            this.workspaceContent = this.codeVisual;
-        }
-    }
 }

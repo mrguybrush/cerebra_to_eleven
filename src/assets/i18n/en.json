@@ -117,6 +117,7 @@
       "system": "Hide \"System\"",
       "systemLinkLabel": "Direct link to the System section:",
       "systemLinkWarning": "Once \"System\" is hidden, the menu item disappears from navigation - this link stays the only way back. Best to copy and save it now.",
+      "systemHidesJointLimitsHint": "Note: hiding \"System\" also hides \"Set joint limits\" under Joint Control → All Joints.",
       "copyLink": "Copy link",
       "linkCopied": "Copied."
     }
