@@ -9,6 +9,7 @@ import {
     of,
 } from "rxjs";
 import {MotorSettingsMessage} from "../../ros-types/msg/motor-settings-message";
+import {MovementSettingsMessage} from "../../ros-types/msg/movement-settings-message";
 import {DiagnosticStatus} from "../../ros-types/msg/diagnostic-status.message";
 import {JointTrajectoryMessage} from "../../ros-types/msg/joint-trajectory-message";
 import {ChatMessage} from "../../ros-types/msg/chat-message";
@@ -118,6 +119,8 @@ export class RosService implements IRosService {
         new Subject<JointTrajectoryMessage>();
     motorSettingsReceiver$: Subject<MotorSettingsMessage> =
         new Subject<MotorSettingsMessage>();
+    movementSettingsReceiver$: Subject<MovementSettingsMessage> =
+        new Subject<MovementSettingsMessage>();
     proxyRunProgramFeedbackReceiver$: Subject<ProxyRunProgramFeedback> =
         new Subject<ProxyRunProgramFeedback>();
     proxyRunProgramResultReceiver$: Subject<ProxyRunProgramResult> =
@@ -136,6 +139,8 @@ export class RosService implements IRosService {
         new BehaviorSubject<any>({
             turned_on: false,
         });
+    autoOffSecondsRemainingReceiver$: BehaviorSubject<number> =
+        new BehaviorSubject<number>(-1);
     cameraTimer: any;
 
     private motorNames = motors.map((motor) => motor.motorName);
@@ -386,6 +391,27 @@ export class RosService implements IRosService {
                     subject.error(
                         new MotorSettingsError(motorSettingsMessage, false),
                     ),
+            });
+        return subject;
+    }
+
+    applyMovementSettings(
+        movementSettingsMessage: MovementSettingsMessage,
+    ): Observable<void> {
+        console.info(JSON.stringify(movementSettingsMessage));
+        const subject = new Subject<void>();
+        this.apiService
+            .put(UrlConstants.MOVEMENT_SETTINGS, {
+                speedPercent: movementSettingsMessage.speed_percent,
+            })
+            .subscribe({
+                next: (_) => {
+                    this.movementSettingsReceiver$.next(
+                        structuredClone(movementSettingsMessage),
+                    );
+                    subject.next();
+                },
+                error: (error) => subject.error(error),
             });
         return subject;
     }

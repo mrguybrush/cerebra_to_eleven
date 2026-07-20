@@ -86,3 +86,12 @@ svg circle {
     fill: $blue-color;
     stroke: $blue-color;
 }
+
+.auto-off-countdown {
+    color: $white-color;
+    font-size: 0.75rem;
+    text-align: center;
+    opacity: 0.8;
+    margin: 4px 8px;
+    max-width: 110px;
+}

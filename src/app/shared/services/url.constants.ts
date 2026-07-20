@@ -17,6 +17,12 @@ export enum UrlConstants {
     GESTURE = "/gesture-control/gestures",
     MOVEMENT_SEQUENCE = "/gesture-control/sequences",
     JOINT_MAPPING = "/gesture-control/joint-mapping",
+    MOTION_CAPTURE_SETTINGS = "/gesture-control/settings",
     VOICE_RECORDINGS = "/voice-recordings",
     LEARNING_GROUPS = "/learning-groups",
+    AUTO_OFF = "/system-settings/auto-off",
+    RESTART_DISPLAY = "/system-settings/restart-display",
+    MENU_VISIBILITY = "/system-settings/menu-visibility",
+    MOVEMENT_SETTINGS = "/movement-settings",
+    FACIAL_EXPRESSIONS = "/facial-expressions",
 }

@@ -1,7 +1,13 @@
 import {ErrorHandler, NgModule} from "@angular/core";
 import {ReactiveFormsModule, FormsModule} from "@angular/forms";
 import {BrowserModule} from "@angular/platform-browser";
-import {HttpClientModule} from "@angular/common/http";
+import {HttpClient, HttpClientModule} from "@angular/common/http";
+import {TranslateHttpLoader} from "@ngx-translate/http-loader";
+import {TranslateLoader, TranslateModule} from "@ngx-translate/core";
+
+export function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http, "./assets/i18n/", ".json");
+}
 
 import {AppRoutingModule} from "./app-routing.module";
 import {AppComponent} from "./app.component";
@@ -10,6 +16,7 @@ import {MatDialogModule} from "@angular/material/dialog";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {NgbModule, NgbDropdownModule} from "@ng-bootstrap/ng-bootstrap";
 import {MatSliderModule} from "@angular/material/slider";
+import {DragDropModule} from "@angular/cdk/drag-drop";
 import {ProgramManagerComponent} from "./program/program-overview/program-manager/program-manager.component";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 
@@ -53,6 +60,7 @@ import {SystemComponent} from "./system/system.component";
 import {SettingsComponent} from "./system/settings/settings.component";
 import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
 import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.component";
+import {FacialExpressionComponent} from "./facial-expression/facial-expression.component";
 
 @NgModule({
     declarations: [
@@ -94,6 +102,7 @@ import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.com
         SettingsComponent,
         ProgramAssignmentComponent,
         PinAssignmentComponent,
+        FacialExpressionComponent,
     ],
     imports: [
         BrowserModule,
@@ -104,6 +113,7 @@ import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.com
         MatTooltipModule,
         NgbModule,
         MatSliderModule,
+        DragDropModule,
         BrowserAnimationsModule,
         NgbDropdownModule,
         FormsModule,
@@ -111,6 +121,13 @@ import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.com
         HighlightModule,
         NgOptimizedImage,
         MarkdownModule.forRoot(),
+        TranslateModule.forRoot({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient],
+            },
+        }),
     ],
     providers: [
         {

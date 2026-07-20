@@ -22,6 +22,7 @@ import {programCodeResolver} from "./program/program-overview/program-manager/pr
 import {PoseComponent} from "./pose/pose.component";
 import {MotionCaptureComponent} from "./motion-capture/motion-capture.component";
 import {VoiceRecordingComponent} from "./voice-recording/voice-recording.component";
+import {FacialExpressionComponent} from "./facial-expression/facial-expression.component";
 import {AllJointsComponent} from "./joint-control/all-joints/all-joints.component";
 import {HardwareIdComponent} from "./system/hardware-id/hardware-id.component";
 import {RgbLedButtonComponent} from "./program/program-overview/rgb-led-button/rgb-led-button.component";
@@ -92,6 +93,10 @@ const routes: Routes = [
     {
         path: "voice-recording",
         component: VoiceRecordingComponent,
+    },
+    {
+        path: "pose/facial-expression",
+        component: FacialExpressionComponent,
     },
     {
         path: "camera",

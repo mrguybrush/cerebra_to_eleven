@@ -28,6 +28,17 @@ export class ApiService {
         return this.http.put(this.baseUrl + url, requestBody);
     }
 
+    /** For replacing an uploaded file (multipart/form-data) via PUT. */
+    putFile(url: string, formData: FormData): Observable<any> {
+        return this.http.put(this.baseUrl + url, formData);
+    }
+
+    /** Fetches raw binary content (e.g. a gif file) instead of JSON - needed
+     * to republish an uploaded file's bytes onto a ROS topic. */
+    getBinary(url: string): Observable<ArrayBuffer> {
+        return this.http.get(this.baseUrl + url, {responseType: "arraybuffer"});
+    }
+
     patch(url: string, requestBody: object): Observable<any> {
         return this.http.patch(this.baseUrl + url, requestBody);
     }

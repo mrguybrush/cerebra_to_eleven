@@ -10,6 +10,7 @@ import {
     map,
 } from "rxjs";
 import {MotorSettingsMessage} from "../../ros-types/msg/motor-settings-message";
+import {MovementSettingsMessage} from "../../ros-types/msg/movement-settings-message";
 import {DiagnosticStatus} from "../../ros-types/msg/diagnostic-status.message";
 import {JointTrajectoryMessage} from "../../ros-types/msg/joint-trajectory-message";
 import {rosDataTypes} from "../../ros-types/path/ros-datatypes.enum";
@@ -27,6 +28,10 @@ import {
     ApplyMotorSettingsRequest,
     ApplyMotorSettingsResponse,
 } from "../../ros-types/srv/apply-motor-settings";
+import {
+    ApplyMovementSettingsRequest,
+    ApplyMovementSettingsResponse,
+} from "../../ros-types/srv/apply-movement-settings";
 import {
     RunProgramFeedback,
     RunProgramResult,
@@ -89,6 +94,8 @@ export class RosService implements IRosService {
         new Subject<JointTrajectoryMessage>();
     motorSettingsReceiver$: Subject<MotorSettingsMessage> =
         new Subject<MotorSettingsMessage>();
+    movementSettingsReceiver$: Subject<MovementSettingsMessage> =
+        new Subject<MovementSettingsMessage>();
     proxyRunProgramFeedbackReceiver$: Subject<ProxyRunProgramFeedback> =
         new Subject<ProxyRunProgramFeedback>();
     proxyRunProgramResultReceiver$: Subject<ProxyRunProgramResult> =
@@ -106,6 +113,10 @@ export class RosService implements IRosService {
     solidStateRelayStateReceiver$: BehaviorSubject<
         SolidStateRelayState | undefined
     > = new BehaviorSubject<SolidStateRelayState | undefined>(undefined);
+    // -1 = nicht anwendbar (Auto-Off deaktiviert oder Roboter schon aus) -
+    // siehe relay_control.py _publish_countdown.
+    autoOffSecondsRemainingReceiver$: BehaviorSubject<number> =
+        new BehaviorSubject<number>(-1);
     gestureCaptureResultReceiver$: Subject<string> = new Subject<string>();
     gestureRetargetTargetsReceiver$: Subject<string> = new Subject<string>();
     gestureRetargetCandidatesReceiver$: Subject<string> = new Subject<string>();
@@ -119,6 +130,7 @@ export class RosService implements IRosService {
     private cameraQualityFactorTopic!: ROSLIB.Topic;
     private jointTrajectoryTopic!: ROSLIB.Topic;
     private motorSettingsTopic!: ROSLIB.Topic;
+    private movementSettingsTopic!: ROSLIB.Topic;
     private deleteTokenTopic!: ROSLIB.Topic;
     private proxyRunProgramFeedbackTopic!: ROSLIB.Topic<ProxyRunProgramFeedback>;
     private proxyRunProgramResultTopic!: ROSLIB.Topic<ProxyRunProgramResult>;
@@ -128,12 +140,23 @@ export class RosService implements IRosService {
     private voiceAssistantStateTopic!: ROSLIB.Topic<VoiceAssistantState>;
     private chatIsListeningTopic!: ROSLIB.Topic<ChatIsListening>;
     private solidStateRelayStateTopic!: ROSLIB.Topic<SolidStateRelayState>;
+    private autoOffSecondsRemainingTopic!: ROSLIB.Topic;
     private gestureCaptureControlTopic!: ROSLIB.Topic;
     private gestureCaptureResultTopic!: ROSLIB.Topic;
     private gestureRetargetTargetsTopic!: ROSLIB.Topic;
     private gestureRetargetCandidatesTopic!: ROSLIB.Topic;
     private browserPoseLandmarksTopic!: ROSLIB.Topic;
     private audioStreamTopic!: ROSLIB.Topic;
+    private displayImageTopic!: ROSLIB.Topic;
+    private oakNnControlTopic!: ROSLIB.Topic;
+    private oakDepthControlTopic!: ROSLIB.Topic;
+    private showIpOverlayTopic!: ROSLIB.Topic;
+    private playAudioFromFileService!: ROSLIB.Service;
+    private playAudioFromSpeechService!: ROSLIB.Service;
+    // Landmarks der experimentellen On-Device-Erkennung (OAK-NN) - dieselbe
+    // Topic, auf die auch der Browser-Tracker publiziert; abonniert nur im
+    // NN-Modus der Motion-Capture-Seite (subscribeBrowserPoseLandmarks).
+    browserPoseLandmarksReceiver$: Subject<string> = new Subject<string>();
     private getMicConfigurationService!: ROSLIB.Service;
 
     private existTokenService!: ROSLIB.Service<
@@ -163,6 +186,10 @@ export class RosService implements IRosService {
     private applyMotorSettingsService!: ROSLIB.Service<
         ApplyMotorSettingsRequest,
         ApplyMotorSettingsResponse
+    >;
+    private applyMovementSettingsService!: ROSLIB.Service<
+        ApplyMovementSettingsRequest,
+        ApplyMovementSettingsResponse
     >;
     private proxyProgramStartService!: ROSLIB.Service<
         ProxyRunProgramStartRequest,
@@ -259,6 +286,10 @@ export class RosService implements IRosService {
             rosTopics.motorSettingsTopicName,
             rosDataTypes.motorSettings,
         );
+        this.movementSettingsTopic = this.createRosTopic(
+            rosTopics.movementSettingsTopicName,
+            rosDataTypes.movementSettings,
+        );
         this.proxyRunProgramFeedbackTopic = this.createRosTopic(
             rosTopics.proxyRunProgramFeedback,
             rosDataTypes.proxyRunProgramFeedback,
@@ -282,6 +313,10 @@ export class RosService implements IRosService {
         this.solidStateRelayStateTopic = this.createRosTopic(
             rosTopics.solidStateRelayState,
             rosDataTypes.solidStateRelayState,
+        );
+        this.autoOffSecondsRemainingTopic = this.createRosTopic(
+            rosTopics.autoOffSecondsRemaining,
+            rosDataTypes.int32,
         );
         this.gestureCaptureControlTopic = this.createRosTopic(
             rosTopics.gestureCaptureControl,
@@ -307,6 +342,30 @@ export class RosService implements IRosService {
             rosTopics.audioStream,
             rosDataTypes.int16MultiArray,
         );
+        this.displayImageTopic = this.createRosTopic(
+            rosTopics.displayImage,
+            rosDataTypes.displayImage,
+        );
+        this.oakNnControlTopic = this.createRosTopic(
+            rosTopics.oakNnControl,
+            rosDataTypes.string,
+        );
+        this.oakDepthControlTopic = this.createRosTopic(
+            rosTopics.oakDepthControl,
+            rosDataTypes.string,
+        );
+        this.showIpOverlayTopic = this.createRosTopic(
+            rosTopics.showIpOverlay,
+            rosDataTypes.empty,
+        );
+        this.playAudioFromFileService = this.createRosService(
+            rosServices.playAudioFromFile,
+            rosDataTypes.playAudioFromFile,
+        );
+        this.playAudioFromSpeechService = this.createRosService(
+            rosServices.playAudioFromSpeech,
+            rosDataTypes.playAudioFromSpeech,
+        );
         this.getMicConfigurationService = this.createRosService(
             rosServices.getMicConfiguration,
             rosDataTypes.getMicConfiguration,
@@ -315,6 +374,10 @@ export class RosService implements IRosService {
         this.applyMotorSettingsService = this.createRosService(
             rosServices.applyMotorSettings,
             rosDataTypes.applyMotorSettings,
+        );
+        this.applyMovementSettingsService = this.createRosService(
+            rosServices.applyMovementSettings,
+            rosDataTypes.applyMovementSettings,
         );
         this.proxyProgramStartService = this.createRosService(
             rosServices.proxyRunProgramStart,
@@ -410,12 +473,17 @@ export class RosService implements IRosService {
         this.subscribeChatIsListeningTopic();
         this.subscribeChatMessageTopic();
         this.subscribeMotorSettingsTopic();
+        this.subscribeMovementSettingsTopic();
         this.subscribeMotorCurrentTopic();
         this.subscribeJointTrajectoryTopic();
         this.subscribeProxyRunProgramFeedbackTopic();
         this.subscribeProxyRunProgramResultTopic();
         this.subscribeProxyRunProgramStatusTopic();
         this.subscribeSolidStateRelayStateTopic();
+        this.subscribeDefaultRosMessageTopic(
+            this.autoOffSecondsRemainingTopic,
+            this.autoOffSecondsRemainingReceiver$,
+        );
     }
 
     private subscribeDefaultRosMessageTopic(
@@ -450,6 +518,14 @@ export class RosService implements IRosService {
     private subscribeMotorSettingsTopic() {
         this.motorSettingsTopic.subscribe((message) => {
             this.motorSettingsReceiver$.next(message as MotorSettingsMessage);
+        });
+    }
+
+    private subscribeMovementSettingsTopic() {
+        this.movementSettingsTopic.subscribe((message) => {
+            this.movementSettingsReceiver$.next(
+                message as MovementSettingsMessage,
+            );
         });
     }
 
@@ -750,6 +826,32 @@ export class RosService implements IRosService {
         return subject;
     }
 
+    applyMovementSettings(
+        movementSettingsMessage: MovementSettingsMessage,
+    ): Observable<void> {
+        const subject: Subject<void> = new ReplaySubject();
+        try {
+            this.applyMovementSettingsService.callService(
+                {movement_settings: movementSettingsMessage},
+                (response) => {
+                    if (response["settings_applied"]) {
+                        subject.next();
+                    } else {
+                        subject.error(
+                            new Error("failed to apply movement-settings."),
+                        );
+                    }
+                },
+                (errorMsg) => {
+                    subject.error(new Error(errorMsg));
+                },
+            );
+        } catch (error) {
+            subject.error(error);
+        }
+        return subject;
+    }
+
     private getfilteredFeedback(
         proxyGoalId: string,
     ): Observable<RunProgramFeedback> {
@@ -940,5 +1042,137 @@ export class RosService implements IRosService {
 
     publishProgramInput(input: string, mpid: number) {
         this.programInputTopic.publish({input, mpid});
+    }
+
+    /** Setzt die Augen auf dem pib-Display (Gesichtsausdruck-Buttons auf
+     * der Posen-Seite). imageIdValue = ImageId-Konstante aus
+     * datatypes/msg/ImageId.msg (2=animiert ... 7=muede); Nachricht ist
+     * identisch zu dem, was Blockly-Programme publizieren. */
+    setDisplayEmotion(imageIdValue: number) {
+        if (!this.displayImageTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            id: {value: imageIdValue},
+            format: {value: 0},
+            data: [],
+        });
+        this.displayImageTopic.publish(message);
+    }
+
+    /** Zeigt einen benutzerdefinierten Gesichtsausdruck (siehe Verwaltungs-
+     * seite "Gesichtsausdruecke") direkt als rohe GIF-Bytes an - nutzt
+     * ImageId.CUSTOM (=1)/ImageFormat.ANIMATED_GIF (=0), die einzigen zwei
+     * Werte, bei denen 'data' laut DisplayImage.msg tatsaechlich befuellt
+     * werden soll (bei allen anderen ids wird das Bild serverseitig aus
+     * einer fest einprogrammierten Datei geladen). */
+    setCustomDisplayImage(gifBytes: Uint8Array) {
+        if (!this.displayImageTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const message = new ROSLIB.Message({
+            id: {value: 1},
+            format: {value: 0},
+            data: Array.from(gifBytes),
+        });
+        this.displayImageTopic.publish(message);
+    }
+
+    /** Spielt eine WAV-Sprachaufnahme direkt auf pibs Lautsprecher ab -
+     * nutzt denselben play_audio_from_file-Service wie der Blockly-Block
+     * "play_wav"; die Aufnahmen sind in den Voice-Assistant-Container
+     * unter /data/voice_recordings gemountet. */
+    playRecordingOnRobot(filename: string) {
+        if (!this.playAudioFromFileService) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const request = new ROSLIB.ServiceRequest({
+            filepath: "/data/voice_recordings/" + filename,
+            join: false,
+        });
+        this.playAudioFromFileService.callService(
+            request,
+            () => undefined,
+            (error) => console.error("play_audio_from_file failed: " + error),
+        );
+    }
+
+    /** Spricht beliebigen Text auf pibs Lautsprecher - nutzt denselben
+     * play_audio_from_speech-Service wie der Blockly-Block "als ... sage
+     * ...". gender/language werden nur fuer die Cloud-TTS-Stimmauswahl
+     * gebraucht - ist in den Voice-Settings eine lokale Piper-Stimme
+     * aktiviert, ignoriert das Backend diese Felder und nutzt die dort
+     * konfigurierte Stimme (siehe audio_player.py _resolve_local_voice). */
+    playAudioFromSpeech(speech: string, gender: string, language: string) {
+        if (!this.playAudioFromSpeechService) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        const request = new ROSLIB.ServiceRequest({
+            speech,
+            gender,
+            language,
+            join: false,
+        });
+        this.playAudioFromSpeechService.callService(
+            request,
+            () => undefined,
+            (error) => console.error("play_audio_from_speech failed: " + error),
+        );
+    }
+
+    /** Schaltet die experimentelle On-Device-Erkennung (OAK-NN) im
+     * Kamera-Node an/aus - siehe oak_d_lite/stereo.py oak_nn_control. */
+    setOakNnActive(active: boolean) {
+        if (!this.oakNnControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        this.oakNnControlTopic.publish(
+            new ROSLIB.Message({data: active ? "start" : "stop"}),
+        );
+    }
+
+    /** Schaltet den Stereo-Tiefenstream der OAK-D an/aus (nur waehrend
+     * Motion Capture aktiv) - gesture_control ersetzt damit die vom
+     * MediaPipe-Modell geschaetzte Tiefe durch echte Messwerte, wodurch
+     * Armdrehung/Ellbogen geometrisch korrekt werden. Siehe
+     * oak_d_lite/stereo.py (oak_depth_control) + depth_fusion.py. */
+    setOakDepthActive(active: boolean) {
+        if (!this.oakDepthControlTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        this.oakDepthControlTopic.publish(
+            new ROSLIB.Message({data: active ? "start" : "stop"}),
+        );
+    }
+
+    /** Laesst pibs Display das IP-Adresse+QR-Code-Overlay zeigen (fuer ein
+     * paar Sekunden, dann zurueck zu den Augen) - siehe display.py
+     * on_show_ip_overlay. Genutzt, wenn im Frontend der QR-Code geoeffnet
+     * wird, damit derselbe Code auch direkt am Roboter scannbar ist. */
+    showIpOverlayOnDisplay() {
+        if (!this.showIpOverlayTopic) {
+            console.error("ROS is not connected.");
+            return;
+        }
+        this.showIpOverlayTopic.publish(new ROSLIB.Message({}));
+    }
+
+    /** Abonniert die Landmarks-Topic fuer den NN-Modus der Motion-Capture-
+     * Seite (dieselbe Topic, auf die der Browser-Tracker publiziert). */
+    subscribeBrowserPoseLandmarks() {
+        this.subscribeDefaultRosMessageTopic(
+            this.browserPoseLandmarksTopic,
+            this.browserPoseLandmarksReceiver$,
+        );
+    }
+
+    unsubscribeBrowserPoseLandmarks() {
+        this.browserPoseLandmarksTopic.unsubscribe();
     }
 }

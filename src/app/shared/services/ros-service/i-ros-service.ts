@@ -6,6 +6,7 @@ import {
 } from "../../ros-types/action/run-program";
 import {JointTrajectoryMessage} from "../../ros-types/msg/joint-trajectory-message";
 import {MotorSettingsMessage} from "../../ros-types/msg/motor-settings-message";
+import {MovementSettingsMessage} from "../../ros-types/msg/movement-settings-message";
 import {VoiceAssistantState} from "../../ros-types/msg/voice-assistant-state";
 import {DiagnosticStatus} from "../../ros-types/msg/diagnostic-status.message";
 import {ProxyRunProgramResult} from "../../ros-types/msg/proxy-run-program-result";
@@ -23,6 +24,7 @@ export interface IRosService {
     cameraQualityFactorReceiver$: BehaviorSubject<number>;
     jointTrajectoryReceiver$: Subject<JointTrajectoryMessage>;
     motorSettingsReceiver$: Subject<MotorSettingsMessage>;
+    movementSettingsReceiver$: Subject<MovementSettingsMessage>;
     proxyRunProgramFeedbackReceiver$: Subject<ProxyRunProgramFeedback>;
     proxyRunProgramResultReceiver$: Subject<ProxyRunProgramResult>;
     proxyRunProgramStatusReceiver$: Subject<ProxyRunProgramStatus>;
@@ -32,6 +34,7 @@ export interface IRosService {
     solidStateRelayStateReceiver$: BehaviorSubject<
         SolidStateRelayState | undefined
     >;
+    autoOffSecondsRemainingReceiver$: BehaviorSubject<number>;
     connectionStatus$: Observable<boolean>;
 
     setVoiceAssistantState: (
@@ -45,6 +48,10 @@ export interface IRosService {
     applyMotorSettings: (
         motorSettingsMessage: MotorSettingsMessage,
     ) => Observable<MotorSettingsMessage>;
+
+    applyMovementSettings: (
+        movementSettingsMessage: MovementSettingsMessage,
+    ) => Observable<void>;
 
     runProgram: (
         programNumber: string,
