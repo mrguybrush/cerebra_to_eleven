@@ -51,12 +51,13 @@
             (click)="playCustomExpression(expression.expressionId)">
             {{expression.name}}
         </button>
-        <a
+        <button
+            type="button"
             routerLink="/pose/facial-expression"
-            class="ml-2 mb-1"
-            data-test="LNK_Manage_Facial_Expressions"
-            >{{ 'pose.manageFacialExpressions' | translate }}</a
-        >
+            class="btn btn-sm mr-2 mb-1 manage-facial-expressions-btn"
+            data-test="LNK_Manage_Facial_Expressions">
+            {{ 'pose.manageFacialExpressions' | translate }}
+        </button>
     </div>
 
     <!-- Text aussprechen: spielt den eingegebenen Satz ueber pibs

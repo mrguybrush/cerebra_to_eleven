@@ -146,3 +146,17 @@ button:focus {
     width: 420px;
     max-width: 90vw;
 }
+
+/* "Gesichtsausdruecke verwalten" soll sich als eigene Aktion von den
+   Emotion-Buttons abheben statt wie ein normaler Text-Link auszusehen. */
+.manage-facial-expressions-btn {
+    background-color: #e10072;
+    border-color: #e10072;
+    color: #fff;
+}
+
+.manage-facial-expressions-btn:hover {
+    background-color: #ff2f96;
+    border-color: #ff2f96;
+    color: #fff;
+}

@@ -29,6 +29,8 @@ import {MovementSequence} from "src/app/shared/types/movement-sequence";
 import {BlocklyLanguageService} from "src/app/shared/services/blockly-language.service";
 import {VoiceRecordingService} from "src/app/shared/services/voice-recording.service";
 import {VoiceRecording} from "src/app/shared/types/voice-recording";
+import {FacialExpressionService} from "src/app/shared/services/facial-expression.service";
+import {FacialExpression} from "src/app/shared/types/facial-expression";
 
 @Component({
     selector: "app-program-workspace",
@@ -78,6 +80,7 @@ export class ProgramWorkspaceComponent
         private movementSequenceService: MovementSequenceService,
         private blocklyLanguageService: BlocklyLanguageService,
         private voiceRecordingService: VoiceRecordingService,
+        private facialExpressionService: FacialExpressionService,
     ) {}
 
     get workspaceContent(): string {
@@ -140,6 +143,10 @@ export class ProgramWorkspaceComponent
                 ? this.updatePlayWavBlockDropdown(recordings)
                 : this.updatePlayWavBlockDropdown([]);
         });
+
+        this.facialExpressionService.expressionsSubject.subscribe(
+            (expressions) => this.updateEmotionBlockDropdown(expressions),
+        );
 
         this.movementSequenceService
             .getSequencesObservable()
@@ -343,6 +350,33 @@ export class ProgramWorkspaceComponent
                   ])
                 : [["keine Aufnahme vorhanden", "NO_RECORDING"]];
         Blockly.Blocks["play_wav"].getWavFiles = () => wavOptions;
+        if (this.workspace) {
+            this.workspaceContent = this.codeVisual;
+        }
+    }
+
+    /** Fixed emotions (see display-block.ts) plus any custom facial
+     * expressions (see the "Gesichtsausdruecke verwalten" page) - the
+     * latter's value is prefixed "CUSTOM:" so the generator can tell them
+     * apart (see function-declarations.ts's SET_EYES_EMOTION_FUNCTION). */
+    updateEmotionBlockDropdown(expressions: FacialExpression[]): void {
+        const fixedOptions = [
+            [Blockly.Msg["PIB_EYES_NEUTRAL"] || "neutral", "NEUTRAL"],
+            [Blockly.Msg["PIB_EYES_HAPPY"] || "happy", "HAPPY"],
+            [Blockly.Msg["PIB_EYES_SAD"] || "sad", "SAD"],
+            [Blockly.Msg["PIB_EYES_ANGRY"] || "angry", "ANGRY"],
+            [Blockly.Msg["PIB_EYES_SURPRISED"] || "surprised", "SURPRISED"],
+            [Blockly.Msg["PIB_EYES_SLEEPY"] || "sleepy", "SLEEPY"],
+            [Blockly.Msg["PIB_EYES_STAR"] || "star-struck", "STAR"],
+            [Blockly.Msg["PIB_EYES_COOL"] || "cool", "COOL"],
+            [Blockly.Msg["PIB_EYES_WINK"] || "wink", "WINK"],
+        ];
+        const customOptions = expressions.map((expression) => [
+            expression.name,
+            `CUSTOM:${expression.expressionId}`,
+        ]);
+        const emotionOptions = [...fixedOptions, ...customOptions];
+        Blockly.Blocks["set_eyes_emotion"].getEmotions = () => emotionOptions;
         if (this.workspace) {
             this.workspaceContent = this.codeVisual;
         }
