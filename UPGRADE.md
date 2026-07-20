@@ -8,6 +8,4 @@ Kurzfassung für dieses Repo allein (öffentlich, kein Zugriffs-Setup nötig):
 git remote set-url origin https://github.com/mrguybrush/cerebra_to_eleven.git
 git fetch origin
 git pull --ff-only origin main
-git submodule sync
-git submodule update --init --recursive
 ```
