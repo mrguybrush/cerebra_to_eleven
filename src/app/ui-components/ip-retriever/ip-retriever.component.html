@@ -5,6 +5,21 @@
         class="ip-nav"
         id="ip-nav"
         data-test="LBL_IP_Address">
-        IP: {{ hostIp || 'Unable to determine address'}}
+        IP: {{ hostIp || ('ipRetriever.unavailable' | translate) }}
     </a>
+    <canvas
+        #qrCanvas
+        class="qr-canvas-inline"
+        data-test="CANVAS_Ip_Qr_Code"
+        [title]="'ipRetriever.qrHint' | translate"
+        (click)="toggleFullscreen()"></canvas>
+</div>
+
+<div
+    *ngIf="fullscreen"
+    class="qr-fullscreen-overlay"
+    data-test="OVERLAY_Ip_Qr_Fullscreen"
+    (click)="toggleFullscreen()">
+    <canvas #qrCanvasFullscreen data-test="CANVAS_Ip_Qr_Fullscreen"></canvas>
+    <div class="qr-hint mt-2">{{ 'ipRetriever.qrHint' | translate }}</div>
 </div>

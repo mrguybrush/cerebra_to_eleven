@@ -1,13 +1,9 @@
 <div>
     <div class="mb-3 pl-2 form-headline">
-        Programme und Posen den Lerngruppen zuordnen.
+        {{ 'programAssignment.headline' | translate }}
     </div>
     <div class="assignment-hint pl-2">
-        Ein Programm oder eine Pose kann nur einer Gruppe angehören. Zum
-        Verschieben einfach die Gruppe in der Dropdown-Liste wechseln - zum
-        Kopieren in eine weitere Gruppe die Zielgruppe rechts auswählen und
-        auf „Kopieren" klicken. Gesten und Bewegungssequenzen sind hier noch
-        nicht enthalten.
+        {{ 'programAssignment.hint' | translate }}
     </div>
 
     <table class="assignment-table">
@@ -17,24 +13,24 @@
                     class="sortable"
                     data-test="TH_Sort_Name"
                     (click)="sortBy('name')">
-                    Name
+                    {{ 'programAssignment.name' | translate }}
                     <span *ngIf="sortColumn === 'name'">{{sortAscending ? "▲" : "▼"}}</span>
                 </th>
                 <th
                     class="sortable"
                     data-test="TH_Sort_Kind"
                     (click)="sortBy('kind')">
-                    Typ
+                    {{ 'programAssignment.type' | translate }}
                     <span *ngIf="sortColumn === 'kind'">{{sortAscending ? "▲" : "▼"}}</span>
                 </th>
                 <th
                     class="sortable"
                     data-test="TH_Sort_Group"
                     (click)="sortBy('group')">
-                    Gruppe
+                    {{ 'programAssignment.group' | translate }}
                     <span *ngIf="sortColumn === 'group'">{{sortAscending ? "▲" : "▼"}}</span>
                 </th>
-                <th>Kopieren nach</th>
+                <th>{{ 'programAssignment.copyTo' | translate }}</th>
                 <th></th>
             </tr>
         </thead>
@@ -52,7 +48,7 @@
                         <span
                             *ngIf="!row.deletable"
                             class="locked-hint"
-                            title="Standard-Eintrag, kann nicht geändert werden"
+                            [title]="'programAssignment.lockedHint' | translate"
                             >🔒</span
                         >
                     </ng-container>
@@ -67,18 +63,22 @@
                             (blur)="confirmRename(row)" />
                     </ng-container>
                 </td>
-                <td>{{row.kind === "program" ? "Programm" : "Pose"}}</td>
+                <td>{{row.kind === "program" ? ('programAssignment.kindProgram' | translate) : ('programAssignment.kindPose' | translate)}}</td>
                 <td>
                     <select
                         class="setting-select"
                         [attr.data-test]="'SEL_Group_' + row.name"
                         [disabled]="!row.deletable"
-                        [value]="row.learningGroupId ?? ''"
                         (change)="onGroupChange(row, $any($event.target).value)">
-                        <option value="">(keine Gruppe)</option>
+                        <option
+                            value=""
+                            [selected]="!row.learningGroupId"
+                            >{{ 'programAssignment.noGroup' | translate }}</option
+                        >
                         <option
                             *ngFor="let group of groups"
-                            [value]="group.groupId">
+                            [value]="group.groupId"
+                            [selected]="group.groupId === row.learningGroupId">
                             {{group.name}}
                         </option>
                     </select>
@@ -89,7 +89,7 @@
                             class="setting-select"
                             [attr.data-test]="'SEL_CopyTarget_' + row.name"
                             [(ngModel)]="row.copyTargetGroupId">
-                            <option value="">(keine Gruppe)</option>
+                            <option value="">{{ 'programAssignment.noGroup' | translate }}</option>
                             <option
                                 *ngFor="let group of groups"
                                 [value]="group.groupId">
@@ -101,7 +101,7 @@
                             class="btn btn-regular btn-sm"
                             [attr.data-test]="'BTN_Copy_' + row.name"
                             (click)="copyToGroup(row)">
-                            Kopieren
+                            {{ 'programAssignment.copy' | translate }}
                         </button>
                     </div>
                 </td>
@@ -112,7 +112,7 @@
                         <button
                             type="button"
                             class="rename-button flex-shrink-0"
-                            title="Umbenennen"
+                            [title]="'programAssignment.rename' | translate"
                             [attr.data-test]="'BTN_Rename_' + row.name"
                             (click)="startRename(row)">
                             <img
@@ -123,7 +123,7 @@
                         <button
                             type="button"
                             class="delete-button flex-shrink-0"
-                            title="Löschen"
+                            [title]="'programAssignment.delete' | translate"
                             [attr.data-test]="'BTN_Delete_' + row.name"
                             (click)="deleteRow(row)">
                             <img
@@ -138,7 +138,7 @@
                 <td
                     colspan="5"
                     class="text-center pt-3 pb-3">
-                    Keine Programme oder Posen vorhanden.
+                    {{ 'programAssignment.noneFound' | translate }}
                 </td>
             </tr>
         </tbody>

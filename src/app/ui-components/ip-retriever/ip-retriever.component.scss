@@ -4,4 +4,51 @@ a.ip-nav {
     font-weight: bold;
     letter-spacing: 0.2px;
     text-align: center;
+    display: block;
+}
+
+.qr-canvas-inline {
+    display: block;
+    margin: 6px auto 0;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.qr-hint {
+    font-size: 0.75rem;
+    max-width: 180px;
+    opacity: 0.85;
+}
+
+.qr-fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 12, 26, 0.95);
+    cursor: pointer;
+}
+
+.qr-fullscreen-overlay canvas {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    // So gross wie moeglich: das kleinere der beiden Viewport-Masse (damit
+    // das Quadrat immer komplett passt), minus etwas Platz fuer den Hinweis.
+    width: min(92vw, 88vh);
+    height: min(92vw, 88vh);
+    // Der Canvas ist in hoher Aufloesung gezeichnet und wird hier
+    // hochskaliert - "pixelated" haelt die QR-Module scharfkantig statt
+    // verwaschen (verwaschene Codes scannen schlechter).
+    image-rendering: pixelated;
+    box-sizing: border-box;
+}
+
+.qr-fullscreen-overlay .qr-hint {
+    color: white;
+    max-width: none;
+    font-size: 1rem;
 }

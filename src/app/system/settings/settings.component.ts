@@ -5,6 +5,7 @@ import {
     FormGroup,
     Validators,
 } from "@angular/forms";
+import {debounceTime, distinctUntilChanged} from "rxjs";
 import {BlocklyLanguageService} from "src/app/shared/services/blockly-language.service";
 import {PibBlocklyLocale} from "src/app/program/pib-blockly/i18n/pib-blockly-locales";
 import {RosService} from "src/app/shared/services/ros-service/ros.service";
@@ -21,6 +22,12 @@ import {
 } from "src/app/shared/services/learning-group.service";
 import {PoseService} from "src/app/shared/services/pose.service";
 import {ProgramService} from "src/app/shared/services/program.service";
+import {SystemSettingsService} from "src/app/shared/services/system-settings.service";
+import {
+    MovementSettingsService,
+    MIN_SPEED_PERCENT,
+    ABSOLUTE_MAX_SPEED_PERCENT,
+} from "src/app/shared/services/movement-settings.service";
 import {
     VoiceSettings,
     PiperVoice,
@@ -28,6 +35,8 @@ import {
 import {AssistantModel} from "src/app/shared/types/assistantModel";
 import {VoiceAssistant} from "src/app/shared/types/voice-assistant";
 import {LlmSettings} from "src/app/shared/types/llm-settings";
+import {MenuVisibility} from "src/app/shared/types/menu-visibility";
+import {TranslateService} from "@ngx-translate/core";
 
 type ConnectionType = "gemini" | "local-llm" | "tryb";
 
@@ -37,6 +46,43 @@ type ConnectionType = "gemini" | "local-llm" | "tryb";
     styleUrl: "./settings.component.scss",
 })
 export class SettingsComponent implements OnInit {
+    // --- Auto-Off (automatische Ruhestellung + Abschaltung) ---
+    // null = deaktiviert. ACHTUNG: das Input ist type="number", Angulars
+    // NumberValueAccessor liefert daher eine ZAHL oder null als
+    // Control-Wert - NICHT den rohen String aus dem Feld.
+    autoOffMinutesControl = new FormControl<number | string | null>(null);
+    // null = wird nicht angezeigt (Auto-Off deaktiviert oder Roboter schon
+    // aus). Kommt live per ROS-Topic aus relay_control.py, nicht aus der DB.
+    autoOffSecondsRemaining: number | null = null;
+
+    // --- Maximale Bewegungsgeschwindigkeit (Sicherheits-Obergrenze) ---
+    // Begrenzt den Tempo-Regler unter Posen; wird backend-seitig
+    // durchgesetzt (siehe movement_settings_service.py).
+    maxSpeedPercent = 100;
+    readonly minSpeedPercent = MIN_SPEED_PERCENT;
+    readonly absoluteMaxSpeedPercent = ABSOLUTE_MAX_SPEED_PERCENT;
+
+    // --- Menüpunkte ein-/ausblenden ---
+    menuVisibility: MenuVisibility = {
+        jointControl: false,
+        pose: false,
+        camera: false,
+        motionCapture: false,
+        voiceRecording: false,
+        voiceAssistant: false,
+        program: false,
+        system: false,
+    };
+    // Einziger Weg zurueck in die Einstellungen, sobald "System" ausgeblendet
+    // ist (der Menuepunkt verschwindet dann aus der Navigation).
+    readonly systemDirectLink = `${window.location.origin}/system/settings`;
+    systemLinkCopied = false;
+
+    // --- Augen-Anzeige neu starten ---
+    // Behilft dem Fall, dass die Augen nach dem Hochfahren des Roboters
+    // nicht vollstaendig im Vollbild angezeigt werden.
+    restartingDisplay = false;
+
     // --- Blockprogrammierung-Sprache ---
     locales: PibBlocklyLocale[];
     selectedLanguage: string;
@@ -127,12 +173,53 @@ export class SettingsComponent implements OnInit {
         private readonly learningGroupService: LearningGroupService,
         private readonly poseService: PoseService,
         private readonly programService: ProgramService,
+        private readonly systemSettingsService: SystemSettingsService,
+        private readonly translateService: TranslateService,
+        private readonly movementSettingsService: MovementSettingsService,
     ) {
         this.locales = this.blocklyLanguageService.locales;
         this.selectedLanguage = this.blocklyLanguageService.currentCode$.value;
     }
 
     ngOnInit(): void {
+        this.systemSettingsService.getAutoOffMinutes().subscribe((minutes) => {
+            // Race: wenn der Nutzer schon zu tippen anfaengt, bevor diese
+            // (asynchrone) Anfrage zurueckkommt, darf die Antwort das
+            // gerade Eingetippte nicht mit dem alten/leeren Wert
+            // ueberschreiben - live per Netzwerk-Log nachvollzogen
+            // (gespeichert wurde konsequent "null", weil genau das passiert
+            // ist). "pristine" heisst: noch nicht angefasst.
+            if (this.autoOffMinutesControl.pristine) {
+                this.autoOffMinutesControl.setValue(minutes, {
+                    emitEvent: false,
+                });
+            }
+        });
+        // Speichert waehrend des Tippens (statt nur bei Fokusverlust) - ein
+        // Klick auf einen anderen Menuepunkt loeste den vorherigen
+        // (blur)-basierten Save nicht zuverlaessig genug aus, bevor die
+        // Seite wechselte, wodurch eingetragene Werte nie in der DB
+        // ankamen.
+        this.autoOffMinutesControl.valueChanges
+            .pipe(debounceTime(600), distinctUntilChanged())
+            .subscribe(() => this.onAutoOffMinutesChange());
+
+        this.rosService.autoOffSecondsRemainingReceiver$.subscribe(
+            (seconds) => {
+                this.autoOffSecondsRemaining = seconds < 0 ? null : seconds;
+            },
+        );
+
+        this.systemSettingsService.menuVisibilitySubject.subscribe(
+            (visibility) => {
+                this.menuVisibility = visibility;
+            },
+        );
+
+        this.movementSettingsService.maxSpeedPercent$.subscribe((percent) => {
+            this.maxSpeedPercent = percent;
+        });
+
         this.tokenService.tokenStatus$.subscribe((response) => {
             this.isTokenStored = response.tokenExists;
             this.isTokenActive = response.tokenActive;
@@ -237,9 +324,69 @@ export class SettingsComponent implements OnInit {
         this.programService.getAllPrograms().subscribe();
     }
 
+    /** Ein Dropdown fuer beides: Blockly-Bloecke UND die gesamte Oberflaeche
+     * teilen sich dieselbe Sprachauswahl (siehe pib-blockly-locales.ts fuer
+     * die Codes "de"/"en"). */
     onLanguageChange(code: string): void {
         this.selectedLanguage = code;
         this.blocklyLanguageService.setLanguage(code);
+        this.translateService.use(code);
+    }
+
+    /** Leeres Feld oder 0/negativ = Auto-Off deaktiviert. */
+    onAutoOffMinutesChange(): void {
+        // Kein direktes .trim() auf dem Control-Wert: der ist bei
+        // type="number" eine Zahl (oder null), und (15).trim() wirft einen
+        // TypeError - dadurch wurde das PUT nie abgeschickt (nginx-Log:
+        // viele GETs, kein einziges PUT) und das Feld sprang beim
+        // Tab-Wechsel immer auf "deaktiviert" zurueck.
+        const raw = String(this.autoOffMinutesControl.value ?? "").trim();
+        const parsed = raw === "" ? null : Number(raw);
+        const minutes =
+            parsed !== null && Number.isFinite(parsed) && parsed > 0
+                ? Math.round(parsed)
+                : null;
+        this.systemSettingsService.setAutoOffMinutes(minutes).subscribe((saved) => {
+            this.autoOffMinutesControl.setValue(saved, {emitEvent: false});
+        });
+    }
+
+    /** Slider fuer die maximale Bewegungsgeschwindigkeit: aktualisiert die
+     * Anzeige live und speichert direkt (ein einzelner Wert, kein
+     * Tipp-Feld - Speichern beim Loslassen reicht). */
+    onMaxSpeedInput(value: string): void {
+        this.maxSpeedPercent = Number(value);
+    }
+
+    onMaxSpeedChange(value: string): void {
+        this.movementSettingsService.setMaxSpeedPercent(Number(value));
+    }
+
+    onToggleMenuVisibility(key: keyof MenuVisibility, hidden: boolean): void {
+        this.menuVisibility = {...this.menuVisibility, [key]: hidden};
+        this.systemSettingsService.setMenuVisibility({[key]: hidden});
+    }
+
+    copySystemLink(): void {
+        navigator.clipboard.writeText(this.systemDirectLink).then(() => {
+            this.systemLinkCopied = true;
+            setTimeout(() => (this.systemLinkCopied = false), 2500);
+        });
+    }
+
+    restartDisplay(): void {
+        if (
+            !confirm(
+                "Augen-Anzeige neu starten? Der Bildschirm ist dabei kurz " +
+                    "schwarz.",
+            )
+        ) {
+            return;
+        }
+        this.restartingDisplay = true;
+        this.systemSettingsService
+            .restartDisplay()
+            .subscribe(() => (this.restartingDisplay = false));
     }
 
     /** Setzt das Assistant-Model fuer ALLE Personalities (gilt global). */

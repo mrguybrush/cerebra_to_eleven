@@ -14,59 +14,117 @@ import {
 import {RosService} from "src/app/shared/services/ros-service/ros.service";
 import {JointMappingService} from "src/app/shared/services/joint-mapping.service";
 import {JointMappingEntry, JointSide} from "src/app/shared/types/joint-mapping";
+import {MotionCaptureSettingsService} from "src/app/shared/services/motion-capture-settings.service";
 
-// Bone connections between the named landmarks the tracker exposes -
-// drawn as the line skeleton over the live image (green body, pink head
-// direction), following the standalone prototype's overlay style.
-const BODY_CONNECTIONS: [string, string][] = [
-    // Rumpf
+// Rumpf/Gesicht: rein visueller Kontext, ohne Zuordnung zu einem Motor -
+// bleiben neutral eingefaerbt (kein Zuordnungsfarbe).
+const CONTEXT_CONNECTIONS: [string, string][] = [
     ["left_shoulder", "right_shoulder"],
     ["left_shoulder", "left_hip"],
     ["right_shoulder", "right_hip"],
     ["left_hip", "right_hip"],
-    // Arme
-    ["left_shoulder", "left_elbow"],
-    ["left_elbow", "left_wrist"],
-    ["right_shoulder", "right_elbow"],
-    ["right_elbow", "right_wrist"],
-    // Beine
-    ["left_hip", "left_knee"],
-    ["left_knee", "left_ankle"],
-    ["right_hip", "right_knee"],
-    ["right_knee", "right_ankle"],
-    // Gesicht
     ["left_ear", "left_eye"],
     ["left_eye", "nose"],
     ["nose", "right_eye"],
     ["right_eye", "right_ear"],
 ];
 
+// Regionen, denen Motoren zugeordnet werden koennen - jede bekommt pro Seite
+// eine feste Videofarbe (siehe SEGMENT_COLORS), unabhaengig davon, welcher
+// Motor gerade zugeordnet ist. Die Zuordnungstabelle zeigt fuer jede Zeile
+// die Farbe der aktuell gewaehlten Quellseite - das ist der visuelle Link
+// zwischen Tabelle und Videobild.
+type SegmentGroup = "upper_arm" | "lower_arm" | "hand";
+
+const SEGMENT_COLORS: {[group in SegmentGroup]: {left: string; right: string}} = {
+    upper_arm: {left: "#ff9100", right: "#00b0ff"},
+    lower_arm: {left: "#ffea00", right: "#1de9b6"},
+    hand: {left: "#d500f9", right: "#ff1744"},
+};
+
+// Knochen-Linien werden neutral gezeichnet (nur Kontext). Die Regionsfarbe
+// sitzt jetzt auf den GELENKPUNKTEN (siehe COLORED_JOINT_POINTS in
+// drawSkeleton) - dort entsteht der Winkel, und die Tabellenfarbe zeigt
+// direkt auf den passenden Punkt im Video.
+const BONE_CONNECTIONS: [string, string][] = [
+    ["left_shoulder", "left_elbow"],
+    ["left_elbow", "left_wrist"],
+    ["right_shoulder", "right_elbow"],
+    ["right_elbow", "right_wrist"],
+];
+
+// Welcher Gelenkpunkt bekommt welche Regionsfarbe (passend zur Tabelle):
+// Schulterpunkt = Oberarm-Region, Ellbogenpunkt = Unterarm-Region,
+// Handgelenkpunkt = Hand-Region.
+const COLORED_JOINT_POINTS: {name: string; group: SegmentGroup; side: JointSide}[] = [
+    {name: "left_shoulder", group: "upper_arm", side: "left"},
+    {name: "right_shoulder", group: "upper_arm", side: "right"},
+    {name: "left_elbow", group: "lower_arm", side: "left"},
+    {name: "right_elbow", group: "lower_arm", side: "right"},
+    {name: "left_wrist", group: "hand", side: "left"},
+    {name: "right_wrist", group: "hand", side: "right"},
+];
+
 const VISIBILITY_THRESHOLD = 0.5;
 
 // The robot joints live mirroring can drive - motor names exactly as in
 // pibdata.db (same names the gesture_control backend maps to). Hip/torso
-// and fingers are deliberately not offered here.
+// are deliberately not offered here (legs don't exist as motors at all).
+// groupMotors (hand rows only): one row drives all 6 finger motors of a
+// side together as one open/close signal - motor is the representative used
+// for display/selection, groupMotors the full list saved/enabled.
 interface JointRow {
     motor: string;
-    label: string;
+    labelKey: string;
+    group: SegmentGroup;
+    groupMotors?: string[];
 }
 
+const HAND_LEFT_MOTORS = [
+    "index_left_stretch",
+    "middle_left_stretch",
+    "ring_left_stretch",
+    "pinky_left_stretch",
+    "thumb_left_stretch",
+    "thumb_left_opposition",
+];
+const HAND_RIGHT_MOTORS = [
+    "index_right_stretch",
+    "middle_right_stretch",
+    "ring_right_stretch",
+    "pinky_right_stretch",
+    "thumb_right_stretch",
+    "thumb_right_opposition",
+];
+
 const JOINT_ROWS: JointRow[] = [
-    {motor: "shoulder_vertical_left", label: "Schulter heben links"},
-    {motor: "shoulder_vertical_right", label: "Schulter heben rechts"},
-    {motor: "shoulder_horizontal_left", label: "Schulter horizontal links"},
-    {motor: "shoulder_horizontal_right", label: "Schulter horizontal rechts"},
-    {motor: "upper_arm_left_rotation", label: "Oberarm-Drehung links"},
-    {motor: "upper_arm_right_rotation", label: "Oberarm-Drehung rechts"},
-    {motor: "elbow_left", label: "Ellbogen links"},
-    {motor: "elbow_right", label: "Ellbogen rechts"},
-    {motor: "lower_arm_left_rotation", label: "Unterarm-Drehung links"},
-    {motor: "lower_arm_right_rotation", label: "Unterarm-Drehung rechts"},
+    {motor: "shoulder_vertical_left", labelKey: "motionCapture.joints.shoulderVerticalLeft", group: "upper_arm"},
+    {motor: "shoulder_vertical_right", labelKey: "motionCapture.joints.shoulderVerticalRight", group: "upper_arm"},
+    {motor: "shoulder_horizontal_left", labelKey: "motionCapture.joints.shoulderHorizontalLeft", group: "upper_arm"},
+    {motor: "shoulder_horizontal_right", labelKey: "motionCapture.joints.shoulderHorizontalRight", group: "upper_arm"},
+    {motor: "upper_arm_left_rotation", labelKey: "motionCapture.joints.upperArmLeftRotation", group: "upper_arm"},
+    {motor: "upper_arm_right_rotation", labelKey: "motionCapture.joints.upperArmRightRotation", group: "upper_arm"},
+    {motor: "elbow_left", labelKey: "motionCapture.joints.elbowLeft", group: "lower_arm"},
+    {motor: "elbow_right", labelKey: "motionCapture.joints.elbowRight", group: "lower_arm"},
+    {motor: "lower_arm_left_rotation", labelKey: "motionCapture.joints.lowerArmLeftRotation", group: "lower_arm"},
+    {motor: "lower_arm_right_rotation", labelKey: "motionCapture.joints.lowerArmRightRotation", group: "lower_arm"},
+    {
+        motor: "middle_left_stretch",
+        labelKey: "motionCapture.joints.handLeft",
+        group: "hand",
+        groupMotors: HAND_LEFT_MOTORS,
+    },
+    {
+        motor: "middle_right_stretch",
+        labelKey: "motionCapture.joints.handRight",
+        group: "hand",
+        groupMotors: HAND_RIGHT_MOTORS,
+    },
 ];
 
 // Preselected joints: the ones whose angles are robustly recoverable from
-// the camera image. The rotation joints are experimental - the user enables
-// them explicitly by clicking their row.
+// the camera image. Rotation joints and the hands are experimental - the
+// user enables them explicitly by clicking their row.
 const DEFAULT_SELECTED_JOINTS = [
     "shoulder_vertical_left",
     "shoulder_vertical_right",
@@ -75,7 +133,7 @@ const DEFAULT_SELECTED_JOINTS = [
 ];
 
 // Matches gesture_control/retargeting.py's MOTOR_TO_CANDIDATE exactly - the
-// calibration wizard needs to know which raw candidate (computed for BOTH
+// mapping table needs to know which raw candidate (computed for BOTH
 // tracked sides) feeds a given motor, to show its live left/right values.
 const MOTOR_TO_CANDIDATE_KEY: {[motor: string]: string} = {
     elbow_left: "elbow",
@@ -88,20 +146,31 @@ const MOTOR_TO_CANDIDATE_KEY: {[motor: string]: string} = {
     upper_arm_right_rotation: "upper_arm_rotation",
     lower_arm_left_rotation: "lower_arm_rotation",
     lower_arm_right_rotation: "lower_arm_rotation",
+    // Both hand rows (representative motor = middle_*_stretch) show the one
+    // combined open/close candidate.
+    middle_left_stretch: "hand_openness",
+    middle_right_stretch: "hand_openness",
 };
 
-interface CalibrationEntry {
+interface RowMappingState {
     sourceSide: JointSide;
     invert: boolean;
+    candidateLowDeg: number | null;
+    candidateHighDeg: number | null;
+    minDeg: number | null;
+    maxDeg: number | null;
+    speedPercent: number;
 }
 
 /**
  * Dedicated live motion-capture view: the camera image (robot camera or
  * own webcam) with the detected skeleton drawn over it in real time, plus
- * a smoothed table of all recognized joint angles. Detection runs in the
- * browser (see BrowserPoseTrackerService); landmarks are also published to
- * ROS as usual, but nothing moves motors unless a capture is started on
- * the Poses page - this page is pure visualization.
+ * a table of all recognized joint angles that also doubles as the
+ * side/invert assignment editor (colors link a table row to the matching
+ * video segment). Detection runs in the browser (see
+ * BrowserPoseTrackerService); landmarks are also published to ROS as usual,
+ * but nothing moves motors unless a capture is started on the Poses page or
+ * live mirroring is switched on here.
  */
 @Component({
     selector: "app-motion-capture",
@@ -125,21 +194,25 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
     landmarkerReady$: Observable<boolean>;
 
     // Robot-joint table: always shown; each row is clickable to include
-    // that joint in the mirroring. Live values come from the gesture_control
-    // backend (topic gesture_retarget_targets, centidegrees).
+    // that joint in the mirroring, and carries its own side/invert
+    // assignment (replaces the former step-by-step calibration wizard).
+    // Live values come from the gesture_control backend (topic
+    // gesture_retarget_targets, centidegrees).
     jointRows = JOINT_ROWS;
     selectedJoints = new Set<string>(DEFAULT_SELECTED_JOINTS);
     liveTargets: {[motor: string]: number} = {};
     handsDetected$: Observable<{left: boolean; right: boolean}>;
 
-    // --- Kalibrierungs-Assistent: schrittweise, manuelle Zuordnung von
-    // erkannter Koerperseite -> Robotermotor, siehe startCalibration(). ---
-    calibrating = false;
-    calibrationStepIndex = 0;
-    calibrationAssignment: {[motor: string]: CalibrationEntry} = {};
+    // Per-row source-side/invert assignment, editable directly in the table.
+    // Loaded from the DB on init; every change is saved immediately.
+    mapping: {[motor: string]: RowMappingState} = {};
     liveCandidates: {[candidateKey: string]: {left: number | null; right: number | null}} =
         {};
-    calibrationSaved = false;
+    mappingSaved = false;
+
+    // Globale Regler über der Tabelle (motion_capture_settings-Singleton).
+    smoothingAlpha = 0.4;
+    evalMaxHz = 12;
 
     private frameSubscription?: Subscription;
     private targetsSubscription?: Subscription;
@@ -150,6 +223,7 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
         private tracker: BrowserPoseTrackerService,
         private rosService: RosService,
         private jointMappingService: JointMappingService,
+        private settingsService: MotionCaptureSettingsService,
     ) {
         this.jointAngles$ = this.tracker.jointAngles$;
         this.error$ = this.tracker.error$;
@@ -191,6 +265,58 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
         // the last selection otherwise, which may be stale from an earlier
         // session on this page.
         this.rosService.setGestureJoints(Array.from(this.selectedJoints));
+        this.loadMapping();
+        this.loadSettings();
+    }
+
+    /** Loads the global smoothing / eval-rate settings and applies the
+     * eval-rate cap to the tracker (latency control). */
+    private loadSettings() {
+        this.settingsService.getSettings().subscribe((s) => {
+            this.smoothingAlpha = s.smoothingAlpha;
+            this.evalMaxHz = s.evalMaxHz;
+            this.applyEvalRate();
+        });
+    }
+
+    private applyEvalRate() {
+        const hz = this.evalMaxHz > 0 ? this.evalMaxHz : 0;
+        this.tracker.setEvalIntervalMs(hz > 0 ? 1000 / hz : 0);
+    }
+
+    /** Smoothing slider changed: persist and tell the ROS node to re-read
+     * (reuses the existing reload path - the node reads smoothing_alpha in
+     * _load_assignment). */
+    onSmoothingChange(rawValue: string) {
+        const value = Number(rawValue);
+        if (Number.isNaN(value)) {
+            return;
+        }
+        this.smoothingAlpha = Math.min(1, Math.max(0.05, value));
+        this.settingsService
+            .updateSettings({smoothingAlpha: this.smoothingAlpha})
+            .subscribe(() => this.rosService.reloadGestureMapping());
+    }
+
+    /** Max evaluations/second changed: persist and apply the cap locally. */
+    onEvalHzChange(rawValue: string) {
+        const value = Number(rawValue);
+        if (Number.isNaN(value)) {
+            return;
+        }
+        this.evalMaxHz = Math.min(30, Math.max(1, value));
+        this.applyEvalRate();
+        this.settingsService.updateSettings({evalMaxHz: this.evalMaxHz}).subscribe();
+    }
+
+    /** Source dropdown changed (robot <-> webcam): if tracking is running,
+     * cleanly stop the old source and start the new one. Over http:// the
+     * webcam start surfaces the HTTPS hint via error$ (browser policy). */
+    onSourceChange() {
+        if (this.running) {
+            this.stop();
+            this.start();
+        }
     }
 
     ngOnDestroy(): void {
@@ -220,14 +346,23 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
         this.rosService.setGestureMirroring(active);
     }
 
-    /** Click on a table row: include/exclude this joint in the mirroring. */
-    toggleJoint(motor: string) {
-        if (this.selectedJoints.has(motor)) {
-            this.selectedJoints.delete(motor);
-        } else {
-            this.selectedJoints.add(motor);
+    /** Click on a table row: include/exclude this joint (or, for a hand
+     * row, all 6 of its finger motors together) in the mirroring. */
+    toggleJoint(row: JointRow) {
+        const motors = row.groupMotors ?? [row.motor];
+        const enabling = !this.selectedJoints.has(row.motor);
+        for (const motor of motors) {
+            if (enabling) {
+                this.selectedJoints.add(motor);
+            } else {
+                this.selectedJoints.delete(motor);
+            }
         }
         this.rosService.setGestureJoints(Array.from(this.selectedJoints));
+    }
+
+    isRowSelected(row: JointRow): boolean {
+        return this.selectedJoints.has(row.motor);
     }
 
     /** Live value for a joint in degrees, or null if currently not detected. */
@@ -236,97 +371,154 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
         return centideg === undefined ? null : centideg / 100;
     }
 
-    // --- Kalibrierungs-Assistent ---
-    // Behebt "erkannte Armbewegung landet auf dem falschen Arm": statt einer
-    // festen Annahme (gleiche Seite) sieht der Nutzer hier live BEIDE Seiten
-    // (links/rechts) für jedes Gelenk und wählt selbst, welche seine ist -
-    // inkl. Vorzeichen-Umkehr, falls die Bewegung seitenverkehrt ausschlägt.
-
-    get calibrationJoint(): JointRow {
-        return this.jointRows[this.calibrationStepIndex];
+    /** Live per-side candidate values (both, regardless of current
+     * assignment) - lets the user compare left/right before picking. */
+    candidateLeft(row: JointRow): number | null {
+        return this.liveCandidates[MOTOR_TO_CANDIDATE_KEY[row.motor]]?.left ?? null;
     }
 
-    get calibrationCandidateKey(): string {
-        return MOTOR_TO_CANDIDATE_KEY[this.calibrationJoint.motor];
+    candidateRight(row: JointRow): number | null {
+        return this.liveCandidates[MOTOR_TO_CANDIDATE_KEY[row.motor]]?.right ?? null;
     }
 
-    get calibrationLiveLeft(): number | null {
-        return this.liveCandidates[this.calibrationCandidateKey]?.left ?? null;
-    }
+    // --- Zuordnungstabelle (ersetzt den frueheren Schritt-fuer-Schritt-
+    // Kalibrierungs-Assistenten): jede Zeile zeigt live BEIDE Seiten
+    // (links/rechts) fuer ihr Gelenk, der Nutzer waehlt per Dropdown selbst,
+    // welche seine ist - inkl. Vorzeichen-Umkehr per Checkbox, falls die
+    // Bewegung seitenverkehrt ausschlaegt. Jede Aenderung speichert sofort. ---
 
-    get calibrationLiveRight(): number | null {
-        return this.liveCandidates[this.calibrationCandidateKey]?.right ?? null;
-    }
-
-    get calibrationCurrentEntry(): CalibrationEntry {
-        return this.calibrationAssignment[this.calibrationJoint.motor];
-    }
-
-    /** Loads the saved mapping (or defaults: same-side, not inverted) and
-     * opens the wizard at the first joint. Tracking must already be running
-     * so the live left/right numbers actually move. */
-    startCalibration() {
-        this.calibrationAssignment = {};
+    /** Loads the saved mapping (or defaults: same-side, not inverted,
+     * uncalibrated/unlimited, full speed). */
+    private loadMapping() {
+        this.mapping = {};
         for (const row of this.jointRows) {
             const defaultSide: JointSide = row.motor.includes("_left")
                 ? "left"
                 : "right";
-            this.calibrationAssignment[row.motor] = {
+            this.mapping[row.motor] = {
                 sourceSide: defaultSide,
                 invert: false,
+                candidateLowDeg: null,
+                candidateHighDeg: null,
+                minDeg: null,
+                maxDeg: null,
+                speedPercent: 100,
             };
         }
         this.jointMappingService.getMapping().subscribe((entries) => {
             for (const entry of entries) {
-                if (this.calibrationAssignment[entry.motorName]) {
-                    this.calibrationAssignment[entry.motorName] = {
+                if (this.mapping[entry.motorName]) {
+                    this.mapping[entry.motorName] = {
                         sourceSide: entry.sourceSide,
                         invert: entry.invert,
+                        candidateLowDeg: entry.candidateLowDeg,
+                        candidateHighDeg: entry.candidateHighDeg,
+                        minDeg: entry.minDeg,
+                        maxDeg: entry.maxDeg,
+                        speedPercent: entry.speedPercent,
                     };
                 }
             }
         });
-        this.calibrationStepIndex = 0;
-        this.calibrating = true;
     }
 
-    calibrationSelectSide(side: JointSide) {
-        this.calibrationCurrentEntry.sourceSide = side;
+    /** Color swatch for a table row: the fixed video-segment color of its
+     * region, for whichever side is currently assigned as the source - so
+     * flipping the dropdown immediately matches the line actually driving
+     * this motor in the video. */
+    rowColor(row: JointRow): string {
+        const side = this.mapping[row.motor]?.sourceSide ?? "left";
+        return SEGMENT_COLORS[row.group][side];
     }
 
-    calibrationSetInvert(invert: boolean) {
-        this.calibrationCurrentEntry.invert = invert;
+    onSourceSideChange(row: JointRow, side: JointSide) {
+        this.mapping[row.motor] = {...this.mapping[row.motor], sourceSide: side};
+        this.saveMapping();
     }
 
-    calibrationNext() {
-        if (this.calibrationStepIndex < this.jointRows.length - 1) {
-            this.calibrationStepIndex++;
+    onInvertChange(row: JointRow, invert: boolean) {
+        this.mapping[row.motor] = {...this.mapping[row.motor], invert};
+        this.saveMapping();
+    }
+
+    /** Handler for the numeric tuning inputs. All four may be cleared to
+     * "unset" (empty input -> null): candidateLow/HighDeg = not yet
+     * calibrated (code fallback applies), minDeg/maxDeg = no extra limit.
+     * speedPercent has its own onSpeedChange below (never "unset"). */
+    onNumberFieldChange(
+        row: JointRow,
+        field: "candidateLowDeg" | "candidateHighDeg" | "minDeg" | "maxDeg",
+        rawValue: string,
+    ) {
+        const value = rawValue.trim() === "" ? null : Number(rawValue);
+        if (value !== null && Number.isNaN(value)) {
+            return;
+        }
+        this.mapping[row.motor] = {...this.mapping[row.motor], [field]: value};
+        this.saveMapping();
+    }
+
+    onSpeedChange(row: JointRow, rawValue: string) {
+        const value = Number(rawValue);
+        if (Number.isNaN(value)) {
+            return;
+        }
+        this.mapping[row.motor] = {
+            ...this.mapping[row.motor],
+            speedPercent: Math.min(100, Math.max(0, value)),
+        };
+        this.saveMapping();
+    }
+
+    /** "Ist-Wert": reads a live value and stores it, so the user doesn't
+     * have to read the number off the table and retype it by hand.
+     * candidateLowDeg/candidateHighDeg (the "unten"/"oben" calibration
+     * anchors) capture the raw camera reading for whichever side is
+     * currently the row's source - move the joint there first, then click.
+     * minDeg/maxDeg (absolute output limits) instead capture the actual
+     * LIVE MOTOR TARGET (post-calibration), since they constrain the
+     * output, not the camera input. */
+    useCurrentAsField(
+        row: JointRow,
+        field: "candidateLowDeg" | "candidateHighDeg" | "minDeg" | "maxDeg",
+    ) {
+        let value: number | null;
+        if (field === "candidateLowDeg" || field === "candidateHighDeg") {
+            const side = this.mapping[row.motor]?.sourceSide;
+            value = side === "right" ? this.candidateRight(row) : this.candidateLeft(row);
         } else {
-            this.finishCalibration();
+            value = this.liveDegrees(row.motor);
         }
-    }
-
-    calibrationBack() {
-        if (this.calibrationStepIndex > 0) {
-            this.calibrationStepIndex--;
+        if (value === null) {
+            return;
         }
+        this.mapping[row.motor] = {...this.mapping[row.motor], [field]: value};
+        this.saveMapping();
     }
 
-    cancelCalibration() {
-        this.calibrating = false;
-    }
-
-    private finishCalibration() {
-        const entries: JointMappingEntry[] = this.jointRows.map((row) => ({
-            motorName: row.motor,
-            sourceSide: this.calibrationAssignment[row.motor].sourceSide,
-            invert: this.calibrationAssignment[row.motor].invert,
-        }));
+    private saveMapping() {
+        const entries: JointMappingEntry[] = [];
+        for (const row of this.jointRows) {
+            const state = this.mapping[row.motor];
+            // Hand rows fan their one calibration out to all 6 finger motors
+            // of the side (they share the hand_openness candidate).
+            for (const motorName of row.groupMotors ?? [row.motor]) {
+                entries.push({
+                    motorName,
+                    sourceSide: state.sourceSide,
+                    invert: state.invert,
+                    candidateLowDeg: state.candidateLowDeg,
+                    candidateHighDeg: state.candidateHighDeg,
+                    minDeg: state.minDeg,
+                    maxDeg: state.maxDeg,
+                    speedPercent: state.speedPercent,
+                });
+            }
+        }
         this.jointMappingService.saveMapping(entries).subscribe(() => {
             this.rosService.reloadGestureMapping();
-            this.calibrating = false;
-            this.calibrationSaved = true;
-            setTimeout(() => (this.calibrationSaved = false), 3000);
+            this.mappingSaved = true;
+            setTimeout(() => (this.mappingSaved = false), 3000);
         });
     }
 
@@ -386,12 +578,9 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
         }
 
         const lineWidth = Math.max(2, w / 200);
-
-        // Knochenlinien (grün)
-        ctx.strokeStyle = "#00e676";
-        ctx.lineWidth = lineWidth;
         ctx.lineCap = "round";
-        for (const [fromName, toName] of BODY_CONNECTIONS) {
+
+        const drawLine = (fromName: string, toName: string, color: string) => {
             const from = byName[fromName];
             const to = byName[toName];
             if (
@@ -400,42 +589,57 @@ export class MotionCaptureComponent implements AfterViewInit, OnDestroy {
                 from.score < VISIBILITY_THRESHOLD ||
                 to.score < VISIBILITY_THRESHOLD
             ) {
-                continue;
+                return;
             }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
             ctx.beginPath();
             ctx.moveTo(from.x * w, from.y * h);
             ctx.lineTo(to.x * w, to.y * h);
             ctx.stroke();
+        };
+
+        // Alle Knochen (Rumpf/Gesicht + Arme) neutral grau - reiner Kontext.
+        // Die Regionsfarbe sitzt jetzt auf den Gelenkpunkten (unten).
+        for (const [fromName, toName] of [...CONTEXT_CONNECTIONS, ...BONE_CONNECTIONS]) {
+            drawLine(fromName, toName, "#607d8b");
         }
 
-        // Kopfrichtung (Ohrmitte -> Nase, pink)
-        const nose = byName["nose"];
-        const earL = byName["left_ear"];
-        const earR = byName["right_ear"];
-        if (
-            nose &&
-            earL &&
-            earR &&
-            nose.score >= VISIBILITY_THRESHOLD &&
-            earL.score >= VISIBILITY_THRESHOLD &&
-            earR.score >= VISIBILITY_THRESHOLD
-        ) {
-            ctx.strokeStyle = "#e10072";
-            ctx.beginPath();
-            ctx.moveTo(((earL.x + earR.x) / 2) * w, ((earL.y + earR.y) / 2) * h);
-            ctx.lineTo(nose.x * w, nose.y * h);
-            ctx.stroke();
-        }
-
-        // Gelenkpunkte
-        ctx.fillStyle = "#ffffff";
+        // Zuerst alle sichtbaren Gelenkpunkte klein/weiss (ausser Beine).
         for (const lm of landmarks) {
             if (lm.score < VISIBILITY_THRESHOLD) {
                 continue;
             }
+            if (
+                lm.name === "left_knee" ||
+                lm.name === "left_ankle" ||
+                lm.name === "right_knee" ||
+                lm.name === "right_ankle"
+            ) {
+                continue;
+            }
+            ctx.fillStyle = "#ffffff";
             ctx.beginPath();
-            ctx.arc(lm.x * w, lm.y * h, lineWidth * 1.2, 0, 2 * Math.PI);
+            ctx.arc(lm.x * w, lm.y * h, lineWidth * 1.0, 0, 2 * Math.PI);
             ctx.fill();
+        }
+
+        // Dann die zuordnungsrelevanten Gelenke gross + in Regionsfarbe -
+        // dort entsteht der Winkel, und die Farbe matcht die Tabellenzeile
+        // (Schulter=Oberarm, Ellbogen=Unterarm, Handgelenk=Hand).
+        for (const jp of COLORED_JOINT_POINTS) {
+            const lm = byName[jp.name];
+            if (!lm || lm.score < VISIBILITY_THRESHOLD) {
+                continue;
+            }
+            ctx.fillStyle = SEGMENT_COLORS[jp.group][jp.side];
+            ctx.beginPath();
+            ctx.arc(lm.x * w, lm.y * h, lineWidth * 2.4, 0, 2 * Math.PI);
+            ctx.fill();
+            // dunkler Rand fuer Kontrast auf hellem Hintergrund
+            ctx.strokeStyle = "rgba(0,0,0,0.5)";
+            ctx.lineWidth = Math.max(1, lineWidth * 0.4);
+            ctx.stroke();
         }
     }
 }

@@ -16,6 +16,13 @@ const TILT_FORWARD_MOTOR = "tilt_forward_motor"; // Neigung hoch/runter
 // haeufiger, als der ROS-Service sinnvoll verarbeiten muesste.
 const SEND_INTERVAL_MS = 100;
 
+// "Expo"-Kurve (wie an RC-Fernsteuerungen) statt linearer Zuordnung: kleine
+// Ablenkungen aus der Mitte bewegen den Kopf nur wenig, volle Ablenkung
+// erreicht weiterhin den vollen Rotationsbereich. Direkt proportional (ohne
+// Kurve) fuehlte sich schon bei kleinen Mausbewegungen viel zu empfindlich
+// an. 2 = spuerbar traeger nahe der Mitte, 1 waere die alte lineare Kurve.
+const RESPONSE_CURVE_EXPONENT = 2;
+
 /**
  * Kleiner Joystick zum Steuern von Kopfdrehung + -neigung, ohne dafuer in
  * Joint Control wechseln zu muessen - genutzt auf den Seiten Motion Capture
@@ -130,19 +137,23 @@ export class HeadJoystickComponent implements OnInit, OnDestroy {
 
     private sendHeadPosition(normX: number, normY: number): void {
         const turnPosition = this.scaleToRange(
-            normX,
+            this.applyResponseCurve(normX),
             this.turnRangeMin,
             this.turnRangeMax,
         );
         // Joystick nach oben (Bildschirm: negatives y) soll den Kopf nach
         // oben neigen - deshalb -normY.
         const tiltPosition = this.scaleToRange(
-            -normY,
+            this.applyResponseCurve(-normY),
             this.tiltRangeMin,
             this.tiltRangeMax,
         );
         this.motorService.setPosition(TURN_HEAD_MOTOR, turnPosition).subscribe();
         this.motorService.setPosition(TILT_FORWARD_MOTOR, tiltPosition).subscribe();
+    }
+
+    private applyResponseCurve(norm: number): number {
+        return Math.sign(norm) * Math.abs(norm) ** RESPONSE_CURVE_EXPONENT;
     }
 
     private scaleToRange(norm: number, min: number, max: number): number {

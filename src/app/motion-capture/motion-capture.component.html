@@ -1,6 +1,6 @@
 <div class="background-image pink-corner-frame mt-5">
     <div class="d-flex flex-row m-3 pb-2 bt-0 pl-1 pr-1 align-items-center flex-wrap">
-        <div class="flex-grow-1 pl-2">Bewegungserfassung</div>
+        <div class="flex-grow-1 pl-2">{{ 'nav.motionCapture' | translate }}</div>
 
         <app-head-joystick class="mr-2 mb-1"></app-head-joystick>
 
@@ -8,9 +8,11 @@
             class="mr-2 mb-1"
             data-test="SEL_Motion_Capture_Source"
             [(ngModel)]="poseSource"
-            [disabled]="running || starting">
-            <option value="robot">Kamera vom Roboter</option>
-            <option value="webcam">Eigene Webcam</option>
+            (ngModelChange)="onSourceChange()"
+            [disabled]="starting">
+            <option value="robot">{{ 'pose.robotCamera' | translate }}</option>
+            <option value="webcam">{{ 'pose.ownWebcam' | translate }}</option>
+            <option value="oak">{{ 'pose.robotCameraNn' | translate }}</option>
         </select>
 
         <button
@@ -20,7 +22,7 @@
             data-test="BTN_Motion_Capture_Start"
             [disabled]="starting"
             (click)="start()">
-            {{starting ? "Lädt..." : "Start"}}
+            {{starting ? ('motionCapture.loading' | translate) : ('common.start' | translate)}}
         </button>
         <button
             *ngIf="running"
@@ -28,7 +30,7 @@
             class="btn btn-regular mb-1"
             data-test="BTN_Motion_Capture_Stop"
             (click)="stop()">
-            Stopp
+            {{ 'common.stop' | translate }}
         </button>
     </div>
 
@@ -43,13 +45,13 @@
                 [checked]="motorsActive"
                 (change)="setMotorsActive($any($event.target).checked)" />
             <span class="ml-2 font-weight-bold">
-                Motoren folgen Bewegung (Live-Mirroring)
+                {{ 'motionCapture.motorsFollow' | translate }}
             </span>
         </label>
         <div class="motor-toggle-hint">
             {{motorsActive
-                ? "AKTIV - der Roboter bewegt sich mit! Ausschalten stoppt ihn sofort an der aktuellen Position."
-                : "Aus - der Roboter bleibt stehen. Einschalten bewegt die Arme zügig in deine aktuelle Haltung."}}
+                ? ('motionCapture.motorsActiveHint' | translate)
+                : ('motionCapture.motorsInactiveHint' | translate)}}
         </div>
     </div>
 
@@ -64,14 +66,23 @@
         *ngIf="running"
         class="m-3"
         style="font-size: 0.85rem; opacity: 0.7">
-        MediaPipe bereit: {{(landmarkerReady$ | async) ? "ja" : "nein"}} |
-        Bilder empfangen: {{framesReceived$ | async}} |
-        Hände erkannt:
-        {{(handsDetected$ | async)?.left ? "links " : ""}}{{(handsDetected$ | async)?.right ? "rechts" : ""}}{{!(handsDetected$ | async)?.left && !(handsDetected$ | async)?.right ? "nein" : ""}}
+        {{ 'motionCapture.debugStatus' | translate: {
+            ready: (landmarkerReady$ | async) ? ('pose.yes' | translate) : ('pose.no' | translate),
+            received: (framesReceived$ | async),
+            hands: (handsDetected$ | async)?.left && (handsDetected$ | async)?.right
+                ? (('motionCapture.handLeft' | translate) + ('motionCapture.handRight' | translate))
+                : (handsDetected$ | async)?.left
+                    ? ('motionCapture.handLeft' | translate)
+                    : (handsDetected$ | async)?.right
+                        ? ('motionCapture.handRight' | translate)
+                        : ('motionCapture.handNone' | translate)
+        } }}
     </div>
 
-    <div class="d-flex flex-row m-3 flex-wrap align-items-start">
-        <div class="flex-grow-1 mr-3 mb-3 video-box">
+    <div class="d-flex flex-column m-3">
+        <!-- Video oben, beim Scrollen fixiert (sticky) - die Tabelle
+             scrollt darunter weg. -->
+        <div class="video-box">
             <canvas
                 #overlayCanvas
                 data-test="CANVAS_Motion_Capture"
@@ -79,140 +90,208 @@
             <div
                 *ngIf="!running"
                 class="canvas-hint">
-                Quelle wählen und auf Start klicken
+                {{ 'motionCapture.chooseSourceHint' | translate }}
             </div>
         </div>
 
         <div class="mb-3 angle-box">
-            <div class="d-flex align-items-center pb-2">
-                <div class="flex-grow-1 font-weight-bold">Robotergelenke</div>
-                <button
-                    type="button"
-                    class="btn btn-regular btn-sm"
-                    data-test="BTN_Start_Calibration"
-                    [disabled]="!running"
-                    title="Ordnet Schritt für Schritt zu, welche erkannte Körperseite welches Gelenk steuert"
-                    (click)="startCalibration()">
-                    Zuordnung kalibrieren
-                </button>
+            <div class="d-flex align-items-center pb-2 mt-2 flex-wrap mc-settings-bar">
+                <label class="mc-setting-item mb-0 mr-4">
+                    <span class="mr-2">{{ 'motionCapture.smoothingLabel' | translate }}</span>
+                    <input
+                        type="range"
+                        min="0.05"
+                        max="1"
+                        step="0.05"
+                        data-test="RNG_Smoothing"
+                        [ngModel]="smoothingAlpha"
+                        (ngModelChange)="onSmoothingChange($any($event).toString())" />
+                    <span class="ml-2 mc-setting-value">{{smoothingAlpha | number: "1.2-2"}}</span>
+                </label>
+                <label class="mc-setting-item mb-0">
+                    <span class="mr-2">{{ 'motionCapture.evalHzLabel' | translate }}</span>
+                    <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        step="1"
+                        class="number-cell"
+                        data-test="NUM_Eval_Hz"
+                        [ngModel]="evalMaxHz"
+                        (ngModelChange)="onEvalHzChange($any($event).toString())" />
+                </label>
             </div>
+            <div class="d-flex align-items-center pb-2">
+                <div class="flex-grow-1 font-weight-bold">{{ 'motionCapture.robotJoints' | translate }}</div>
+            </div>
+            <p class="joint-table-hint">
+                {{ 'motionCapture.mappingHint' | translate }}
+            </p>
             <table
                 class="angle-table joint-table"
                 data-test="TABLE_Motion_Capture_Joints">
+                <tr class="joint-header-row">
+                    <th></th>
+                    <th>{{ 'motionCapture.jointColumn' | translate }}</th>
+                    <th>{{ 'motionCapture.colorColumn' | translate }}</th>
+                    <th>{{ 'motionCapture.sideColumn' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.leftSide' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.rightSide' | translate }}</th>
+                    <th>{{ 'motionCapture.invertShort' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.calibrateLowColumn' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.calibrateHighColumn' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.minDegColumn' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.maxDegColumn' | translate }}</th>
+                    <th class="text-right">{{ 'motionCapture.speedColumn' | translate }}</th>
+                </tr>
                 <tr
                     *ngFor="let row of jointRows"
                     class="joint-row"
-                    [class.joint-selected]="selectedJoints.has(row.motor)"
-                    (click)="toggleJoint(row.motor)">
-                    <td class="pr-2">
+                    [class.joint-selected]="isRowSelected(row)">
+                    <td class="pr-2" (click)="toggleJoint(row)">
                         <input
                             type="checkbox"
                             tabindex="-1"
                             style="pointer-events: none"
-                            [checked]="selectedJoints.has(row.motor)" />
+                            [checked]="isRowSelected(row)" />
                     </td>
-                    <td class="pr-3">{{row.label}}</td>
-                    <td class="text-right">
-                        <ng-container *ngIf="liveDegrees(row.motor) !== null; else noValue">
-                            {{liveDegrees(row.motor) | number: "1.0-0"}}&deg;
+                    <td class="pr-3" (click)="toggleJoint(row)">{{row.labelKey | translate}}</td>
+                    <td class="pr-3">
+                        <span
+                            class="color-swatch"
+                            [style.background-color]="rowColor(row)"
+                            data-test="SWATCH_Joint_Color"></span>
+                    </td>
+                    <td class="pr-3">
+                        <select
+                            data-test="SEL_Joint_Source_Side"
+                            [ngModel]="mapping[row.motor]?.sourceSide"
+                            (ngModelChange)="onSourceSideChange(row, $event)">
+                            <option value="left">{{ 'motionCapture.leftSide' | translate }}</option>
+                            <option value="right">{{ 'motionCapture.rightSide' | translate }}</option>
+                        </select>
+                    </td>
+                    <td class="text-right pr-2">
+                        <ng-container *ngIf="candidateLeft(row) !== null; else noValueL">
+                            {{candidateLeft(row) | number: "1.0-0"}}{{row.group === 'hand' ? '%' : '°'}}
                         </ng-container>
-                        <ng-template #noValue>&ndash;</ng-template>
+                        <ng-template #noValueL>&ndash;</ng-template>
+                    </td>
+                    <td class="text-right pr-2">
+                        <ng-container *ngIf="candidateRight(row) !== null; else noValueR">
+                            {{candidateRight(row) | number: "1.0-0"}}{{row.group === 'hand' ? '%' : '°'}}
+                        </ng-container>
+                        <ng-template #noValueR>&ndash;</ng-template>
+                    </td>
+                    <td>
+                        <input
+                            type="checkbox"
+                            data-test="CHK_Joint_Invert"
+                            [checked]="mapping[row.motor]?.invert"
+                            (change)="onInvertChange(row, $any($event.target).checked)" />
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <input
+                                type="number"
+                                step="1"
+                                class="number-cell"
+                                data-test="NUM_Joint_CandidateLow"
+                                placeholder="–"
+                                [ngModel]="mapping[row.motor]?.candidateLowDeg"
+                                (ngModelChange)="onNumberFieldChange(row, 'candidateLowDeg', $any($event ?? '').toString())" />
+                            <button
+                                type="button"
+                                class="btn btn-regular btn-sm ml-1 use-current-btn"
+                                data-test="BTN_Use_Current_As_Low"
+                                [title]="'motionCapture.calibrateLowTooltip' | translate"
+                                (click)="useCurrentAsField(row, 'candidateLowDeg')">
+                                {{ 'motionCapture.useCurrent' | translate }}
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <input
+                                type="number"
+                                step="1"
+                                class="number-cell"
+                                data-test="NUM_Joint_CandidateHigh"
+                                placeholder="–"
+                                [ngModel]="mapping[row.motor]?.candidateHighDeg"
+                                (ngModelChange)="onNumberFieldChange(row, 'candidateHighDeg', $any($event ?? '').toString())" />
+                            <button
+                                type="button"
+                                class="btn btn-regular btn-sm ml-1 use-current-btn"
+                                data-test="BTN_Use_Current_As_High"
+                                [title]="'motionCapture.calibrateHighTooltip' | translate"
+                                (click)="useCurrentAsField(row, 'candidateHighDeg')">
+                                {{ 'motionCapture.useCurrent' | translate }}
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <input
+                                type="number"
+                                step="1"
+                                class="number-cell"
+                                data-test="NUM_Joint_MinDeg"
+                                placeholder="–"
+                                [ngModel]="mapping[row.motor]?.minDeg"
+                                (ngModelChange)="onNumberFieldChange(row, 'minDeg', $any($event ?? '').toString())" />
+                            <button
+                                type="button"
+                                class="btn btn-regular btn-sm ml-1 use-current-btn"
+                                data-test="BTN_Use_Current_As_Min"
+                                [title]="'motionCapture.limitUseCurrentTooltip' | translate"
+                                (click)="useCurrentAsField(row, 'minDeg')">
+                                {{ 'motionCapture.useCurrent' | translate }}
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <input
+                                type="number"
+                                step="1"
+                                class="number-cell"
+                                data-test="NUM_Joint_MaxDeg"
+                                placeholder="–"
+                                [ngModel]="mapping[row.motor]?.maxDeg"
+                                (ngModelChange)="onNumberFieldChange(row, 'maxDeg', $any($event ?? '').toString())" />
+                            <button
+                                type="button"
+                                class="btn btn-regular btn-sm ml-1 use-current-btn"
+                                data-test="BTN_Use_Current_As_Max"
+                                [title]="'motionCapture.limitUseCurrentTooltip' | translate"
+                                (click)="useCurrentAsField(row, 'maxDeg')">
+                                {{ 'motionCapture.useCurrent' | translate }}
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="100"
+                            class="number-cell"
+                            data-test="NUM_Joint_Speed"
+                            [ngModel]="mapping[row.motor]?.speedPercent"
+                            (ngModelChange)="onSpeedChange(row, $any($event).toString())" />
                     </td>
                 </tr>
             </table>
             <div class="joint-table-hint">
-                Gelenk anklicken, um es in die Bewegungsübertragung
-                aufzunehmen. Werte erscheinen, sobald die Erfassung läuft und
-                eine Person erkannt wird; die Dreh-Gelenke brauchen einen
-                angewinkelten Arm.
+                {{ 'motionCapture.jointClickHint' | translate }}
             </div>
             <div
-                *ngIf="calibrationSaved"
+                *ngIf="mappingSaved"
                 class="text-success mt-1"
-                data-test="TXT_Calibration_Saved">
-                Zuordnung gespeichert.
+                data-test="TXT_Mapping_Saved">
+                {{ 'motionCapture.calibrationSaved' | translate }}
             </div>
-        </div>
-    </div>
-
-    <!-- Kalibrierungs-Assistent: schrittweise, manuelle Zuordnung von
-         erkannter Körperseite zu Robotermotor (siehe motion-capture.component.ts) -->
-    <div
-        *ngIf="calibrating"
-        class="calibration-panel m-3"
-        data-test="PANEL_Calibration">
-        <div class="d-flex align-items-center pb-2">
-            <div class="flex-grow-1 font-weight-bold">
-                Kalibrierung {{calibrationStepIndex + 1}} / {{jointRows.length}}:
-                {{calibrationJoint.label}}
-            </div>
-            <button
-                type="button"
-                class="btn btn-regular btn-sm"
-                data-test="BTN_Calibration_Cancel"
-                (click)="cancelCalibration()">
-                Abbrechen
-            </button>
-        </div>
-        <p class="calibration-hint">
-            Bewege dich und beobachte, welcher der beiden Werte unten reagiert
-            - klicke dann auf die passende Seite. Reagiert der Wert in die
-            falsche Richtung, zusätzlich "Invertieren" anhaken.
-        </p>
-        <div class="d-flex flex-row calibration-sides">
-            <button
-                type="button"
-                class="calibration-side-btn"
-                data-test="BTN_Calibration_Left"
-                [class.calibration-side-selected]="calibrationCurrentEntry.sourceSide === 'left'"
-                (click)="calibrationSelectSide('left')">
-                <div>Linke Seite</div>
-                <div class="calibration-live-value">
-                    {{calibrationLiveLeft !== null ? (calibrationLiveLeft | number: "1.0-0") + "°" : "–"}}
-                </div>
-            </button>
-            <button
-                type="button"
-                class="calibration-side-btn"
-                data-test="BTN_Calibration_Right"
-                [class.calibration-side-selected]="calibrationCurrentEntry.sourceSide === 'right'"
-                (click)="calibrationSelectSide('right')">
-                <div>Rechte Seite</div>
-                <div class="calibration-live-value">
-                    {{calibrationLiveRight !== null ? (calibrationLiveRight | number: "1.0-0") + "°" : "–"}}
-                </div>
-            </button>
-        </div>
-        <div class="form-check mt-2">
-            <input
-                id="calibration-invert-checkbox"
-                data-test="CHK_Calibration_Invert"
-                class="form-check-input"
-                type="checkbox"
-                [checked]="calibrationCurrentEntry.invert"
-                (change)="calibrationSetInvert($any($event.target).checked)" />
-            <label
-                class="form-check-label"
-                for="calibration-invert-checkbox">
-                Invertieren (Bewegung geht in die falsche Richtung)
-            </label>
-        </div>
-        <div class="d-flex flex-row mt-3">
-            <button
-                type="button"
-                class="btn btn-regular btn-sm mr-2"
-                data-test="BTN_Calibration_Back"
-                [disabled]="calibrationStepIndex === 0"
-                (click)="calibrationBack()">
-                Zurück
-            </button>
-            <button
-                type="button"
-                class="btn btn-regular btn-sm"
-                data-test="BTN_Calibration_Next"
-                (click)="calibrationNext()">
-                {{calibrationStepIndex < jointRows.length - 1 ? "Weiter" : "Fertig & speichern"}}
-            </button>
         </div>
     </div>
 </div>

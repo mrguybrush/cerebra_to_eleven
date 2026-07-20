@@ -1,42 +1,13 @@
 <div class="settings-container">
-    <div class="setting-row">
-        <label
-            for="blockly-language-select"
-            class="setting-label">
-            Blockprogrammierung – Sprache
-        </label>
-        <select
-            id="blockly-language-select"
-            data-test="SEL_Blockly_Language"
-            class="setting-select"
-            [ngModel]="selectedLanguage"
-            (ngModelChange)="onLanguageChange($event)">
-            <option
-                *ngFor="let locale of locales"
-                [value]="locale.code">
-                {{ locale.label }}
-            </option>
-        </select>
-    </div>
+    <h3 class="settings-section-title">{{ 'settings.learningGroup.title' | translate }}</h3>
     <div class="setting-hint">
-        Legt die Sprache der Blöcke und Kategorien im Programm-Editor fest.
-        Änderungen wirken sofort und gelten für diesen Browser.
-    </div>
-
-    <hr class="settings-divider" />
-
-    <h3 class="settings-section-title">Lerngruppe</h3>
-    <div class="setting-hint">
-        Ist eine Lerngruppe aktiv, werden überall (Programme, Posen, auch in
-        der Blockprogrammierung) nur die Inhalte dieser Gruppe angezeigt.
-        Neue Programme und Posen gehören automatisch zur aktiven Gruppe.
-        Die Resting-Pose ist immer verfügbar.
+        {{ 'settings.learningGroup.hint' | translate }}
     </div>
     <div class="setting-row">
         <label
             for="learning-group-select"
             class="setting-label">
-            Aktive Gruppe
+            {{ 'settings.learningGroup.activeGroupLabel' | translate }}
         </label>
         <select
             id="learning-group-select"
@@ -46,14 +17,14 @@
             <option
                 [value]="''"
                 [selected]="activeLearningGroup === null">
-                (keine – alles anzeigen)
+                {{ 'settings.learningGroup.noneOption' | translate }}
             </option>
             <option
                 *ngFor="let group of learningGroups"
                 [value]="group.groupId"
                 [selected]="group.groupId === activeLearningGroup?.groupId">
                 {{ group.name
-                }}{{ group.groupId === activeLearningGroup?.groupId ? " (aktiv)" : "" }}
+                }}{{ group.groupId === activeLearningGroup?.groupId ? (' ' + ('settings.learningGroup.activeSuffix' | translate)) : "" }}
             </option>
         </select>
     </div>
@@ -61,7 +32,7 @@
         <input
             type="text"
             class="setting-text-input"
-            placeholder="Neue Gruppe (Name)"
+            [placeholder]="'settings.learningGroup.newGroupPlaceholder' | translate"
             data-test="TXT_New_Learning_Group"
             [formControl]="newGroupNameControl" />
         <button
@@ -70,7 +41,7 @@
             data-test="BTN_Create_Learning_Group"
             [disabled]="!newGroupNameControl.value"
             (click)="createLearningGroup()">
-            Anlegen
+            {{ 'settings.learningGroup.create' | translate }}
         </button>
     </div>
     <div
@@ -85,22 +56,120 @@
                 class="btn btn-regular btn-sm delete-token-button"
                 [attr.data-test]="'BTN_Delete_Group_' + group.name"
                 (click)="deleteLearningGroup(group)">
-                Löschen
+                {{ 'settings.learningGroup.delete' | translate }}
             </button>
         </div>
         <div class="setting-hint mt-1">
-            Beim Löschen einer Gruppe bleiben ihre Programme/Posen erhalten
-            und werden wieder allgemein sichtbar.
+            {{ 'settings.learningGroup.deleteHint' | translate }}
         </div>
     </div>
 
     <hr class="settings-divider" />
 
-    <h3 class="settings-section-title">Chat-Verbindung</h3>
+    <h3 class="settings-section-title">{{ 'settings.autoOff.title' | translate }}</h3>
     <div class="setting-hint">
-        Bestimmt, welcher Dienst mit dem Sprachassistenten und dem Chat
-        spricht - gilt global für alle Personalities. Nur eine Option ist
-        gleichzeitig aktiv; die jeweils passenden Felder erscheinen darunter.
+        {{ 'settings.autoOff.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <label
+            for="auto-off-minutes"
+            class="setting-label">
+            {{ 'settings.autoOff.label' | translate }}
+        </label>
+        <input
+            id="auto-off-minutes"
+            type="number"
+            min="0"
+            step="1"
+            class="setting-text-input"
+            data-test="TXT_Auto_Off_Minutes"
+            [placeholder]="'settings.autoOff.placeholder' | translate"
+            [formControl]="autoOffMinutesControl"
+            (blur)="onAutoOffMinutesChange()"
+            (keydown.enter)="onAutoOffMinutesChange()" />
+    </div>
+    <div
+        class="setting-hint"
+        data-test="TXT_Auto_Off_Countdown"
+        *ngIf="autoOffSecondsRemaining !== null">
+        {{ 'settings.autoOff.countdown' | translate: {seconds: autoOffSecondsRemaining} }}
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">{{ 'settings.maxSpeed.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.maxSpeed.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <label
+            for="max-speed-percent"
+            class="setting-label">
+            {{ 'settings.maxSpeed.label' | translate }}
+        </label>
+        <input
+            id="max-speed-percent"
+            type="range"
+            [min]="minSpeedPercent"
+            [max]="absoluteMaxSpeedPercent"
+            step="1"
+            data-test="SLD_Max_Speed"
+            [value]="maxSpeedPercent"
+            (input)="onMaxSpeedInput($any($event.target).value)"
+            (change)="onMaxSpeedChange($any($event.target).value)" />
+        <span
+            class="ml-2"
+            data-test="TXT_Max_Speed_Value"
+            >{{maxSpeedPercent}}%</span
+        >
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">{{ 'settings.display.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.display.hint' | translate }}
+    </div>
+    <button
+        type="button"
+        class="btn btn-regular restart-button"
+        data-test="BTN_Restart_Display"
+        [disabled]="restartingDisplay"
+        (click)="restartDisplay()">
+        {{restartingDisplay ? ('settings.display.restarting' | translate) : ('settings.display.restart' | translate)}}
+    </button>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">{{ 'settings.language.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.language.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <label
+            for="blockly-language-select"
+            class="setting-label">
+            {{ 'settings.language.label' | translate }}
+        </label>
+        <select
+            id="blockly-language-select"
+            data-test="SEL_Blockly_Language"
+            class="setting-select"
+            [ngModel]="selectedLanguage"
+            (ngModelChange)="onLanguageChange($event)">
+            <option
+                *ngFor="let locale of locales"
+                [value]="locale.code">
+                {{ locale.label }}
+            </option>
+        </select>
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">{{ 'settings.chat.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.chat.hint' | translate }}
     </div>
 
     <div class="connection-type-choice">
@@ -111,7 +180,7 @@
                 data-test="RDO_Connection_Gemini"
                 [checked]="connectionType === 'gemini'"
                 (change)="onSelectConnectionType('gemini')" />
-            <span>Gemini</span>
+            <span>{{ 'settings.chat.gemini' | translate }}</span>
         </label>
         <label class="connection-type-option">
             <input
@@ -120,7 +189,7 @@
                 data-test="RDO_Connection_Local_Llm"
                 [checked]="connectionType === 'local-llm'"
                 (change)="onSelectConnectionType('local-llm')" />
-            <span>Lokales Netzwerk-LLM</span>
+            <span>{{ 'settings.chat.localLlm' | translate }}</span>
         </label>
         <label class="connection-type-option">
             <input
@@ -129,7 +198,7 @@
                 data-test="RDO_Connection_Tryb"
                 [checked]="connectionType === 'tryb'"
                 (change)="onSelectConnectionType('tryb')" />
-            <span>Tryb (GPT-4o / Claude, mit Token)</span>
+            <span>{{ 'settings.chat.tryb' | translate }}</span>
         </label>
     </div>
 
@@ -142,7 +211,7 @@
             <label
                 for="gemini-api-key"
                 class="setting-label">
-                Gemini API-Key
+                {{ 'settings.chat.geminiApiKey' | translate }}
             </label>
             <div class="input-group setting-input-group">
                 <input
@@ -166,20 +235,20 @@
                 data-test="BTN_Verify_Gemini_Key"
                 [disabled]="verifyingGeminiKey || !geminiApiKeyControl.value"
                 (click)="verifyGeminiKey()">
-                {{verifyingGeminiKey ? "Prüfe..." : "Überprüfen"}}
+                {{verifyingGeminiKey ? ('settings.chat.verifying' | translate) : ('settings.chat.verify' | translate)}}
             </button>
             <button
                 type="button"
                 class="btn btn-regular btn-sm"
                 data-test="BTN_Save_Llm_Settings"
                 (click)="saveLlmSettings()">
-                Speichern
+                {{ 'settings.chat.save' | translate }}
             </button>
             <span
                 *ngIf="llmSettingsSaved"
                 class="text-success"
                 data-test="TXT_Llm_Settings_Saved">
-                Gespeichert.
+                {{ 'settings.chat.saved' | translate }}
             </span>
         </div>
         <div
@@ -190,9 +259,7 @@
             {{result.message}}
         </div>
         <div class="setting-hint mt-2">
-            Ohne gültigen Key lässt sich der Sprachassistent mit Gemini nicht
-            aktivieren. "Überprüfen" testet den Key direkt bei Google, ohne
-            ihn vorher speichern zu müssen.
+            {{ 'settings.chat.geminiHint' | translate }}
         </div>
     </div>
 
@@ -204,7 +271,7 @@
             <label
                 for="local-llm-url"
                 class="setting-label">
-                Server-URL
+                {{ 'settings.chat.localLlmUrlLabel' | translate }}
             </label>
             <input
                 id="local-llm-url"
@@ -217,7 +284,7 @@
             <label
                 for="local-llm-model"
                 class="setting-label">
-                Modellname
+                {{ 'settings.chat.localLlmModelLabel' | translate }}
             </label>
             <input
                 id="local-llm-model"
@@ -227,9 +294,7 @@
                 [formControl]="localLlmModelControl" />
         </div>
         <div class="setting-hint">
-            Adresse eines OpenAI-kompatiblen LLM-Servers im lokalen Netzwerk
-            (z.B. Ollama, LM Studio) - braucht keine Internetverbindung und
-            keinen Token.
+            {{ 'settings.chat.localLlmHint' | translate }}
         </div>
         <div class="setting-row mt-2">
             <button
@@ -237,13 +302,13 @@
                 class="btn btn-regular btn-sm"
                 data-test="BTN_Save_Llm_Settings"
                 (click)="saveLlmSettings()">
-                Speichern
+                {{ 'settings.chat.save' | translate }}
             </button>
             <span
                 *ngIf="llmSettingsSaved"
                 class="text-success"
                 data-test="TXT_Llm_Settings_Saved">
-                Gespeichert.
+                {{ 'settings.chat.saved' | translate }}
             </span>
         </div>
     </div>
@@ -258,7 +323,7 @@
             <label
                 for="assistant-model-select"
                 class="setting-label">
-                Modell
+                {{ 'settings.chat.modelLabel' | translate }}
             </label>
             <select
                 id="assistant-model-select"
@@ -270,12 +335,12 @@
                     [value]="model.id"
                     [selected]="model.id === selectedAssistantModelId">
                     {{ model.visualName
-                    }}{{ model.id === selectedAssistantModelId ? " (aktiv)" : "" }}
+                    }}{{ model.id === selectedAssistantModelId ? (' ' + ('settings.chat.modelActiveSuffix' | translate)) : "" }}
                 </option>
             </select>
         </div>
 
-        <h4 class="settings-subsection-title">Smart API Token</h4>
+        <h4 class="settings-subsection-title">{{ 'settings.chat.smartApiToken' | translate }}</h4>
 
         <!-- Decrypt Token Form -->
         <div
@@ -284,12 +349,12 @@
             <div
                 *ngIf="isTokenActive"
                 class="mb-2">
-                <span class="text-success">Token bereits entschlüsselt.</span>
+                <span class="text-success">{{ 'settings.chat.tokenActive' | translate }}</span>
             </div>
             <p
                 [ngClass]="{disabled: isTokenActive}"
                 class="setting-hint">
-                Passwort eingeben, um sich mit der Smart API zu verbinden.
+                {{ 'settings.chat.passwordHint' | translate }}
             </p>
             <form
                 [formGroup]="decryptTokenForm"
@@ -299,7 +364,7 @@
                         for="password"
                         [ngClass]="{disabled: isTokenActive}"
                         class="setting-label"
-                        >Passwort</label
+                        >{{ 'settings.chat.passwordLabel' | translate }}</label
                     >
                     <div class="input-group setting-input-group">
                         <input
@@ -317,7 +382,7 @@
                     </div>
                 </div>
                 <div *ngIf="onErrorSubmit">
-                    <span class="text-danger">Entschlüsseln fehlgeschlagen.</span>
+                    <span class="text-danger">{{ 'settings.chat.decryptFailed' | translate }}</span>
                 </div>
                 <div class="setting-row mt-2">
                     <button
@@ -326,14 +391,14 @@
                         type="submit"
                         class="btn btn-regular"
                         [disabled]="decryptTokenForm.invalid || isTokenActive">
-                        Verbinden
+                        {{ 'settings.chat.connect' | translate }}
                     </button>
                     <button
                         type="button"
                         data-test="BTN_Delete"
                         class="btn btn-regular delete-token-button"
                         (click)="onDeleteToken()">
-                        Token löschen
+                        {{ 'settings.chat.deleteToken' | translate }}
                     </button>
                 </div>
             </form>
@@ -343,13 +408,8 @@
         <ng-template #encryptToken>
             <div class="mt-2">
                 <p class="setting-hint">
-                    <b
-                        >Um dich mit der Smart API zu verbinden, gib den
-                        erhaltenen Token ein und verschlüssele ihn mit einem
-                        Passwort.</b
-                    >
-                    Bei vergessenem Passwort muss ein neuer Token angefordert
-                    werden.
+                    <b>{{ 'settings.chat.encryptIntro' | translate }}</b>
+                    {{ 'settings.chat.encryptOutro' | translate }}
                 </p>
                 <form
                     [formGroup]="encryptTokenForm"
@@ -358,7 +418,7 @@
                         <label
                             for="token"
                             class="setting-label"
-                            >Token</label
+                            >{{ 'settings.chat.tokenLabel' | translate }}</label
                         >
                         <input
                             id="token"
@@ -373,7 +433,7 @@
                         <label
                             for="encrypt-password"
                             class="setting-label"
-                            >Passwort</label
+                            >{{ 'settings.chat.passwordLabel' | translate }}</label
                         >
                         <div class="input-group setting-input-group">
                             <input
@@ -392,16 +452,14 @@
                     </div>
                     <div
                         *ngIf="encryptTokenForm.get('password')?.errors?.['minlength'] && (encryptTokenForm.touched || encryptTokenForm.dirty)">
-                        <span class="text-danger"
-                            >Passwort muss mindestens 8 Zeichen lang sein.</span
-                        >
+                        <span class="text-danger">{{ 'settings.chat.passwordLengthError' | translate }}</span>
                     </div>
 
                     <div class="setting-row">
                         <label
                             for="confirmPassword"
                             class="setting-label"
-                            >Passwort bestätigen</label
+                            >{{ 'settings.chat.confirmPasswordLabel' | translate }}</label
                         >
                         <div class="input-group setting-input-group">
                             <input
@@ -420,13 +478,10 @@
                     </div>
                     <div
                         *ngIf="encryptTokenForm.get('confirmPassword')?.errors?.['mismatch'] && (encryptTokenForm.touched || encryptTokenForm.dirty)">
-                        <span class="text-danger">Passwörter stimmen nicht überein.</span>
+                        <span class="text-danger">{{ 'settings.chat.passwordMismatchError' | translate }}</span>
                     </div>
                     <div *ngIf="onErrorSubmit">
-                        <span class="text-danger"
-                            >Verschlüsseln fehlgeschlagen. Bitte
-                            Netzwerkverbindung prüfen und erneut versuchen.</span
-                        >
+                        <span class="text-danger">{{ 'settings.chat.encryptFailed' | translate }}</span>
                     </div>
 
                     <div class="setting-row mt-2">
@@ -436,7 +491,7 @@
                             type="submit"
                             class="btn btn-regular"
                             [disabled]="encryptTokenForm.invalid">
-                            Verschlüsseln
+                            {{ 'settings.chat.encrypt' | translate }}
                         </button>
                     </div>
                 </form>
@@ -446,7 +501,7 @@
 
     <hr class="settings-divider" />
 
-    <h3 class="settings-section-title">Lokale Sprachausgabe (Piper)</h3>
+    <h3 class="settings-section-title">{{ 'settings.voice.title' | translate }}</h3>
     <div class="setting-row">
         <div class="form-check">
             <input
@@ -459,7 +514,7 @@
             <label
                 class="form-check-label setting-label"
                 for="local-voice-checkbox">
-                Nur lokale Stimme (Piper, ohne Cloud)
+                {{ 'settings.voice.onlyLocal' | translate }}
             </label>
         </div>
     </div>
@@ -469,7 +524,7 @@
         <label
             for="local-voice-select"
             class="setting-label">
-            Stimme
+            {{ 'settings.voice.voiceLabel' | translate }}
         </label>
         <select
             id="local-voice-select"
@@ -482,8 +537,165 @@
                 [value]="voice.id"
                 [selected]="voice.id === selectedVoiceModel">
                 {{ voice.visualName
-                }}{{ voice.id === selectedVoiceModel ? " (aktiv)" : "" }}
+                }}{{ voice.id === selectedVoiceModel ? (' ' + ('settings.voice.activeSuffix' | translate)) : "" }}
             </option>
         </select>
+    </div>
+
+    <hr class="settings-divider" />
+
+    <h3 class="settings-section-title">{{ 'settings.menu.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.menu.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-joint-control-checkbox"
+                data-test="CHK_Hide_Joint_Control"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.jointControl"
+                (change)="onToggleMenuVisibility('jointControl', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-joint-control-checkbox">
+                {{ 'settings.menu.jointControl' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-pose-checkbox"
+                data-test="CHK_Hide_Pose"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.pose"
+                (change)="onToggleMenuVisibility('pose', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-pose-checkbox">
+                {{ 'settings.menu.pose' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-camera-checkbox"
+                data-test="CHK_Hide_Camera"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.camera"
+                (change)="onToggleMenuVisibility('camera', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-camera-checkbox">
+                {{ 'settings.menu.camera' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-motion-capture-checkbox"
+                data-test="CHK_Hide_Motion_Capture"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.motionCapture"
+                (change)="onToggleMenuVisibility('motionCapture', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-motion-capture-checkbox">
+                {{ 'settings.menu.motionCapture' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-voice-recording-checkbox"
+                data-test="CHK_Hide_Voice_Recording"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.voiceRecording"
+                (change)="onToggleMenuVisibility('voiceRecording', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-voice-recording-checkbox">
+                {{ 'settings.menu.voiceRecording' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-voice-assistant-checkbox"
+                data-test="CHK_Hide_Voice_Assistant"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.voiceAssistant"
+                (change)="onToggleMenuVisibility('voiceAssistant', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-voice-assistant-checkbox">
+                {{ 'settings.menu.voiceAssistant' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-program-checkbox"
+                data-test="CHK_Hide_Program"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.program"
+                (change)="onToggleMenuVisibility('program', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-program-checkbox">
+                {{ 'settings.menu.program' | translate }}
+            </label>
+        </div>
+    </div>
+    <div class="setting-row">
+        <div class="form-check">
+            <input
+                id="hide-system-nav-checkbox"
+                data-test="CHK_Hide_System_Nav"
+                class="form-check-input"
+                type="checkbox"
+                [checked]="menuVisibility.system"
+                (change)="onToggleMenuVisibility('system', $any($event.target).checked)" />
+            <label
+                class="form-check-label setting-label"
+                for="hide-system-nav-checkbox">
+                {{ 'settings.menu.system' | translate }}
+            </label>
+        </div>
+        <div class="system-link-box mt-2">
+            <div class="setting-hint mb-1">
+                {{ 'settings.menu.systemLinkWarning' | translate }}
+            </div>
+            <div class="setting-row">
+                <label class="setting-label">{{ 'settings.menu.systemLinkLabel' | translate }}</label>
+                <input
+                    type="text"
+                    class="setting-text-input"
+                    data-test="TXT_System_Direct_Link"
+                    [value]="systemDirectLink"
+                    readonly
+                    (focus)="$any($event.target).select()" />
+                <button
+                    type="button"
+                    class="btn btn-regular btn-sm"
+                    data-test="BTN_Copy_System_Link"
+                    (click)="copySystemLink()">
+                    {{ systemLinkCopied ? ('settings.menu.linkCopied' | translate) : ('settings.menu.copyLink' | translate) }}
+                </button>
+            </div>
+        </div>
     </div>
 </div>

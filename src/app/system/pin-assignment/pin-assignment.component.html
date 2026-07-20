@@ -1,13 +1,7 @@
 <div>
-    <div class="mb-3 pl-2 form-headline">Pinbelegung der Servo-Bricklets</div>
+    <div class="mb-3 pl-2 form-headline">{{ 'pinAssignment.headline' | translate }}</div>
     <div class="pin-hint pl-2">
-        Pro Pin lässt sich das angeschlossene Körperteil auswählen oder
-        „nicht angeschlossen" setzen. Ein Körperteil kann immer nur einem
-        Pin zugewiesen sein - es verschwindet automatisch aus den anderen
-        Dropdown-Listen. Defekte (z. B. durchgebrannte) Pins lassen sich
-        markieren, sobald kein Körperteil mehr daran hängt - dafür zuerst
-        „nicht angeschlossen" auswählen. Änderungen wirken erst, nachdem
-        der ros-motors-Container neu gestartet wurde.
+        {{ 'pinAssignment.hint' | translate }}
     </div>
 
     <button
@@ -16,14 +10,14 @@
         data-test="BTN_Restart_Motors"
         [disabled]="restartingMotors"
         (click)="restartMotors()">
-        {{restartingMotors ? "Wird neu gestartet…" : "ros-motors neu starten"}}
+        {{restartingMotors ? ('pinAssignment.restarting' | translate) : ('pinAssignment.restart' | translate)}}
     </button>
 
     <div
         *ngFor="let bricklet of grid.bricklets"
         class="bricklet-group">
         <div class="bricklet-title">
-            Servo Bricklet {{bricklet.brickletNumber}}
+            {{ 'pinAssignment.servoBricklet' | translate: {number: bricklet.brickletNumber} }}
             <span
                 class="bricklet-uid"
                 *ngIf="bricklet.uid"
@@ -32,9 +26,9 @@
         </div>
         <table class="pin-table">
             <tr>
-                <th>Pin</th>
-                <th>Körperteil</th>
-                <th>Defekt</th>
+                <th>{{ 'pinAssignment.pin' | translate }}</th>
+                <th>{{ 'pinAssignment.bodyPart' | translate }}</th>
+                <th>{{ 'pinAssignment.defective' | translate }}</th>
             </tr>
             <tr
                 *ngFor="let pinInfo of bricklet.pins"
@@ -45,12 +39,16 @@
                         class="pin-select"
                         [attr.data-test]="'SEL_Pin_' + bricklet.brickletNumber + '_' + pinInfo.pin"
                         [disabled]="pinInfo.defective"
-                        [value]="pinInfo.motorName ?? ''"
                         (change)="onAssign(bricklet.brickletId, pinInfo.pin, $any($event.target).value)">
-                        <option value="">(nicht angeschlossen)</option>
+                        <option
+                            value=""
+                            [selected]="!pinInfo.motorName"
+                            >{{ 'pinAssignment.notConnected' | translate }}</option
+                        >
                         <option
                             *ngFor="let motorName of availableMotorNames(pinInfo.motorName)"
-                            [value]="motorName">
+                            [value]="motorName"
+                            [selected]="motorName === pinInfo.motorName">
                             {{motorName}}
                         </option>
                     </select>

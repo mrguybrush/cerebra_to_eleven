@@ -1,5 +1,5 @@
 <div>
-    <div class="mb-3 pl-2 form-headline">Please input your bricklet uids.</div>
+    <div class="mb-3 pl-2 form-headline">{{ 'hardwareId.headline' | translate }}</div>
     <form
         [formGroup]="brickletUidForm"
         (ngSubmit)="updateIds()">
@@ -45,16 +45,13 @@
                     data-test="BTN_Update_bricklet_UIDs"
                     class="hardware-button btn btn-regular"
                     [disabled]="brickletUidForm.invalid">
-                    Update
+                    {{ 'hardwareId.update' | translate }}
                 </button>
             </div>
             <div
                 class="col-auto mt-4 ml-4 mb-3 pl-2 align-self-center"
                 *ngIf="brickletUidForm.invalid">
-                <span class="validation-error"
-                    >IDs must be unique, up to 6 characters long, and contain
-                    only letters and numbers.</span
-                >
+                <span class="validation-error">{{ 'hardwareId.validationError' | translate }}</span>
             </div>
         </div>
     </form>

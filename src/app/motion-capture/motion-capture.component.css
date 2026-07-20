@@ -12,18 +12,61 @@ select {
     padding: 4px 8px;
 }
 
+/* Same reasoning as the select rule above - narrow numeric tuning inputs
+   (Skalierung/Min/Max/Totzone) in the joint mapping table. */
+.number-cell {
+    color: white;
+    background-color: #344864;
+    border-radius: 5px;
+    border: none;
+    padding: 4px 6px;
+    width: 64px;
+    font-variant-numeric: tabular-nums;
+}
+
+.use-current-btn {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Video oben fixiert: bleibt beim Scrollen stehen, die Tabelle scrollt
+   darunter weg. Der Hintergrund deckt die durchscrollende Tabelle ab. */
 .video-box {
-    position: relative;
-    min-width: 300px;
-    max-width: 800px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    align-self: center;
+    width: 100%;
+    max-width: 640px;
+    background: #041939;
+    padding-bottom: 6px;
 }
 
 .capture-canvas {
     width: 100%;
+    max-height: 45vh;
+    object-fit: contain;
     border-radius: 8px;
     background: #041939;
     display: block;
-    min-height: 200px;
+    min-height: 160px;
+}
+
+.mc-settings-bar {
+    gap: 8px 0;
+}
+
+.mc-setting-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.mc-setting-value {
+    font-variant-numeric: tabular-nums;
+    min-width: 2.5em;
+    display: inline-block;
 }
 
 .canvas-hint {
@@ -109,42 +152,19 @@ select {
     margin-top: 4px;
 }
 
-.calibration-panel {
-    border: 2px solid #e10072;
-    border-radius: 8px;
-    padding: 14px 16px;
-    max-width: 620px;
-    background-color: rgba(225, 0, 114, 0.08);
+.joint-header-row th {
+    text-align: left;
+    font-weight: normal;
+    opacity: 0.7;
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-bottom: 1px solid #344864;
 }
 
-.calibration-hint {
-    font-size: 0.85rem;
-    opacity: 0.85;
-}
-
-.calibration-sides {
-    gap: 10px;
-}
-
-.calibration-side-btn {
-    flex: 1;
-    background-color: #344864;
-    border: 2px solid #344864;
-    border-radius: 8px;
-    color: white;
-    padding: 10px;
-    cursor: pointer;
-    text-align: center;
-}
-
-.calibration-side-btn.calibration-side-selected {
-    border-color: #e10072;
-    background-color: rgba(225, 0, 114, 0.2);
-}
-
-.calibration-live-value {
-    font-size: 1.4rem;
-    font-weight: bold;
-    font-variant-numeric: tabular-nums;
-    margin-top: 4px;
+.color-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }

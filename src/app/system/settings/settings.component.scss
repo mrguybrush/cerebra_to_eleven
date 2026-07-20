@@ -33,13 +33,14 @@
 
 .settings-divider {
     border-color: #344864;
-    margin: 1.5rem 0;
+    margin: 2.5rem 0;
 }
 
 .settings-section-title {
     color: white;
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
 }
 
 .setting-text-input {
@@ -117,6 +118,13 @@
     padding: 14px 16px;
     max-width: 620px;
     margin-bottom: 0.5rem;
+}
+
+.system-link-box {
+    border: 2px solid #344864;
+    border-radius: 8px;
+    padding: 12px 16px;
+    max-width: 620px;
 }
 
 .learning-group-list {

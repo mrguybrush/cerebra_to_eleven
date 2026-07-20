@@ -10,14 +10,22 @@ import {RosService} from "./ros-service/ros.service";
 // MediaPipe Hand Landmarker's 21-point indices, used to compute a proper
 // palm-orientation (for lower-arm/wrist rotation) instead of the coarse
 // pinky/index approximation previously derived from the 3 low-fidelity hand
-// keypoints the Pose model exposes. Names match what retargeting.py expects
-// under points["hands"][side][name].
+// keypoints the Pose model exposes, and (MCP + fingertip pairs) to estimate
+// each finger's stretch/opposition independently for retargeting.py's
+// per-finger candidates. Names match what retargeting.py expects under
+// points["hands"][side][name].
 const HAND_KP_NAMES: {[index: number]: string} = {
     0: "wrist",
+    2: "thumb_mcp",
+    4: "thumb_tip",
     5: "index_mcp",
+    8: "index_tip",
     9: "middle_mcp",
+    12: "middle_tip",
     13: "ring_mcp",
+    16: "ring_tip",
     17: "pinky_mcp",
+    20: "pinky_tip",
 };
 
 // MediaPipe Pose's 33-point landmark indices - matches BODY_KP in
@@ -78,7 +86,11 @@ const VISIBILITY_THRESHOLD = 0.5;
 // doesn't jitter (per prototype: alpha ~0.35; higher = snappier).
 const EMA_ALPHA = 0.35;
 
-export type PoseSource = "robot" | "webcam";
+// "oak": EXPERIMENTELL - Erkennung laeuft on-device auf der OAK-D-VPU
+// (MoveNet + Hand-Landmark, siehe oak_d_lite/stereo.py). Der Browser zeigt
+// nur noch Kamera-Frames + die vom Roboter publizierten Landmarks an,
+// MediaPipe laeuft dann gar nicht - minimale Latenz auf schwachen Geraeten.
+export type PoseSource = "robot" | "webcam" | "oak";
 
 export interface NamedLandmark {
     name: string;
@@ -142,7 +154,33 @@ export class BrowserPoseTrackerService {
     private smoothedAngles: {[label: string]: number} = {};
     private frameAspect = 16 / 9; // width/height of the current source, for angle math
 
+    // Latency controls (set from the motion_capture_settings singleton via
+    // the component). evalIntervalMs caps how often detection runs (0 = as
+    // fast as frames arrive); pose+hand CPU/GPU inference is the main cost,
+    // so throttling prevents backlog on weak devices.
+    private evalIntervalMs = 0;
+    private lastEvalTime = 0;
+    // HandLandmarker is expensive; hand open/close and wrist rotation don't
+    // need every frame. Run it only every Nth detection and reuse the last
+    // result in between.
+    private static readonly HAND_DETECTION_EVERY_N = 2;
+    private detectCount = 0;
+    private lastHandResult?: HandResult;
+    // "oak" mode (on-device NN, experimentell): frames only for display,
+    // landmarks arrive from the camera node via browser_pose_landmarks.
+    private oakActive = false;
+    private oakLandmarksSubscription?: Subscription;
+    // Stereo-Tiefenstream der OAK-D aktiv (robot- und oak-Quelle) - siehe
+    // setOakDepthActive im RosService.
+    private depthActive = false;
+
     constructor(private rosService: RosService) {}
+
+    /** Cap detection frequency (ms between detections); 0 = uncapped.
+     * Driven by eval_max_hz from motion_capture_settings. */
+    setEvalIntervalMs(ms: number): void {
+        this.evalIntervalMs = Math.max(0, ms);
+    }
 
     isRunning(): boolean {
         return this.running;
@@ -166,6 +204,25 @@ export class BrowserPoseTrackerService {
             throw new Error(msg);
         }
 
+        if (source === "oak") {
+            // On-Device-Erkennung: kein MediaPipe im Browser. Frames nur
+            // zur Anzeige, Landmarks kommen vom Kamera-Node.
+            try {
+                await this.startFromOakNn();
+            } catch (err) {
+                this.error$.next(
+                    "Kamera konnte nicht gestartet werden: " + String(err),
+                );
+                throw err;
+            }
+            this.oakActive = true;
+            this.depthActive = true;
+            this.rosService.setOakDepthActive(true);
+            this.landmarkerReady$.next(true);
+            this.running = true;
+            return;
+        }
+
         try {
             await this.initLandmarker(source === "robot" ? "IMAGE" : "VIDEO");
             this.landmarkerReady$.next(true);
@@ -177,6 +234,12 @@ export class BrowserPoseTrackerService {
         try {
             if (source === "robot") {
                 await this.startFromRobotCamera();
+                // Stereo-Tiefenstream der OAK-D mitlaufen lassen: das
+                // Backend ersetzt damit die vom MediaPipe-Modell nur
+                // geschaetzte Tiefe durch Messwerte (Armdrehung/Ellbogen).
+                // Bei der eigenen Webcam sinnlos (anderes Blickfeld).
+                this.depthActive = true;
+                this.rosService.setOakDepthActive(true);
             } else {
                 await this.startFromWebcam();
             }
@@ -189,6 +252,17 @@ export class BrowserPoseTrackerService {
 
     stop(): void {
         this.running = false;
+        if (this.depthActive) {
+            this.depthActive = false;
+            this.rosService.setOakDepthActive(false);
+        }
+        if (this.oakActive) {
+            this.oakActive = false;
+            this.rosService.setOakNnActive(false);
+            this.rosService.unsubscribeBrowserPoseLandmarks();
+            this.oakLandmarksSubscription?.unsubscribe();
+            this.oakLandmarksSubscription = undefined;
+        }
         this.cameraSubscription?.unsubscribe();
         this.cameraSubscription = undefined;
         this.imageElement = undefined;
@@ -207,6 +281,10 @@ export class BrowserPoseTrackerService {
         this.landmarkerReady$.next(false);
         this.smoothedAngles = {};
         this.handsDetected$.next({left: false, right: false});
+        this.lastEvalTime = 0;
+        this.detectCount = 0;
+        this.lastHandResult = undefined;
+        this.busy = false;
     }
 
     private async initLandmarker(mode: "IMAGE" | "VIDEO"): Promise<void> {
@@ -219,27 +297,115 @@ export class BrowserPoseTrackerService {
         }
         // Self-hosted (see Dockerfile) - no external CDN needed at runtime.
         const vision = await FilesetResolver.forVisionTasks("assets/mediapipe/wasm");
-        this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-            baseOptions: {
-                modelAssetPath: "assets/mediapipe/pose_landmarker_lite.task",
-                // CPU, not GPU: the WebGL-based GPU delegate throws on some
-                // mobile browsers/devices. CPU is slower but universally
-                // supported - reliability matters more than speed here,
-                // especially at the ~10Hz we sample anyway.
-                delegate: "CPU",
-            },
-            runningMode: mode,
-            numPoses: 1,
-        });
-        this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
-            baseOptions: {
-                modelAssetPath: "assets/mediapipe/hand_landmarker.task",
-                delegate: "CPU",
-            },
-            runningMode: mode,
-            numHands: 2,
-        });
+        // Try the WebGL GPU delegate first (big latency win on a real
+        // desktop Chrome), fall back to CPU if it throws - the GPU delegate
+        // is unavailable/broken on some mobile browsers/devices, which is
+        // why this used to be CPU-only.
+        this.poseLandmarker = await this.createWithGpuFallback((delegate) =>
+            PoseLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "assets/mediapipe/pose_landmarker_lite.task",
+                    delegate,
+                },
+                runningMode: mode,
+                numPoses: 1,
+            }),
+        );
+        this.handLandmarker = await this.createWithGpuFallback((delegate) =>
+            HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "assets/mediapipe/hand_landmarker.task",
+                    delegate,
+                },
+                runningMode: mode,
+                numHands: 2,
+            }),
+        );
         this.landmarkerRunningMode = mode;
+    }
+
+    private async createWithGpuFallback<T>(
+        create: (delegate: "GPU" | "CPU") => Promise<T>,
+    ): Promise<T> {
+        try {
+            return await create("GPU");
+        } catch {
+            return await create("CPU");
+        }
+    }
+
+    // --- Source: on-device NN on the OAK-D itself (EXPERIMENTELL) ---------
+    // Kein MediaPipe im Browser: Frames werden nur angezeigt, die Landmarks
+    // publiziert der Kamera-Node selbst (MoveNet + Hand-Landmark auf der
+    // VPU, siehe oak_d_lite/stereo.py) - gesture_control konsumiert sie
+    // unveraendert ueber browser_pose_landmarks.
+
+    private async startFromOakNn(): Promise<void> {
+        this.imageElement = new Image();
+        this.rosService.subscribeCameraTopic();
+        this.cameraSubscription = this.rosService.cameraReceiver$.subscribe(
+            (base64Jpeg: string) => this.onOakFrame(base64Jpeg),
+        );
+        this.rosService.subscribeBrowserPoseLandmarks();
+        this.oakLandmarksSubscription =
+            this.rosService.browserPoseLandmarksReceiver$.subscribe(
+                (json: string) => this.onOakLandmarks(json),
+            );
+        this.rosService.setOakNnActive(true);
+    }
+
+    private onOakFrame(base64Jpeg: string) {
+        if (base64Jpeg.startsWith("Camera not available")) {
+            return;
+        }
+        const dataUrl = "data:image/jpeg;base64," + base64Jpeg;
+        this.frame$.next(dataUrl);
+        this.framesReceived$.next(this.framesReceived$.value + 1);
+        // aspect once per session (needed to un-scale the payload's x/z)
+        if (this.imageElement && !this.imageElement.src) {
+            this.imageElement.onload = () => {
+                if (this.imageElement && this.imageElement.naturalHeight > 0) {
+                    this.frameAspect =
+                        this.imageElement.naturalWidth /
+                        this.imageElement.naturalHeight;
+                }
+            };
+            this.imageElement.src = dataUrl;
+        }
+    }
+
+    private onOakLandmarks(json: string) {
+        let payload: {
+            pose?: {[name: string]: number[]};
+            hands?: {[side: string]: object};
+        };
+        try {
+            payload = JSON.parse(json);
+        } catch {
+            return;
+        }
+        // payload format matches what this service itself publishes:
+        // pose {name: [x*aspect, y, score, z*aspect]} - un-scale for display
+        const namedList: NamedLandmark[] = [];
+        for (const [name, values] of Object.entries(payload.pose ?? {})) {
+            if (!Array.isArray(values) || values.length < 3) {
+                continue;
+            }
+            namedList.push({
+                name,
+                x: values[0] / this.frameAspect,
+                y: values[1],
+                z: (values[3] ?? 0) / this.frameAspect,
+                score: values[2],
+            });
+        }
+        this.landmarks$.next(namedList);
+        this.jointAngles$.next(this.computeBodyAngles(namedList));
+        const hands = payload.hands ?? {};
+        this.handsDetected$.next({
+            left: "left" in hands,
+            right: "right" in hands,
+        });
     }
 
     // --- Source: pib's own OAK-D camera (camera_topic), discrete JPEG frames ---
@@ -265,13 +431,21 @@ export class BrowserPoseTrackerService {
         if (base64Jpeg.startsWith("Camera not available")) {
             return;
         }
-        if (this.busy) {
-            return;
-        }
 
+        // Always show the incoming frame so the video preview stays smooth,
+        // even when detection is throttled below.
         const dataUrl = "data:image/jpeg;base64," + base64Jpeg;
         this.frame$.next(dataUrl);
         this.framesReceived$.next(this.framesReceived$.value + 1);
+
+        if (this.busy) {
+            return;
+        }
+        const now = performance.now();
+        if (this.evalIntervalMs > 0 && now - this.lastEvalTime < this.evalIntervalMs) {
+            return; // detection throttle - frame already displayed above
+        }
+        this.lastEvalTime = now;
 
         this.busy = true;
         this.imageElement.onload = () => {
@@ -281,9 +455,9 @@ export class BrowserPoseTrackerService {
                     this.frameAspect = img.naturalWidth / img.naturalHeight;
                 }
                 const result = this.poseLandmarker!.detect(img);
-                const handResult = this.handLandmarker?.detect(img) as
-                    | HandResult
-                    | undefined;
+                const handResult = this.maybeDetectHands(() =>
+                    this.handLandmarker?.detect(img) as HandResult | undefined,
+                );
                 this.handleResult(result.landmarks, handResult);
             } finally {
                 this.busy = false;
@@ -293,6 +467,22 @@ export class BrowserPoseTrackerService {
             this.busy = false;
         };
         this.imageElement.src = dataUrl;
+    }
+
+    /** Runs the (expensive) hand detection only every Nth call, reusing the
+     * last result in between - hand open/close and wrist rotation don't need
+     * full framerate, and this roughly halves per-frame inference cost. */
+    private maybeDetectHands(
+        detect: () => HandResult | undefined,
+    ): HandResult | undefined {
+        this.detectCount++;
+        if (
+            !this.lastHandResult ||
+            this.detectCount % BrowserPoseTrackerService.HAND_DETECTION_EVERY_N === 0
+        ) {
+            this.lastHandResult = detect();
+        }
+        return this.lastHandResult;
     }
 
     // --- Source: operator's own webcam via getUserMedia, continuous <video> ---
@@ -317,6 +507,15 @@ export class BrowserPoseTrackerService {
             }
             return;
         }
+        // The RAF loop fires at ~60Hz; throttle the heavy work (capture +
+        // inference) to evalIntervalMs so a slow device doesn't back up.
+        const now = performance.now();
+        if (this.evalIntervalMs > 0 && now - this.lastEvalTime < this.evalIntervalMs) {
+            this.animationFrameId = requestAnimationFrame(this.webcamDetectLoop);
+            return;
+        }
+        this.lastEvalTime = now;
+
         const canvas = document.createElement("canvas");
         canvas.width = this.videoElement.videoWidth;
         canvas.height = this.videoElement.videoHeight;
@@ -327,11 +526,14 @@ export class BrowserPoseTrackerService {
             this.frameAspect = this.videoElement.videoWidth / this.videoElement.videoHeight;
         }
 
-        const result = this.poseLandmarker.detectForVideo(this.videoElement, performance.now());
-        const handResult = this.handLandmarker?.detectForVideo(
-            this.videoElement,
-            performance.now(),
-        ) as HandResult | undefined;
+        const result = this.poseLandmarker.detectForVideo(this.videoElement, now);
+        const handResult = this.maybeDetectHands(
+            () =>
+                this.handLandmarker?.detectForVideo(
+                    this.videoElement!,
+                    now,
+                ) as HandResult | undefined,
+        );
         this.handleResult(result.landmarks, handResult);
 
         this.animationFrameId = requestAnimationFrame(this.webcamDetectLoop);

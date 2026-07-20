@@ -8,18 +8,7 @@
                 data-test="LNK_Settings"
                 class="nav-link sidebar-btn"
                 routerLink="settings">
-                Einstellungen
-            </a>
-        </li>
-        <li
-            class="nav-item"
-            routerLinkActive="navbar-btn-active">
-            <a
-                id="hardware-nav"
-                data-test="LNK_Hardware_IDs"
-                class="nav-link sidebar-btn"
-                routerLink="hardware-ids">
-                Hardware IDs
+                {{ 'system.settingsTab' | translate }}
             </a>
         </li>
         <li
@@ -30,7 +19,7 @@
                 data-test="LNK_Program_Assignment"
                 class="nav-link sidebar-btn"
                 routerLink="program-assignment">
-                Programme
+                {{ 'system.programAssignmentTab' | translate }}
             </a>
         </li>
         <li
@@ -41,7 +30,18 @@
                 data-test="LNK_Pin_Assignment"
                 class="nav-link sidebar-btn"
                 routerLink="pin-assignment">
-                Pinbelegung
+                {{ 'system.pinAssignmentTab' | translate }}
+            </a>
+        </li>
+        <li
+            class="nav-item"
+            routerLinkActive="navbar-btn-active">
+            <a
+                id="hardware-nav"
+                data-test="LNK_Hardware_IDs"
+                class="nav-link sidebar-btn"
+                routerLink="hardware-ids">
+                {{ 'system.hardwareIdsTab' | translate }}
             </a>
         </li>
     </ul>
