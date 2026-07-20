@@ -1,6 +1,6 @@
 <div class="row p-3 w-100 h-100">
     <div class="mb-3 pl-2 head-line">
-        Please assign a Blockly program to each button.
+        {{ 'rgbLedButton.headline' | translate }}
     </div>
     <form
         [formGroup]="ledConfigForm"
@@ -35,7 +35,7 @@
                     data-test="BTN_Update_Button_Programs"
                     class="hardware-button btn btn-regular"
                     [disabled]="ledConfigForm.pristine">
-                    Update
+                    {{ 'common.update' | translate }}
                 </button>
             </div>
         </div>

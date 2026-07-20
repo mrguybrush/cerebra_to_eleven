@@ -19,7 +19,8 @@ a {
 }
 
 .nav-tabs .nav-item {
-    width: 160px;
+    min-width: 160px;
+    width: fit-content;
     height: 50px;
     background-image: linear-gradient(to top, $blue-dark-2, $black-color);
 }
@@ -27,6 +28,9 @@ a {
 .nav-tabs .nav-item a {
     border: none;
     color: $blue-color;
+    white-space: nowrap;
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 .nav-tabs .nav-item a:hover,

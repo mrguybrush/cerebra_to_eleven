@@ -24,7 +24,7 @@
         <div
             class="col-10"
             id="header-title">
-            <span id="header-title-text">PROGRAM</span>
+            <span id="header-title-text">{{ 'programManager.modalTitle' | translate }}</span>
         </div>
         <div
             class="col-2 text-right"
@@ -58,7 +58,7 @@
             for="name-input"
             class="col-3 mt-2 justify-content-end"
             id="label-name"
-            >Name</label
+            >{{ 'common.name' | translate }}</label
         >
         <input
             ngbAutofocus
@@ -70,8 +70,10 @@
             name="name-input"
             id="name-input" />
     </div>
+    <!-- col-auto statt col-3: die festen 25%-Spalten waren schmaler als die
+         Buttons, wodurch "Abbrechen" den "Speichern"-Button ueberlappte. -->
     <div class="row justify-content-center mt-2 mb-3">
-        <div class="col-3 align-self-center">
+        <div class="col-auto align-self-center">
             <button
                 type="button"
                 [disabled]="nameFormControl.invalid"
@@ -80,17 +82,17 @@
                 data-test="BTN_Save"
                 (keydown.enter)="modal.close('Save')"
                 (click)="modal.close('Save')">
-                Save
+                {{ 'common.save' | translate }}
             </button>
         </div>
-        <div class="col-3 align-self-center">
+        <div class="col-auto align-self-center">
             <button
                 type="button"
                 class="btn btn-regular"
                 id="modal-cancel-button"
                 data-test="BTN_Cancel"
                 (click)="modal.dismiss('Cancel')">
-                Cancel
+                {{ 'common.cancel' | translate }}
             </button>
         </div>
     </div>

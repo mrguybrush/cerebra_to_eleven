@@ -9,6 +9,7 @@ import {RgbLedButtonService} from "src/app/shared/services/rgb-led-button.servic
 import {Bricklet} from "src/app/shared/types/bricklet";
 import {ButtonProgram} from "src/app/shared/types/button-program";
 import {Program} from "src/app/shared/types/program";
+import {TranslateService} from "@ngx-translate/core";
 
 @Component({
     selector: "app-rgb-led-button",
@@ -26,6 +27,7 @@ export class RgbLedButtonComponent implements OnInit {
         private rgbLedButtonService: RgbLedButtonService,
         private brickletService: BrickletService,
         private snackBar: MatSnackBar,
+        private readonly translateService: TranslateService,
     ) {}
 
     ngOnInit(): void {
@@ -76,7 +78,7 @@ export class RgbLedButtonComponent implements OnInit {
                 next: () => {
                     this.ledConfigForm.markAsPristine();
                     this.snackBar.open(
-                        "Button programs updated successfully",
+                        this.translateService.instant("rgbLedButton.updated"),
                         "",
                         {
                             panelClass: "cerebra-toast",
@@ -85,10 +87,14 @@ export class RgbLedButtonComponent implements OnInit {
                     );
                 },
                 error: () =>
-                    this.snackBar.open("Error updating button programs", "", {
-                        panelClass: "cerebra-toast",
-                        duration: 3000,
-                    }),
+                    this.snackBar.open(
+                        this.translateService.instant("rgbLedButton.updateError"),
+                        "",
+                        {
+                            panelClass: "cerebra-toast",
+                            duration: 3000,
+                        },
+                    ),
             });
     }
 }

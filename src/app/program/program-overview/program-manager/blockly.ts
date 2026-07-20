@@ -353,6 +353,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
     </block>
 </category>
 <category name="%{BKY_PIB_CAT_TIME}" colour="60">
+    <block type = "when_program_starts"></block>
     <block type = "sleep_for_seconds"></block>
     <block type = "get_system_time"></block>
 </category>
@@ -368,6 +369,7 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
 <category name="%{BKY_PIB_CAT_MOTORIC}" colour="355">
     <block type="move_motor"></block>
     <block type="get_motor_current"></block>
+    <block type="set_movement_speed"></block>
     <block type="move_to_pose"></block>
     <block type="run_gesture"></block>
     <block type="run_movement_sequence"></block>

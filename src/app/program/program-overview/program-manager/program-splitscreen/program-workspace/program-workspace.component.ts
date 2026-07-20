@@ -117,7 +117,10 @@ export class ProgramWorkspaceComponent
             poses.length > 0
                 ? this.updatePoseBlockDropdown(poses)
                 : this.updatePoseBlockDropdown([
-                      new Pose("no pose available", "NO POSE"),
+                      new Pose(
+                          this.blocklyLanguageService.msg("PIB_NO_POSE_AVAILABLE"),
+                          "NO POSE",
+                      ),
                   ]);
         });
 
@@ -125,7 +128,10 @@ export class ProgramWorkspaceComponent
             gestures.length > 0
                 ? this.updateGestureBlockDropdown(gestures)
                 : this.updateGestureBlockDropdown([
-                      new Gesture("no gesture available", "NO GESTURE"),
+                      new Gesture(
+                          this.blocklyLanguageService.msg("PIB_NO_GESTURE_AVAILABLE"),
+                          "NO GESTURE",
+                      ),
                   ]);
         });
 
@@ -142,7 +148,9 @@ export class ProgramWorkspaceComponent
                     ? this.updateMovementSequenceBlockDropdown(sequences)
                     : this.updateMovementSequenceBlockDropdown([
                           new MovementSequence(
-                              "no movement sequence available",
+                              this.blocklyLanguageService.msg(
+                                  "PIB_NO_MOVEMENT_SEQUENCE_AVAILABLE",
+                              ),
                               "NO SEQUENCE",
                           ),
                       ]);
@@ -207,7 +215,10 @@ export class ProgramWorkspaceComponent
                 const items = variableCallback?.(workspaceSvg) as HTMLElement[];
                 const stringButton = items[0];
                 const listButton = stringButton.cloneNode(true) as HTMLElement;
-                listButton.setAttribute("text", "Create list variable...");
+                listButton.setAttribute(
+                    "text",
+                    this.blocklyLanguageService.msg("PIB_CREATE_LIST_VARIABLE"),
+                );
                 listButton.setAttribute("callbackKey", "CREATE_VARIABLE_ARRAY");
                 return [listButton, ...items];
             },

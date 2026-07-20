@@ -9,7 +9,7 @@ import {
 import {Observable, Subject} from "rxjs";
 import {NgbModal, NgbModalRef} from "@ng-bootstrap/ng-bootstrap";
 import {FormControl, Validators} from "@angular/forms";
-import {ActivatedRoute, Router} from "@angular/router";
+import {ActivatedRoute, NavigationEnd, Router} from "@angular/router";
 import {Program} from "../../../shared/types/program";
 import {SidebarElement} from "../../../shared/interfaces/sidebar-element.interface";
 import {ProgramService} from "../../../shared/services/program.service";
@@ -20,9 +20,14 @@ import {
     safeFilename,
 } from "../../../shared/services/file-transfer.util";
 import {map, switchMap} from "rxjs/operators";
+import {TranslateService} from "@ngx-translate/core";
 
 // Marker + shape of an exported program file, so imports can be validated.
 const PROGRAM_EXPORT_KIND = "pib-program";
+
+// localStorage key for the last opened program - navigating away from the
+// editor and back re-opens that program instead of always the first one.
+const LAST_PROGRAM_KEY = "pib-last-program-number";
 interface ProgramExport {
     kind: string;
     name: string;
@@ -49,6 +54,7 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
         private route: ActivatedRoute,
         private programService: ProgramService,
         private snackBar: MatSnackBar,
+        private readonly translateService: TranslateService,
     ) {}
 
     ngOnInit(): void {
@@ -58,12 +64,27 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
             Validators.minLength(2),
             Validators.maxLength(255),
         ]);
+        // Remember which program the user last opened (sidebar clicks
+        // navigate to /program/<number>), so re-entering the editor
+        // restores it instead of falling back to the first program.
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                const match = event.urlAfterRedirects.match(
+                    /\/program\/([^/?#]+)/,
+                );
+                if (match) {
+                    localStorage.setItem(LAST_PROGRAM_KEY, match[1]);
+                }
+            }
+        });
     }
 
     ngAfterViewInit() {
         this.route.url.subscribe((_segments) => {
             this.programService.getAllPrograms().subscribe((programs) => {
-                this.selected.next(programs[0]?.getUUID());
+                const last = localStorage.getItem(LAST_PROGRAM_KEY);
+                const restored = programs.find((p) => p.getUUID() === last);
+                this.selected.next((restored ?? programs[0])?.getUUID());
             });
         });
     }
@@ -138,7 +159,9 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
                 if (!raw) return;
                 const data = raw as ProgramExport;
                 if (data.kind !== PROGRAM_EXPORT_KIND || typeof data.name !== "string") {
-                    throw new Error("Keine gültige pib-Programmdatei.");
+                    throw new Error(
+                        this.translateService.instant("programManager.invalidProgramFile"),
+                    );
                 }
                 // Create the program, then attach its visual code.
                 this.programService
@@ -154,10 +177,11 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
                     )
                     .subscribe((program) => {
                         this.selected.next(program.programNumber);
-                        this.snackBar.open("Programm importiert", "", {
-                            panelClass: "cerebra-toast",
-                            duration: 3000,
-                        });
+                        this.snackBar.open(
+                            this.translateService.instant("programManager.programImported"),
+                            "",
+                            {panelClass: "cerebra-toast", duration: 3000},
+                        );
                     });
             })
             .catch((err) =>
@@ -171,13 +195,13 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
     optionCallbackMethods = [
         {
             icon: "",
-            label: "New program",
+            label: this.translateService.instant("programManager.newProgram"),
             clickCallback: this.addProgram.bind(this),
             disabled: false,
         },
         {
             icon: "",
-            label: "Import program",
+            label: this.translateService.instant("programManager.importProgram"),
             clickCallback: this.importProgram.bind(this),
             disabled: false,
         },
@@ -186,19 +210,19 @@ export class ProgramManagerComponent implements OnInit, AfterViewInit {
     dropdownCallbackMethods = [
         {
             icon: "../../assets/edit.svg",
-            label: "Rename",
+            label: this.translateService.instant("common.rename"),
             clickCallback: this.editProgram.bind(this),
             disabled: false,
         },
         {
             icon: "../../assets/export.svg",
-            label: "Export",
+            label: this.translateService.instant("common.export"),
             clickCallback: this.exportProgram.bind(this),
             disabled: false,
         },
         {
             icon: "../../assets/delete.svg",
-            label: "Delete",
+            label: this.translateService.instant("common.delete"),
             clickCallback: this.deleteProgram.bind(this),
             disabled: false,
         },
