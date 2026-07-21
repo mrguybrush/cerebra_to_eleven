@@ -3,7 +3,7 @@
 ## Frontend Setup
 
 This repository contains Cerebra, the frontend website to be used with a pib robot.  
-It is automatically installed when using our setup script, which can be found at [pib-rocks/pib-backend](https://github.com/pib-rocks/pib-backend/blob/main/setup/setup-pib.sh).
+It is automatically installed when using our setup script, which can be found at [mrguybrush/pib-backend_to_eleven](https://github.com/mrguybrush/pib-backend_to_eleven/blob/main/setup/setup-pib.sh).
 
 > **Neuinstallation auf neuer SD-Karte oder Upgrade eines bestehenden pib:**
 > siehe [UPGRADE.md](UPGRADE.md).
