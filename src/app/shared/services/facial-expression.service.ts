@@ -7,11 +7,13 @@ import {FacialExpression} from "../types/facial-expression";
 
 /**
  * Verwaltet benutzerdefinierte Gesichtsausdruecke (Name + hochgeladene
- * GIF-Datei) - siehe die Verwaltungsseite "Gesichtsausdruecke". Anders als
- * die fest einprogrammierten Emotionen (siehe pose.component.ts) werden
- * diese nicht ueber eine feste ImageId angezeigt, sondern indem die
- * rohen GIF-Bytes direkt per ROS-Topic geschickt werden (ImageId.CUSTOM,
- * siehe ros.service.ts setCustomDisplayImage).
+ * GIF-/PNG-/JPG-Datei) - siehe die Verwaltungsseite "Gesichtsausdruecke".
+ * Anders als die fest einprogrammierten Emotionen (siehe pose.component.ts)
+ * werden diese nicht ueber eine feste ImageId angezeigt, sondern indem die
+ * rohen Bild-Bytes direkt per ROS-Topic geschickt werden (ImageId.CUSTOM,
+ * siehe ros.service.ts setCustomDisplayImage) - animierte GIFs UND
+ * statische PNG/JPEG werden beide unterstuetzt (Format wird anhand der
+ * Magic-Bytes erkannt, siehe detectImageFormatValue unten).
  */
 @Injectable({
     providedIn: "root",
@@ -88,13 +90,36 @@ export class FacialExpressionService {
         return `${this.apiService.baseUrl}${UrlConstants.FACIAL_EXPRESSIONS}/${expressionId}/gif`;
     }
 
-    /** Laedt die GIF-Bytes und zeigt sie sofort auf pibs Display an -
+    /** Laedt die Bild-Bytes und zeigt sie sofort auf pibs Display an -
      * genutzt vom "Gesichtsausdruck"-Button auf der Posen-Seite. */
     play(expressionId: string): void {
         this.apiService
             .getBinary(`${UrlConstants.FACIAL_EXPRESSIONS}/${expressionId}/gif`)
-            .subscribe((buffer) =>
-                this.rosService.setCustomDisplayImage(new Uint8Array(buffer)),
-            );
+            .subscribe((buffer) => {
+                const bytes = new Uint8Array(buffer);
+                this.rosService.setCustomDisplayImage(
+                    bytes,
+                    detectImageFormatValue(bytes),
+                );
+            });
     }
+}
+
+/** ImageFormat.msg: ANIMATED_GIF=0, PNG=1, JPEG=2 - erkannt anhand der
+ * Magic-Bytes am Dateianfang (dieselbe Logik wie
+ * facial_expression_controller.py's _detect_mimetype). */
+function detectImageFormatValue(bytes: Uint8Array): number {
+    const startsWith = (magic: number[]) =>
+        magic.every((byte, i) => bytes[i] === byte);
+    if (startsWith([0x47, 0x49, 0x46, 0x38])) {
+        // "GIF8" (87a oder 89a)
+        return 0;
+    }
+    if (startsWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+        return 1;
+    }
+    if (startsWith([0xff, 0xd8, 0xff])) {
+        return 2;
+    }
+    return 0;
 }

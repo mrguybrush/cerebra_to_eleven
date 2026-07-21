@@ -25,7 +25,7 @@
                 id="new-expression-gif"
                 type="file"
                 class="form-control"
-                accept=".gif"
+                accept=".gif,.png,.jpg,.jpeg"
                 data-test="FILE_New_Facial_Expression_Gif"
                 (change)="onNewGifSelected($event)" />
         </div>
@@ -70,7 +70,7 @@
                     {{ "facialExpression.replaceGif" | translate }}
                     <input
                         type="file"
-                        accept=".gif"
+                        accept=".gif,.png,.jpg,.jpeg"
                         hidden
                         (change)="replaceGif(expression, $event)" />
                 </label>

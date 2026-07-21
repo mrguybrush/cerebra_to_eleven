@@ -285,7 +285,7 @@
     "backToPose": "← Zurück zu Posen",
     "title": "Gesichtsausdrücke verwalten",
     "description": "Eigene GIF-Dateien als zusätzliche Gesichtsausdrücke hochladen - sie erscheinen danach auf der Posen-Seite unter „Gesichtsausdruck“.",
-    "gifFile": "GIF-Datei",
+    "gifFile": "GIF-/PNG-/JPG-Datei",
     "replaceGif": "GIF austauschen",
     "renameTitle": "Gesichtsausdruck umbenennen"
   },

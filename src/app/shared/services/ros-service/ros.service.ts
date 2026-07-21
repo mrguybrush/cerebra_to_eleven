@@ -1062,20 +1062,22 @@ export class RosService implements IRosService {
     }
 
     /** Zeigt einen benutzerdefinierten Gesichtsausdruck (siehe Verwaltungs-
-     * seite "Gesichtsausdruecke") direkt als rohe GIF-Bytes an - nutzt
-     * ImageId.CUSTOM (=1)/ImageFormat.ANIMATED_GIF (=0), die einzigen zwei
-     * Werte, bei denen 'data' laut DisplayImage.msg tatsaechlich befuellt
-     * werden soll (bei allen anderen ids wird das Bild serverseitig aus
-     * einer fest einprogrammierten Datei geladen). */
-    setCustomDisplayImage(gifBytes: Uint8Array) {
+     * seite "Gesichtsausdruecke") direkt als rohe Bild-Bytes an - nutzt
+     * ImageId.CUSTOM (=1), der einzige Wert, bei dem 'data' laut
+     * DisplayImage.msg tatsaechlich befuellt werden soll (bei allen
+     * anderen ids wird das Bild serverseitig aus einer fest einprogram-
+     * mierten Datei geladen). formatValue: ImageFormat.ANIMATED_GIF=0,
+     * PNG=1, JPEG=2 (siehe facial-expression.service.ts's Format-Erkennung
+     * anhand der Magic-Bytes der Datei). */
+    setCustomDisplayImage(imageBytes: Uint8Array, formatValue: number = 0) {
         if (!this.displayImageTopic) {
             console.error("ROS is not connected.");
             return;
         }
         const message = new ROSLIB.Message({
             id: {value: 1},
-            format: {value: 0},
-            data: Array.from(gifBytes),
+            format: {value: formatValue},
+            data: Array.from(imageBytes),
         });
         this.displayImageTopic.publish(message);
     }

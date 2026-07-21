@@ -285,7 +285,7 @@
     "backToPose": "← Back to Poses",
     "title": "Manage Facial Expressions",
     "description": "Upload your own GIF files as additional facial expressions - they'll then show up on the Pose page under \"Facial expression\".",
-    "gifFile": "GIF file",
+    "gifFile": "GIF/PNG/JPG file",
     "replaceGif": "Replace GIF",
     "renameTitle": "Rename facial expression"
   },
