@@ -165,7 +165,8 @@
     "deletePersona": "Persona löschen",
     "smartApiTokenTooltip": "In den Einstellungen einen Smart-API-Token hinterlegen oder ein Modell ohne Token (Gemini / Lokales Netzwerk-LLM) wählen",
     "cameraAccessLabel": "Kamerazugriff während des Sprechens (nur Gemini)",
-    "movementAccessLabel": "Darf pib während des Sprechens bewegen (nur Gemini) - Vorsicht: keine Vorschau, der Roboter bewegt sich sofort"
+    "movementAccessLabel": "Darf pib während des Sprechens bewegen (nur Gemini) - Vorsicht: keine Vorschau, der Roboter bewegt sich sofort",
+    "emotionAccessLabel": "Darf Gesichtsausdruck passend zum Gespräch ändern (nur Gemini)"
   },
   "rgbLedButton": {
     "headline": "Bitte jeder Taste ein Blockly-Programm zuweisen.",

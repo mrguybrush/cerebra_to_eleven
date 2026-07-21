@@ -96,6 +96,10 @@ export class VoiceAssistantPersonalitySidebarRightComponent implements OnInit {
                 this.personalityClone.movementAccessEnabled ?? false,
                 {nonNullable: true},
             ),
+            emotionAccessEnabled: new FormControl(
+                this.personalityClone.emotionAccessEnabled ?? false,
+                {nonNullable: true},
+            ),
         });
         this.thresholdString = this.personalityClone.pauseThreshold.toFixed(1);
         this.messageHistoryNumber = this.personalityClone.messageHistory;
@@ -219,6 +223,8 @@ export class VoiceAssistantPersonalitySidebarRightComponent implements OnInit {
                 this.personalityFormSidebar.controls["cameraAccessEnabled"].value;
             this.personalityClone.movementAccessEnabled =
                 this.personalityFormSidebar.controls["movementAccessEnabled"].value;
+            this.personalityClone.emotionAccessEnabled =
+                this.personalityFormSidebar.controls["emotionAccessEnabled"].value;
             this.voiceAssistantService.updatePersonalityById(
                 this.personalityClone!,
             );

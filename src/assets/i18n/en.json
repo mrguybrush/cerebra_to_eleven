@@ -165,7 +165,8 @@
     "deletePersona": "Delete persona",
     "smartApiTokenTooltip": "Set up a Smart API token in Settings, or choose a model that needs no token (Gemini / local network LLM)",
     "cameraAccessLabel": "Camera access while speaking (Gemini only)",
-    "movementAccessLabel": "Allowed to move pib while speaking (Gemini only) - caution: no preview, the robot moves immediately"
+    "movementAccessLabel": "Allowed to move pib while speaking (Gemini only) - caution: no preview, the robot moves immediately",
+    "emotionAccessLabel": "Allowed to change facial expression to match the conversation (Gemini only)"
   },
   "rgbLedButton": {
     "headline": "Please assign a Blockly program to each button.",
