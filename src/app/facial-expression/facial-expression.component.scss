@@ -1,3 +1,12 @@
+/* Ohne diese explizite Farbe erben Ueberschrift/Kachel-Beschriftung den
+   Browser-Standardtext (dunkel), der auf dem dunklen App-Hintergrund kaum
+   lesbar ist - andere Seiten (z.B. pose.component.css) setzen dieselbe
+   Regel, aber Angulars View Encapsulation sorgt dafuer, dass das nicht
+   automatisch auch fuer diese Komponente gilt. */
+* {
+    color: white;
+}
+
 .tile-grid {
     display: flex;
     flex-wrap: wrap;
