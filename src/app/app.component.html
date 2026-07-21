@@ -237,6 +237,11 @@
                     {{ 'settings.autoOff.countdown' | translate: {seconds: autoOffSecondsRemaining} }}
                 </div>
                 <app-relay-control></app-relay-control>
+                <div
+                    class="app-version"
+                    data-test="TXT_App_Version">
+                    {{ appVersion }}
+                </div>
             </div>
         </aside>
     </div>

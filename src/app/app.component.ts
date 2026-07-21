@@ -6,6 +6,7 @@ import {BlocklyLanguageService} from "src/app/shared/services/blockly-language.s
 import {TranslateService} from "@ngx-translate/core";
 import {DEFAULT_LOCALE_CODE} from "src/app/program/pib-blockly/i18n/pib-blockly-locales";
 import {RosService} from "src/app/shared/services/ros-service/ros.service";
+import {APP_VERSION} from "src/app/version";
 
 @Component({
     selector: "app-root",
@@ -13,6 +14,8 @@ import {RosService} from "src/app/shared/services/ros-service/ros.service";
     styleUrls: ["./app.component.scss"],
 })
 export class AppComponent implements OnInit {
+    // Kleine Versionsanzeige unter dem Motorstrom-Button (siehe version.ts).
+    readonly appVersion = APP_VERSION;
     currentRoute: string = "";
     isActiveRoute = false;
     jointControlNavItemGroup = [

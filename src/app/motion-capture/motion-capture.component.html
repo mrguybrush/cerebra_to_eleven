@@ -12,7 +12,14 @@
             [disabled]="starting">
             <option value="robot">{{ 'pose.robotCamera' | translate }}</option>
             <option value="webcam">{{ 'pose.ownWebcam' | translate }}</option>
-            <option value="oak">{{ 'pose.robotCameraNn' | translate }}</option>
+            <!-- "Roboter-Kamera (NN)" vorerst ausgeblendet: das On-Device-NN
+                 auf der OAK-D Lite zieht beim Pipeline-Start einen
+                 Stromspitzen-Peak, der den ganzen Pi zum Reboot bringt
+                 (Symptom: kurz schwarz, danach Display in falscher
+                 Aufloesung, SSH/VNC weg). Backend-Logik bleibt erhalten,
+                 nur die Auswahl ist raus - siehe browser-pose-tracker.service.ts
+                 (PoseSource "oak") und oak_d_lite/stereo.py. -->
+            <!-- <option value="oak">{{ 'pose.robotCameraNn' | translate }}</option> -->
         </select>
 
         <button
