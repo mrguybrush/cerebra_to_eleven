@@ -6,6 +6,9 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {NgbModal, NgbModalRef} from "@ng-bootstrap/ng-bootstrap";
 import {VoiceAssistant} from "../shared/types/voice-assistant";
 import {AssistantModel} from "../shared/types/assistantModel";
+import {SystemSettingsService} from "../shared/services/system-settings.service";
+
+type ConnectionType = "gemini" | "local-llm" | "tryb";
 
 @Component({
     selector: "app-voice-assistant",
@@ -29,9 +32,42 @@ export class VoiceAssistantComponent implements OnInit {
         },
     };
 
+    // --- Vereinfachte Sprachmodell-Auswahl fuer den "Neuer Chat"-Dialog ---
+    // Statt der vollen Modell-Liste (technische Namen wie "gpt-4o") nur ein
+    // Radiobutton zwischen den 3 Verbindungsarten - Details/Feintuning
+    // bleiben den System-Einstellungen vorbehalten (siehe settings.component.ts,
+    // dessen Gemini/Lokales-LLM/Tryb-Radiobutton dasselbe Muster nutzt).
+    connectionType: ConnectionType = "tryb";
+    systemNavVisible = true;
+
+    private get geminiModelId(): number | null {
+        return this.models?.find((m) => this.isGeminiModel(m))?.id ?? null;
+    }
+
+    private get localLlmModelId(): number | null {
+        return this.models?.find((m) => this.isLocalLlmModel(m))?.id ?? null;
+    }
+
+    private get firstTrybModelId(): number | null {
+        return (
+            this.models?.find(
+                (m) => !this.isGeminiModel(m) && !this.isLocalLlmModel(m),
+            )?.id ?? null
+        );
+    }
+
+    private isGeminiModel(m: AssistantModel): boolean {
+        return m.apiName.toLowerCase().includes("gemini");
+    }
+
+    private isLocalLlmModel(m: AssistantModel): boolean {
+        return m.apiName.toLowerCase() === "local-llm";
+    }
+
     constructor(
         private voiceAssistantService: VoiceAssistantService,
         private modalService: NgbModal,
+        private systemSettingsService: SystemSettingsService,
     ) {}
 
     voiceAssistantActivationToggle = new FormControl(false);
@@ -84,6 +120,54 @@ export class VoiceAssistantComponent implements OnInit {
         this.voiceAssistantService.uuidSubject.subscribe((uuid: string) => {
             this.openEditModal(uuid);
         });
+
+        this.systemSettingsService.menuVisibilitySubject.subscribe(
+            (visibility) => {
+                this.systemNavVisible = !visibility.system;
+            },
+        );
+    }
+
+    /** Leitet den Default-Radiobutton fuer den "Neuer Chat"-Dialog aus dem
+     * Modell der zuletzt erstellten Personality ab (bzw. "tryb" mit dem
+     * ersten verfuegbaren Modell, wenn es noch keine Personality gibt) -
+     * so bekommt ein neuer Chat sein Sprachmodell automatisch zugewiesen,
+     * ohne dass man es jedes Mal erneut waehlen muss. */
+    private updateDefaultConnectionType() {
+        const personalities = this.voiceAssistantService.personalities;
+        const lastModelId =
+            personalities.length > 0
+                ? personalities[personalities.length - 1].assistantModelId
+                : null;
+        const model = this.models?.find((m) => m.id === lastModelId);
+        if (model) {
+            if (this.isGeminiModel(model)) {
+                this.connectionType = "gemini";
+            } else if (this.isLocalLlmModel(model)) {
+                this.connectionType = "local-llm";
+            } else {
+                this.connectionType = "tryb";
+            }
+        } else {
+            this.connectionType = "tryb";
+        }
+    }
+
+    /** Ermittelt die konkrete assistantModelId zum aktuell gewaehlten
+     * Radiobutton (siehe onSelectConnectionType) - fuers Anlegen einer
+     * neuen Personality. */
+    private resolveAssistantModelId(): number {
+        if (this.connectionType === "gemini") {
+            return this.geminiModelId ?? this.firstTrybModelId ?? 1;
+        }
+        if (this.connectionType === "local-llm") {
+            return this.localLlmModelId ?? this.firstTrybModelId ?? 1;
+        }
+        return this.firstTrybModelId ?? this.geminiModelId ?? 1;
+    }
+
+    onSelectConnectionType(type: ConnectionType) {
+        this.connectionType = type;
     }
 
     showModal = () => {
@@ -158,6 +242,7 @@ export class VoiceAssistantComponent implements OnInit {
 
     openAddModal = () => {
         this.personalityForm.reset();
+        this.updateDefaultConnectionType();
         this.thresholdString =
             this.personalityForm.controls["pausethreshold"].value + "s";
         this.messageHistory =
@@ -193,7 +278,7 @@ export class VoiceAssistantComponent implements OnInit {
                     this.personalityForm.controls["gender"].value,
                     this.personalityForm.controls["pausethreshold"].value,
                     "",
-                    this.personalityForm.controls["assistantModel"].value,
+                    this.resolveAssistantModelId(),
                     this.personalityForm.controls["messageHistory"].value,
                 ),
             );

@@ -42,6 +42,11 @@
       "delete": "Löschen",
       "deleteHint": "Beim Löschen einer Gruppe bleiben ihre Programme/Posen erhalten und werden wieder allgemein sichtbar."
     },
+    "ipOverlay": {
+      "title": "IP/QR-Code-Anzeige",
+      "hint": "So lange werden IP-Adresse und QR-Code beim Hochfahren (und nach Klick auf den QR-Code im Frontend) auf pibs Display angezeigt, bevor wieder auf die normalen Augen umgeschaltet wird. 0 = wird gar nicht angezeigt.",
+      "label": "Anzeigedauer (Sekunden)"
+    },
     "autoOff": {
       "title": "Automatische Ruhestellung",
       "hint": "Fährt der Roboter nach dieser Zeit ohne Bewegung automatisch in die Resting Pose und schaltet danach den Motorstrom ab - verhindert ein Überhitzen, wenn er versehentlich eingeschaltet bleibt. Leer lassen oder 0, um das zu deaktivieren.",
@@ -137,6 +142,13 @@
     "editPersonaTitle": "PERSONA BEARBEITEN",
     "addPersonaTitle": "PERSONA HINZUFÜGEN",
     "modelAriaLabel": "Sprachmodell des Sprachassistenten",
+    "connectionType": {
+      "label": "Sprachmodell",
+      "gemini": "Gemini",
+      "localLlm": "Lokales Netzwerk-LLM",
+      "tryb": "Tryb",
+      "hint": "Genaue Einstellungen (API-Key, Modellauswahl, ...) finden sich unter System > Einstellungen."
+    },
     "female": "Weiblich",
     "male": "Männlich",
     "pauseThreshold": "Sprechpausen-Schwelle",
@@ -435,6 +447,7 @@
       "angry": "Wütend",
       "surprised": "Überrascht",
       "sleepy": "Müde",
+      "heart": "Verliebt",
       "star": "Begeistert",
       "cool": "Cool",
       "wink": "Zwinkern"

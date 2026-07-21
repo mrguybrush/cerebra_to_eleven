@@ -21,6 +21,7 @@ export enum UrlConstants {
     VOICE_RECORDINGS = "/voice-recordings",
     LEARNING_GROUPS = "/learning-groups",
     AUTO_OFF = "/system-settings/auto-off",
+    IP_OVERLAY_SECONDS = "/system-settings/ip-overlay-seconds",
     RESTART_DISPLAY = "/system-settings/restart-display",
     MENU_VISIBILITY = "/system-settings/menu-visibility",
     MOVEMENT_SETTINGS = "/movement-settings",

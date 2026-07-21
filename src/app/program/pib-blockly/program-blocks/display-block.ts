@@ -45,6 +45,7 @@ export const display_blocks = (Blockly.Blocks["set_eyes_emotion"] = {
             [Blockly.Msg["PIB_EYES_ANGRY"] || "angry", "ANGRY"],
             [Blockly.Msg["PIB_EYES_SURPRISED"] || "surprised", "SURPRISED"],
             [Blockly.Msg["PIB_EYES_SLEEPY"] || "sleepy", "SLEEPY"],
+            [Blockly.Msg["PIB_EYES_HEART"] || "in love", "HEART"],
             [Blockly.Msg["PIB_EYES_STAR"] || "star-struck", "STAR"],
             [Blockly.Msg["PIB_EYES_COOL"] || "cool", "COOL"],
             [Blockly.Msg["PIB_EYES_WINK"] || "wink", "WINK"],

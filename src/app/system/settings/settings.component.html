@@ -66,6 +66,30 @@
 
     <hr class="settings-divider" />
 
+    <h3 class="settings-section-title">{{ 'settings.ipOverlay.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.ipOverlay.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <label
+            for="ip-overlay-seconds"
+            class="setting-label">
+            {{ 'settings.ipOverlay.label' | translate }}
+        </label>
+        <input
+            id="ip-overlay-seconds"
+            type="number"
+            min="0"
+            step="1"
+            class="setting-text-input"
+            data-test="TXT_Ip_Overlay_Seconds"
+            [formControl]="ipOverlaySecondsControl"
+            (blur)="onIpOverlaySecondsChange()"
+            (keydown.enter)="onIpOverlaySecondsChange()" />
+    </div>
+
+    <hr class="settings-divider" />
+
     <h3 class="settings-section-title">{{ 'settings.autoOff.title' | translate }}</h3>
     <div class="setting-hint">
         {{ 'settings.autoOff.hint' | translate }}

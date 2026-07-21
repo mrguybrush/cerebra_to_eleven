@@ -55,6 +55,10 @@ export class SettingsComponent implements OnInit {
     // aus). Kommt live per ROS-Topic aus relay_control.py, nicht aus der DB.
     autoOffSecondsRemaining: number | null = null;
 
+    // --- IP/QR-Code-Overlay beim Hochfahren ---
+    // 0 = wird gar nicht angezeigt.
+    ipOverlaySecondsControl = new FormControl<number | string | null>(null);
+
     // --- Maximale Bewegungsgeschwindigkeit (Sicherheits-Obergrenze) ---
     // Begrenzt den Tempo-Regler unter Posen; wird backend-seitig
     // durchgesetzt (siehe movement_settings_service.py).
@@ -204,6 +208,17 @@ export class SettingsComponent implements OnInit {
             .pipe(debounceTime(600), distinctUntilChanged())
             .subscribe(() => this.onAutoOffMinutesChange());
 
+        this.systemSettingsService.getIpOverlaySeconds().subscribe((seconds) => {
+            if (this.ipOverlaySecondsControl.pristine) {
+                this.ipOverlaySecondsControl.setValue(seconds, {
+                    emitEvent: false,
+                });
+            }
+        });
+        this.ipOverlaySecondsControl.valueChanges
+            .pipe(debounceTime(600), distinctUntilChanged())
+            .subscribe(() => this.onIpOverlaySecondsChange());
+
         this.rosService.autoOffSecondsRemainingReceiver$.subscribe(
             (seconds) => {
                 this.autoOffSecondsRemaining = seconds < 0 ? null : seconds;
@@ -349,6 +364,18 @@ export class SettingsComponent implements OnInit {
         this.systemSettingsService.setAutoOffMinutes(minutes).subscribe((saved) => {
             this.autoOffMinutesControl.setValue(saved, {emitEvent: false});
         });
+    }
+
+    onIpOverlaySecondsChange(): void {
+        const raw = String(this.ipOverlaySecondsControl.value ?? "").trim();
+        const parsed = raw === "" ? 0 : Number(raw);
+        const seconds =
+            Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
+        this.systemSettingsService
+            .setIpOverlaySeconds(seconds)
+            .subscribe((saved) => {
+                this.ipOverlaySecondsControl.setValue(saved, {emitEvent: false});
+            });
     }
 
     /** Slider fuer die maximale Bewegungsgeschwindigkeit: aktualisiert die

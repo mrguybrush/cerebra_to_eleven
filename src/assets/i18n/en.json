@@ -42,6 +42,11 @@
       "delete": "Delete",
       "deleteHint": "Deleting a group keeps its programs/poses, which become generally visible again."
     },
+    "ipOverlay": {
+      "title": "IP/QR code display",
+      "hint": "How long the IP address and QR code are shown on pib's display at boot (and after clicking the QR code in the frontend) before switching back to the normal eyes. 0 = never shown.",
+      "label": "Display duration (seconds)"
+    },
     "autoOff": {
       "title": "Automatic Rest Mode",
       "hint": "After this much time without movement, the robot automatically moves to the resting pose and then cuts motor power - prevents overheating if it's accidentally left switched on. Leave empty or 0 to disable.",
@@ -137,6 +142,13 @@
     "editPersonaTitle": "EDIT PERSONA",
     "addPersonaTitle": "ADD PERSONA",
     "modelAriaLabel": "Voice assistant language model",
+    "connectionType": {
+      "label": "Language model",
+      "gemini": "Gemini",
+      "localLlm": "Local network LLM",
+      "tryb": "Tryb",
+      "hint": "Detailed settings (API key, model choice, ...) are under System > Settings."
+    },
     "female": "Female",
     "male": "Male",
     "pauseThreshold": "Pause threshold",
@@ -435,6 +447,7 @@
       "angry": "Angry",
       "surprised": "Surprised",
       "sleepy": "Sleepy",
+      "heart": "In love",
       "star": "Starstruck",
       "cool": "Cool",
       "wink": "Wink"

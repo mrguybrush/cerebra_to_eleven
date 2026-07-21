@@ -66,6 +66,21 @@ export class SystemSettingsService {
             .pipe(map((dto) => dto["autoOffMinutes"] ?? null));
     }
 
+    /** Anzeigedauer des IP/QR-Code-Overlays beim Hochfahren (und nach
+     * Klick auf den QR-Code im Frontend), in Sekunden. 0 = gar nicht
+     * anzeigen. */
+    getIpOverlaySeconds(): Observable<number> {
+        return this.apiService
+            .get(UrlConstants.IP_OVERLAY_SECONDS)
+            .pipe(map((dto) => dto["ipOverlaySeconds"] ?? 20));
+    }
+
+    setIpOverlaySeconds(seconds: number): Observable<number> {
+        return this.apiService
+            .put(UrlConstants.IP_OVERLAY_SECONDS, {ipOverlaySeconds: seconds})
+            .pipe(map((dto) => dto["ipOverlaySeconds"] ?? 20));
+    }
+
     /** Restarts the ros-display container (Augen-Anzeige) - hilft, wenn die
      * Augen nach dem Hochfahren nicht vollstaendig im Vollbild angezeigt
      * werden. Returns an Observable purely so the caller can track the

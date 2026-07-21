@@ -74,19 +74,42 @@
                 formControlName="name-input"
                 id="name-input" />
         </div>
-        <div class="row ml-3 m-2 mt-3 pr-2">
-            <select
-                id="voice-assistant-model-select"
-                formControlName="assistantModel"
-                class="form-select"
-                data-test="DDN_Voice_Assistant_Model"
-                [attr.aria-label]="'voiceAssistant.modelAriaLabel' | translate">
-                <option
-                    *ngFor="let model of models"
-                    [value]="model.id ">
-                    {{model.visualName}}
-                </option>
-            </select>
+        <div
+            class="row ml-3 m-2 mt-3 pr-2"
+            *ngIf="systemNavVisible && !uuid">
+            <label class="col-12 mb-1 p-0">{{ 'voiceAssistant.connectionType.label' | translate }}</label>
+            <div class="col-12 d-flex flex-wrap gap-3">
+                <label class="pointer mb-0">
+                    <input
+                        type="radio"
+                        name="connection-type"
+                        data-test="RBN_Connection_Gemini"
+                        [checked]="connectionType === 'gemini'"
+                        (change)="onSelectConnectionType('gemini')" />
+                    {{ 'voiceAssistant.connectionType.gemini' | translate }}
+                </label>
+                <label class="pointer mb-0">
+                    <input
+                        type="radio"
+                        name="connection-type"
+                        data-test="RBN_Connection_LocalLlm"
+                        [checked]="connectionType === 'local-llm'"
+                        (change)="onSelectConnectionType('local-llm')" />
+                    {{ 'voiceAssistant.connectionType.localLlm' | translate }}
+                </label>
+                <label class="pointer mb-0">
+                    <input
+                        type="radio"
+                        name="connection-type"
+                        data-test="RBN_Connection_Tryb"
+                        [checked]="connectionType === 'tryb'"
+                        (change)="onSelectConnectionType('tryb')" />
+                    {{ 'voiceAssistant.connectionType.tryb' | translate }}
+                </label>
+            </div>
+            <div class="col-12 setting-hint">
+                {{ 'voiceAssistant.connectionType.hint' | translate }}
+            </div>
         </div>
         <div class="row mt-3 m-2 ml-3">
             <div

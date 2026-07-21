@@ -100,6 +100,7 @@ export class PoseComponent implements OnInit {
         {labelKey: "pose.emotions.angry", value: 5},
         {labelKey: "pose.emotions.surprised", value: 6},
         {labelKey: "pose.emotions.sleepy", value: 7},
+        {labelKey: "pose.emotions.heart", value: 8},
         {labelKey: "pose.emotions.star", value: 9},
         {labelKey: "pose.emotions.cool", value: 10},
         {labelKey: "pose.emotions.wink", value: 11},

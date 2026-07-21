@@ -145,6 +145,7 @@ button:focus {
 .speech-input {
     width: 420px;
     max-width: 90vw;
+    padding: 10px 14px;
 }
 
 /* "Gesichtsausdruecke verwalten" soll sich als eigene Aktion von den
