@@ -576,6 +576,19 @@ export class PoseComponent implements OnInit {
         if (!pose.deletable && pose.name !== "Startup/Resting") {
             return;
         }
+        // Sicherheitsabfrage: das Ueberschreiben nimmt die AKTUELLEN
+        // Gelenkstellungen als neue Pose-Werte - ein Fehlklick wuerde eine
+        // muehsam eingestellte Pose (z.B. die Startup/Resting-Pose, die beim
+        // Ab-/Anschalten angefahren wird) unwiderruflich mit der momentanen
+        // Haltung ueberschreiben.
+        const confirmed = confirm(
+            this.translateService.instant("pose.updatePoseConfirm", {
+                name: pose.name,
+            }),
+        );
+        if (!confirmed) {
+            return;
+        }
         this.selectPose(pose);
         this.poseService.updatePoseMotorPositions(pose.poseId).subscribe(() => {
             this.matSnackBarService.open(

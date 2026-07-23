@@ -48,6 +48,17 @@
                     {{ 'hardwareId.update' | translate }}
                 </button>
             </div>
+            <div class="col-auto mt-4 mb-3 pl-2">
+                <button
+                    type="button"
+                    id="auto-assign-button"
+                    data-test="BTN_Auto_Assign"
+                    class="hardware-button btn btn-regular"
+                    [disabled]="detecting"
+                    (click)="autoAssign()">
+                    {{ detecting ? ('hardwareId.detecting' | translate) : ('hardwareId.autoAssign' | translate) }}
+                </button>
+            </div>
             <div
                 class="col-auto mt-4 ml-4 mb-3 pl-2 align-self-center"
                 *ngIf="brickletUidForm.invalid">
@@ -55,4 +66,29 @@
             </div>
         </div>
     </form>
+
+    <!-- Tabelle aller live erkannten Bricks (nach Auto-Zuweisung befuellt) -->
+    <div
+        class="detected-bricklets mt-4"
+        *ngIf="detectedBricklets.length > 0">
+        <div class="mb-2 pl-2 form-headline">{{ 'hardwareId.detectedHeadline' | translate }}</div>
+        <table
+            class="detected-table"
+            data-test="TBL_Detected_Bricklets">
+            <thead>
+                <tr>
+                    <th>{{ 'hardwareId.position' | translate }}</th>
+                    <th>{{ 'hardwareId.uid' | translate }}</th>
+                    <th>{{ 'hardwareId.type' | translate }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let brick of detectedBricklets">
+                    <td>{{ (brick.position || '–') | uppercase }}</td>
+                    <td>{{ brick.uid }}</td>
+                    <td>{{ brick.deviceType || ('hardwareId.unknownDevice' | translate) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

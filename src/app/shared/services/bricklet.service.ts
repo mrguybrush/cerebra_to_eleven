@@ -119,4 +119,25 @@ export class BrickletService {
     public getBricklet(brickletNumber: number): Bricklet | undefined {
         return this.bricklets.find((b) => b.brickletNumber === brickletNumber);
     }
+
+    /** Fragt die aktuell am HAT angeschlossenen Bricklets live ab (inkl.
+     * Steckposition) - fuer die Tabelle + Auto-Zuweisung auf der
+     * Hardware-IDs-Seite. */
+    public getDetectedBricklets(): Observable<DetectedBricklet[]> {
+        return this.apiService
+            .get(UrlConstants.BRICKLET + "/detected")
+            .pipe(
+                map(
+                    (dto) =>
+                        (dto["detectedBricklets"] ?? []) as DetectedBricklet[],
+                ),
+            );
+    }
+}
+
+export interface DetectedBricklet {
+    uid: string;
+    position: string | null;
+    deviceType: string | null;
+    deviceIdentifier: number;
 }

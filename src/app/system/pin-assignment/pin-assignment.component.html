@@ -13,6 +13,29 @@
         {{restartingMotors ? ('pinAssignment.restarting' | translate) : ('pinAssignment.restart' | translate)}}
     </button>
 
+    <button
+        type="button"
+        class="btn btn-regular restart-button ml-2"
+        data-test="BTN_Export_Pins"
+        (click)="exportAssignment()">
+        {{ 'pinAssignment.export' | translate }}
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-regular restart-button ml-2"
+        data-test="BTN_Import_Pins"
+        (click)="importFileInput.click()">
+        {{ 'pinAssignment.import' | translate }}
+    </button>
+    <input
+        #importFileInput
+        type="file"
+        accept="application/json,.json"
+        class="d-none"
+        data-test="INP_Import_Pins"
+        (change)="onImportFileSelected($event)" />
+
     <div
         *ngFor="let bricklet of grid.bricklets"
         class="bricklet-group">

@@ -69,4 +69,29 @@ export class PinAssignmentComponent implements OnInit {
             .restartMotorsContainer()
             .subscribe(() => (this.restartingMotors = false));
     }
+
+    /** Laedt die aktuelle Pinbelegung als JSON-Datei herunter. */
+    exportAssignment(): void {
+        this.brickletPinService.exportAssignment();
+    }
+
+    /** Liest die gewaehlte JSON-Datei ein und schickt sie an den Import. */
+    onImportFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        input.value = ""; // erlaubt, dieselbe Datei erneut auszuwaehlen
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const data = JSON.parse(reader.result as string);
+                this.brickletPinService.importAssignment(data);
+            } catch {
+                alert("Die Datei ist keine gültige JSON-Pinbelegung.");
+            }
+        };
+        reader.readAsText(file);
+    }
 }

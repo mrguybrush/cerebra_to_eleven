@@ -65,6 +65,12 @@
       "restart": "Restart Eye Display",
       "restarting": "Restarting…"
     },
+    "reboot": {
+      "title": "Restart System",
+      "hint": "Restarts the whole robot (Raspberry Pi). This takes about a minute, during which pib is unreachable.",
+      "reboot": "Restart System",
+      "rebooting": "Restarting…"
+    },
     "language": {
       "title": "Language",
       "hint": "Sets the language of the entire interface (menus, buttons, blocks in the program editor). Changes take effect immediately and apply to this browser.",
@@ -399,6 +405,13 @@
   "hardwareId": {
     "headline": "Please enter the bricklet UIDs.",
     "update": "Update",
+    "autoAssign": "Auto-assign",
+    "detecting": "Detecting bricks…",
+    "detectedHeadline": "Detected bricks",
+    "position": "Position",
+    "uid": "UID",
+    "type": "Type",
+    "unknownDevice": "Unknown / HAT",
     "validationError": "IDs must be unique, up to 6 characters long, and contain only letters and numbers."
   },
   "programAssignment": {
@@ -486,6 +499,7 @@
     "noDeletablePoses": "No deletable poses available.",
     "posesDeletedCount": "{{count}} pose(s) deleted.",
     "poseUpdatedSuccessfully": "Pose updated successfully",
+    "updatePoseConfirm": "Overwrite pose \"{{name}}\" with the current joint positions? The previous values will be lost.",
     "trackingStartFailed": "Gesture recognition could not be started (see browser console)."
   },
   "pinAssignment": {
@@ -493,6 +507,8 @@
     "hint": "For each pin you can pick the connected body part or set it to \"not connected\". A body part can only ever be assigned to one pin - it automatically disappears from the other dropdowns. Defective (e.g. burnt-out) pins can be marked once no body part is attached to them anymore - set \"not connected\" first. Changes only take effect after the ros-motors container is restarted.",
     "restart": "Restart ros-motors",
     "restarting": "Restarting…",
+    "export": "Export assignment",
+    "import": "Import assignment",
     "pin": "Pin",
     "bodyPart": "Body Part",
     "defective": "Defective",

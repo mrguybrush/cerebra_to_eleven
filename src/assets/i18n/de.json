@@ -65,6 +65,12 @@
       "restart": "Augen-Anzeige neu starten",
       "restarting": "Wird neu gestartet…"
     },
+    "reboot": {
+      "title": "System neu starten",
+      "hint": "Startet den kompletten Roboter (Raspberry Pi) neu. Das dauert etwa eine Minute, in der pib nicht erreichbar ist.",
+      "reboot": "System neu starten",
+      "rebooting": "Wird neu gestartet…"
+    },
     "language": {
       "title": "Sprache",
       "hint": "Legt die Sprache der gesamten Oberfläche fest (Menüs, Buttons, Bausteine im Programm-Editor). Änderungen wirken sofort und gelten für diesen Browser.",
@@ -399,6 +405,13 @@
   "hardwareId": {
     "headline": "Bitte die Bricklet-UIDs eingeben.",
     "update": "Aktualisieren",
+    "autoAssign": "Auto-Zuweisung",
+    "detecting": "Erkenne Bricks…",
+    "detectedHeadline": "Erkannte Bricks",
+    "position": "Position",
+    "uid": "UID",
+    "type": "Typ",
+    "unknownDevice": "Unbekannt / HAT",
     "validationError": "IDs müssen eindeutig sein, bis zu 6 Zeichen lang und dürfen nur Buchstaben und Zahlen enthalten."
   },
   "programAssignment": {
@@ -486,6 +499,7 @@
     "noDeletablePoses": "Keine löschbaren Posen vorhanden.",
     "posesDeletedCount": "{{count}} Pose(n) gelöscht.",
     "poseUpdatedSuccessfully": "Pose erfolgreich aktualisiert",
+    "updatePoseConfirm": "Pose „{{name}}“ mit der aktuellen Gelenkstellung überschreiben? Die bisherigen Werte gehen dabei verloren.",
     "trackingStartFailed": "Gestenerkennung konnte nicht gestartet werden (siehe Browser-Konsole)."
   },
   "pinAssignment": {
@@ -493,6 +507,8 @@
     "hint": "Pro Pin lässt sich das angeschlossene Körperteil auswählen oder „nicht angeschlossen“ setzen. Ein Körperteil kann immer nur einem Pin zugewiesen sein - es verschwindet automatisch aus den anderen Dropdown-Listen. Defekte (z. B. durchgebrannte) Pins lassen sich markieren, sobald kein Körperteil mehr daran hängt - dafür zuerst „nicht angeschlossen“ auswählen. Änderungen wirken erst, nachdem der ros-motors-Container neu gestartet wurde.",
     "restart": "ros-motors neu starten",
     "restarting": "Wird neu gestartet…",
+    "export": "Zuweisung exportieren",
+    "import": "Zuweisung importieren",
     "pin": "Pin",
     "bodyPart": "Körperteil",
     "defective": "Defekt",

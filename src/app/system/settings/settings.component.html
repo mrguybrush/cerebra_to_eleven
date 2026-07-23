@@ -165,6 +165,21 @@
 
     <hr class="settings-divider" />
 
+    <h3 class="settings-section-title">{{ 'settings.reboot.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.reboot.hint' | translate }}
+    </div>
+    <button
+        type="button"
+        class="btn btn-regular restart-button"
+        data-test="BTN_Reboot_System"
+        [disabled]="rebooting"
+        (click)="rebootSystem()">
+        {{rebooting ? ('settings.reboot.rebooting' | translate) : ('settings.reboot.reboot' | translate)}}
+    </button>
+
+    <hr class="settings-divider" />
+
     <h3 class="settings-section-title">{{ 'settings.language.title' | translate }}</h3>
     <div class="setting-hint">
         {{ 'settings.language.hint' | translate }}

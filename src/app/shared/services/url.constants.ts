@@ -23,6 +23,7 @@ export enum UrlConstants {
     AUTO_OFF = "/system-settings/auto-off",
     IP_OVERLAY_SECONDS = "/system-settings/ip-overlay-seconds",
     RESTART_DISPLAY = "/system-settings/restart-display",
+    REBOOT = "/system-settings/reboot",
     MENU_VISIBILITY = "/system-settings/menu-visibility",
     MOVEMENT_SETTINGS = "/movement-settings",
     FACIAL_EXPRESSIONS = "/facial-expressions",

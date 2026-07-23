@@ -89,6 +89,47 @@ export class BrickletPinService {
         );
     }
 
+    /** Laedt die aktuelle Pinbelegung als JSON-Datei herunter (Zuordnung
+     * ueber die stabile bricklet_number, siehe Backend export). */
+    exportAssignment(): void {
+        this.apiService.get(`${UrlConstants.BRICKLET_PINS}/export`).subscribe({
+            next: (data) => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                    type: "application/json",
+                });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "pib-pinbelegung.json";
+                link.click();
+                URL.revokeObjectURL(url);
+            },
+            error: (err) =>
+                this.showError(err, "Export der Pinbelegung fehlgeschlagen."),
+        });
+    }
+
+    /** Uebernimmt eine zuvor exportierte Pinbelegung aus einer JSON-Datei. */
+    importAssignment(data: object): void {
+        this.apiService
+            .put(`${UrlConstants.BRICKLET_PINS}/import`, data)
+            .pipe(
+                tap(() => {
+                    this.matSnackBarService.open(
+                        "Pinbelegung importiert. Zum Übernehmen ros-motors neu starten.",
+                        "",
+                        {panelClass: "cerebra-toast", duration: 4000},
+                    );
+                    this.reload();
+                }),
+                catchError((err) => {
+                    this.showError(err, "Import der Pinbelegung fehlgeschlagen.");
+                    return of(null);
+                }),
+            )
+            .subscribe();
+    }
+
     private showError(err: unknown, fallback: string) {
         const message =
             (err as {error?: {error?: string}})?.error?.error ?? fallback;

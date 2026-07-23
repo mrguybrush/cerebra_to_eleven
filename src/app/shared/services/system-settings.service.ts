@@ -108,4 +108,28 @@ export class SystemSettingsService {
             }),
         );
     }
+
+    /** Startet den kompletten Raspberry Pi neu (nicht nur einen Container). */
+    rebootSystem(): Observable<boolean> {
+        return this.apiService.post(UrlConstants.REBOOT, {}).pipe(
+            tap(() =>
+                this.matSnackBarService.open(
+                    "Roboter wird neu gestartet - bitte etwa eine Minute warten.",
+                    "",
+                    {panelClass: "cerebra-toast", duration: 6000},
+                ),
+            ),
+            map(() => true),
+            catchError((err) => {
+                const message =
+                    (err as {error?: {error?: string}})?.error?.error ??
+                    "Neustart des Systems fehlgeschlagen.";
+                this.matSnackBarService.open(message, "", {
+                    panelClass: "cerebra-toast",
+                    duration: 4000,
+                });
+                return of(false);
+            }),
+        );
+    }
 }

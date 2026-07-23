@@ -87,6 +87,9 @@ export class SettingsComponent implements OnInit {
     // nicht vollstaendig im Vollbild angezeigt werden.
     restartingDisplay = false;
 
+    // --- Kompletter System-Neustart (Raspberry Pi) ---
+    rebooting = false;
+
     // --- Blockprogrammierung-Sprache ---
     locales: PibBlocklyLocale[];
     selectedLanguage: string;
@@ -414,6 +417,21 @@ export class SettingsComponent implements OnInit {
         this.systemSettingsService
             .restartDisplay()
             .subscribe(() => (this.restartingDisplay = false));
+    }
+
+    rebootSystem(): void {
+        if (
+            !confirm(
+                "Den ganzen Roboter (Raspberry Pi) jetzt neu starten? Das " +
+                    "dauert etwa eine Minute, in der pib nicht erreichbar ist.",
+            )
+        ) {
+            return;
+        }
+        this.rebooting = true;
+        this.systemSettingsService
+            .rebootSystem()
+            .subscribe(() => (this.rebooting = false));
     }
 
     /** Setzt das Assistant-Model fuer ALLE Personalities (gilt global). */
