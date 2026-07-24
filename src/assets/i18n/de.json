@@ -406,6 +406,7 @@
     "headline": "Bitte die Bricklet-UIDs eingeben.",
     "update": "Aktualisieren",
     "autoAssign": "Auto-Zuweisung",
+    "updateHint": "Zum Übernehmen auf „Aktualisieren“ klicken.",
     "detecting": "Erkenne Bricks…",
     "detectedHeadline": "Erkannte Bricks",
     "position": "Position",

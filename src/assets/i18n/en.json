@@ -406,6 +406,7 @@
     "headline": "Please enter the bricklet UIDs.",
     "update": "Update",
     "autoAssign": "Auto-assign",
+    "updateHint": "Click \"Update\" to apply.",
     "detecting": "Detecting bricks…",
     "detectedHeadline": "Detected bricks",
     "position": "Position",

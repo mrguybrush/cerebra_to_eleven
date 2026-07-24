@@ -42,6 +42,10 @@ export class HardwareIdComponent implements OnInit {
 
     detectedBricklets: DetectedBricklet[] = [];
     detecting = false;
+    // true, sobald durch die Auto-Zuweisung Felder befuellt wurden, aber
+    // noch nicht ueber "Aktualisieren" gespeichert - blendet den Hinweis
+    // ein, dass man noch speichern muss.
+    showUpdateHint = false;
 
     constructor(
         private brickletService: BrickletService,
@@ -82,6 +86,7 @@ export class HardwareIdComponent implements OnInit {
         if (changedBricklets.length > 0) {
             this.brickletService.renameBrickletUid(changedBricklets);
         }
+        this.showUpdateHint = false;
     }
 
     /** Fragt die angeschlossenen Bricklets live ab (fuellt die Tabelle) und
@@ -111,6 +116,7 @@ export class HardwareIdComponent implements OnInit {
                         assigned++;
                     }
                 }
+                this.showUpdateHint = assigned > 0;
                 this.matSnackBarService.open(
                     assigned > 0
                         ? `${assigned} Bricklet(s) automatisch zugewiesen. Zum Speichern „Aktualisieren“ klicken.`

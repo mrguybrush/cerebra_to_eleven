@@ -64,6 +64,12 @@
                 *ngIf="brickletUidForm.invalid">
                 <span class="validation-error">{{ 'hardwareId.validationError' | translate }}</span>
             </div>
+            <div
+                class="col-auto mt-4 ml-4 mb-3 pl-2 align-self-center"
+                data-test="TXT_Update_Hint"
+                *ngIf="showUpdateHint && brickletUidForm.valid">
+                <span class="update-hint">{{ 'hardwareId.updateHint' | translate }}</span>
+            </div>
         </div>
     </form>
 
