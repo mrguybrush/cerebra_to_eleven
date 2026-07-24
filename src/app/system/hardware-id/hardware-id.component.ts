@@ -14,17 +14,18 @@ import {
 
 // Feste Zuordnung der HAT-Steckposition (a-h, Tinkerforge-Enumeration) zur
 // internen bricklet_number in der DB - siehe Aufgabe:
-//   Position a/b/c = Servo Bricklets 1/2/3
-//   Position d/f/g = RGB-LED-Button-Bricklets (bricklet_number 5/6/7)
+//   Position a/b/c = Servo Bricklets 1/2/3 (bricklet_number 1/2/3)
 //   Position e     = Solid State Relay (bricklet_number 4)
+//   RGB-LED-Button-Bricklets 1/2/3 (bricklet_number 5/6/7) sitzen auf
+//   Position f/d/g (NICHT d/f/g!) - vom Nutzer korrigierte Reihenfolge.
 // Der HAT selbst (Position 'i') hat keine Zuordnung und wird ignoriert.
 const POSITION_TO_BRICKLET_NUMBER: {[position: string]: number} = {
     a: 1,
     b: 2,
     c: 3,
     e: 4,
-    d: 5,
-    f: 6,
+    f: 5,
+    d: 6,
     g: 7,
 };
 
