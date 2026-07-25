@@ -59,6 +59,11 @@
       "hint": "Caps the movement speed for the whole robot (safety limit). The speed slider under Poses only goes up to this value; a higher speed is automatically clamped to this limit.",
       "label": "Maximum speed"
     },
+    "volume": {
+      "title": "Volume",
+      "hint": "Sets the robot's output volume (speech, sounds). The change takes effect immediately and persists across reboots.",
+      "label": "Volume"
+    },
     "display": {
       "title": "Eye Display",
       "hint": "If the eyes aren't fully shown in fullscreen after booting the robot, restarting the display helps.",

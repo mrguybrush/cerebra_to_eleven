@@ -59,6 +59,11 @@
       "hint": "Begrenzt das Bewegungstempo für den gesamten Roboter (Sicherheits-Obergrenze). Der Tempo-Regler unter Posen geht nur bis zu diesem Wert; ein höher eingestelltes Tempo wird automatisch auf dieses Limit gekappt.",
       "label": "Maximale Geschwindigkeit"
     },
+    "volume": {
+      "title": "Lautstärke",
+      "hint": "Stellt die Ausgabelautstärke des Roboters ein (Sprachausgabe, Töne). Die Änderung wirkt sofort und bleibt auch nach einem Neustart erhalten.",
+      "label": "Lautstärke"
+    },
     "display": {
       "title": "Augen-Anzeige",
       "hint": "Falls die Augen nach dem Hochfahren des Roboters nicht vollständig im Vollbild angezeigt werden, hilft ein Neustart der Anzeige.",

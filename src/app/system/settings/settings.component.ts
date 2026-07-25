@@ -59,6 +59,9 @@ export class SettingsComponent implements OnInit {
     // 0 = wird gar nicht angezeigt.
     ipOverlaySecondsControl = new FormControl<number | string | null>(null);
 
+    // --- Ausgabelautstaerke des Roboters (0-100%) ---
+    volumePercent = 100;
+
     // --- Maximale Bewegungsgeschwindigkeit (Sicherheits-Obergrenze) ---
     // Begrenzt den Tempo-Regler unter Posen; wird backend-seitig
     // durchgesetzt (siehe movement_settings_service.py).
@@ -238,6 +241,10 @@ export class SettingsComponent implements OnInit {
             this.maxSpeedPercent = percent;
         });
 
+        this.systemSettingsService.getVolumePercent().subscribe((percent) => {
+            this.volumePercent = percent;
+        });
+
         this.tokenService.tokenStatus$.subscribe((response) => {
             this.isTokenStored = response.tokenExists;
             this.isTokenActive = response.tokenActive;
@@ -390,6 +397,21 @@ export class SettingsComponent implements OnInit {
 
     onMaxSpeedChange(value: string): void {
         this.movementSettingsService.setMaxSpeedPercent(Number(value));
+    }
+
+    /** Lautstaerke-Regler: aktualisiert nur die Anzeige waehrend des
+     * Ziehens ... */
+    onVolumeInput(value: string): void {
+        this.volumePercent = Number(value);
+    }
+
+    /** ... und wendet die Lautstaerke erst beim Loslassen an (jede
+     * Aenderung startet einen Helfer-Container, daher nicht bei jedem
+     * Pixel). */
+    onVolumeChange(value: string): void {
+        this.systemSettingsService
+            .setVolumePercent(Number(value))
+            .subscribe((saved) => (this.volumePercent = saved));
     }
 
     onToggleMenuVisibility(key: keyof MenuVisibility, hidden: boolean): void {

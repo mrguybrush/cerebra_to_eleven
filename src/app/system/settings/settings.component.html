@@ -150,6 +150,35 @@
 
     <hr class="settings-divider" />
 
+    <h3 class="settings-section-title">{{ 'settings.volume.title' | translate }}</h3>
+    <div class="setting-hint">
+        {{ 'settings.volume.hint' | translate }}
+    </div>
+    <div class="setting-row">
+        <label
+            for="volume-percent"
+            class="setting-label">
+            {{ 'settings.volume.label' | translate }}
+        </label>
+        <input
+            id="volume-percent"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            data-test="SLD_Volume"
+            [value]="volumePercent"
+            (input)="onVolumeInput($any($event.target).value)"
+            (change)="onVolumeChange($any($event.target).value)" />
+        <span
+            class="ml-2"
+            data-test="TXT_Volume_Value"
+            >{{volumePercent}}%</span
+        >
+    </div>
+
+    <hr class="settings-divider" />
+
     <h3 class="settings-section-title">{{ 'settings.display.title' | translate }}</h3>
     <div class="setting-hint">
         {{ 'settings.display.hint' | translate }}

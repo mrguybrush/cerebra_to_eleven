@@ -109,6 +109,33 @@ export class SystemSettingsService {
         );
     }
 
+    /** Ausgabelautstaerke des Roboters (0-100%). */
+    getVolumePercent(): Observable<number> {
+        return this.apiService
+            .get(UrlConstants.VOLUME)
+            .pipe(map((dto) => dto["volumePercent"] ?? 100));
+    }
+
+    /** Setzt die Lautstaerke (0-100%) - wird backend-seitig sofort auf den
+     * Audio-Sink angewendet und persistiert. */
+    setVolumePercent(percent: number): Observable<number> {
+        return this.apiService
+            .put(UrlConstants.VOLUME, {volumePercent: percent})
+            .pipe(
+                map((dto) => dto["volumePercent"] ?? percent),
+                catchError((err) => {
+                    const message =
+                        (err as {error?: {error?: string}})?.error?.error ??
+                        "Lautstärke konnte nicht gesetzt werden.";
+                    this.matSnackBarService.open(message, "", {
+                        panelClass: "cerebra-toast",
+                        duration: 4000,
+                    });
+                    return of(percent);
+                }),
+            );
+    }
+
     /** Startet den kompletten Raspberry Pi neu (nicht nur einen Container). */
     rebootSystem(): Observable<boolean> {
         return this.apiService.post(UrlConstants.REBOOT, {}).pipe(
