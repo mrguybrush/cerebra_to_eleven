@@ -1,7 +1,7 @@
 import {Injectable} from "@angular/core";
 import {RosService} from "./ros-service/ros.service";
 import {ApiService} from "./api.service";
-import {BehaviorSubject, Observable, map} from "rxjs";
+import {BehaviorSubject, Observable, map, of} from "rxjs";
 import {
     MotorSettings,
     fromMotorDTO,
@@ -191,8 +191,43 @@ export class MotorService {
             });
     }
 
+    // Per-Motor "ist gerade ein setPosition() fuer diesen Motor unterwegs"
+    // + der zuletzt gewuenschte Wert, falls waehrend der Wartezeit noch
+    // einer angefragt wurde. Ohne das lief bei durchgehendem Slider-Ziehen
+    // unter Systemlast (langsame ROS-Antworten) ein immer laenger
+    // werdender Rueckstau an bereits abgeschickten, aber noch unbeant-
+    // worteten Positions-Requests auf - der Roboter arbeitete dann sichtbar
+    // "hinterher" eine Warteschlange laengst veralteter Positionen ab,
+    // statt direkt zur aktuellen Slider-Position zu fahren. setPositions()
+    // (Posen/Gesten, ein einzelner Aufruf) ist davon nicht betroffen.
+    private setPositionInFlight: {[motor: string]: boolean} = {};
+    private setPositionPending: {[motor: string]: number} = {};
+
     setPosition(motorName: string, position: number): Observable<void> {
-        return this.setPositions([{motorName, position}]);
+        if (this.setPositionInFlight[motorName]) {
+            this.setPositionPending[motorName] = position;
+            return of(undefined);
+        }
+        return this.dispatchPosition(motorName, position);
+    }
+
+    private dispatchPosition(motorName: string, position: number): Observable<void> {
+        this.setPositionInFlight[motorName] = true;
+        const result = this.setPositions([{motorName, position}]);
+        result.subscribe({
+            next: () => this.onPositionSettled(motorName),
+            error: () => this.onPositionSettled(motorName),
+        });
+        return result;
+    }
+
+    private onPositionSettled(motorName: string): void {
+        this.setPositionInFlight[motorName] = false;
+        const pending = this.setPositionPending[motorName];
+        if (pending !== undefined) {
+            delete this.setPositionPending[motorName];
+            this.dispatchPosition(motorName, pending);
+        }
     }
 
     setPositions(motorPositions: MotorPosition[]): Observable<void> {
