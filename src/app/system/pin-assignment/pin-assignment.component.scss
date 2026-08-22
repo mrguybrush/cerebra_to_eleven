@@ -35,7 +35,7 @@
 
 .pin-table {
     width: 100%;
-    max-width: 500px;
+    max-width: 760px;
     border-collapse: collapse;
     color: white;
 }
@@ -81,6 +81,23 @@
 
 .defective-checkbox:disabled {
     opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.active-checkbox {
+    accent-color: #2ecc71;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.test-slider {
+    width: 140px;
+    accent-color: #2ecc71;
+}
+
+.test-slider:disabled {
+    opacity: 0.35;
     cursor: not-allowed;
 }
 

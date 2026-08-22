@@ -51,6 +51,8 @@
             <tr>
                 <th>{{ 'pinAssignment.pin' | translate }}</th>
                 <th>{{ 'pinAssignment.bodyPart' | translate }}</th>
+                <th>{{ 'pinAssignment.active' | translate }}</th>
+                <th>{{ 'pinAssignment.test' | translate }}</th>
                 <th>{{ 'pinAssignment.defective' | translate }}</th>
             </tr>
             <tr
@@ -77,6 +79,25 @@
                     </select>
                 </td>
                 <td>
+                    <ng-container
+                        *ngIf="pinInfo.motorName as motorName"
+                        [ngTemplateOutlet]="activeCheckbox"
+                        [ngTemplateOutletContext]="{
+                            motorName: motorName,
+                            settings: settingsFor(motorName) | async
+                        }"></ng-container>
+                </td>
+                <td>
+                    <ng-container
+                        *ngIf="pinInfo.motorName as motorName"
+                        [ngTemplateOutlet]="testSlider"
+                        [ngTemplateOutletContext]="{
+                            motorName: motorName,
+                            settings: settingsFor(motorName) | async,
+                            position: positionFor(motorName) | async
+                        }"></ng-container>
+                </td>
+                <td>
                     <input
                         type="checkbox"
                         class="defective-checkbox"
@@ -89,3 +110,38 @@
         </table>
     </div>
 </div>
+
+<!-- Aktiviert/deaktiviert genau den Motor an diesem einen Pin (Hardware-
+     Enable des Servo-Bricklet-Pins) - wirkt sofort, ohne ros-motors neu zu
+     starten. Nur sichtbar, wenn dem Pin ein Koerperteil zugewiesen ist. -->
+<ng-template
+    #activeCheckbox
+    let-motorName="motorName"
+    let-settings="settings">
+    <input
+        type="checkbox"
+        class="active-checkbox"
+        [attr.data-test]="'CHK_Active_' + motorName"
+        [checked]="settings?.turnedOn"
+        (change)="toggleMotorActive(motorName, $any($event.target).checked)" />
+</ng-template>
+
+<!-- Bewegt genau den Motor an diesem einen Pin probeweise hin und her -
+     nur wirksam, waehrend die Aktiv-Checkbox daneben angehakt ist (die
+     Hardware ignoriert Positionsbefehle auf einem deaktivierten Pin). -->
+<ng-template
+    #testSlider
+    let-motorName="motorName"
+    let-settings="settings"
+    let-position="position">
+    <input
+        *ngIf="settings"
+        type="range"
+        class="test-slider"
+        [attr.data-test]="'RNG_Test_' + motorName"
+        [min]="settings.rotationRangeMin / 100"
+        [max]="settings.rotationRangeMax / 100"
+        [disabled]="!settings.turnedOn"
+        [value]="(position ?? 0) / 100"
+        (input)="setTestPosition(motorName, $any($event.target).valueAsNumber)" />
+</ng-template>

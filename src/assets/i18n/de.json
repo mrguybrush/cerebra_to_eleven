@@ -510,13 +510,15 @@
   },
   "pinAssignment": {
     "headline": "Pinbelegung der Servo-Bricklets",
-    "hint": "Pro Pin lässt sich das angeschlossene Körperteil auswählen oder „nicht angeschlossen“ setzen. Ein Körperteil kann immer nur einem Pin zugewiesen sein - es verschwindet automatisch aus den anderen Dropdown-Listen. Defekte (z. B. durchgebrannte) Pins lassen sich markieren, sobald kein Körperteil mehr daran hängt - dafür zuerst „nicht angeschlossen“ auswählen. Änderungen wirken erst, nachdem der ros-motors-Container neu gestartet wurde.",
+    "hint": "Pro Pin lässt sich das angeschlossene Körperteil auswählen oder „nicht angeschlossen“ setzen. Ein Körperteil kann immer nur einem Pin zugewiesen sein - es verschwindet automatisch aus den anderen Dropdown-Listen. Defekte (z. B. durchgebrannte) Pins lassen sich markieren, sobald kein Körperteil mehr daran hängt - dafür zuerst „nicht angeschlossen“ auswählen. Änderungen an der Zuordnung selbst wirken erst, nachdem der ros-motors-Container neu gestartet wurde. „Aktiv“ und der Testregler wirken dagegen sofort und lassen sich nutzen, um die Verkabelung eines einzelnen Pins gefahrlos zu prüfen, ohne andere Motoren zu beeinflussen.",
     "restart": "ros-motors neu starten",
     "restarting": "Wird neu gestartet…",
     "export": "Zuweisung exportieren",
     "import": "Zuweisung importieren",
     "pin": "Pin",
     "bodyPart": "Körperteil",
+    "active": "Aktiv",
+    "test": "Test",
     "defective": "Defekt",
     "notConnected": "(nicht angeschlossen)",
     "servoBricklet": "Servo Bricklet {{number}}"

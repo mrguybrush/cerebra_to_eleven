@@ -510,13 +510,15 @@
   },
   "pinAssignment": {
     "headline": "Servo Bricklet Pin Layout",
-    "hint": "For each pin you can pick the connected body part or set it to \"not connected\". A body part can only ever be assigned to one pin - it automatically disappears from the other dropdowns. Defective (e.g. burnt-out) pins can be marked once no body part is attached to them anymore - set \"not connected\" first. Changes only take effect after the ros-motors container is restarted.",
+    "hint": "For each pin you can pick the connected body part or set it to \"not connected\". A body part can only ever be assigned to one pin - it automatically disappears from the other dropdowns. Defective (e.g. burnt-out) pins can be marked once no body part is attached to them anymore - set \"not connected\" first. Changes to the assignment itself only take effect after the ros-motors container is restarted. \"Active\" and the test slider, however, take effect immediately and let you safely verify one pin's wiring without affecting any other motor.",
     "restart": "Restart ros-motors",
     "restarting": "Restarting…",
     "export": "Export assignment",
     "import": "Import assignment",
     "pin": "Pin",
     "bodyPart": "Body Part",
+    "active": "Active",
+    "test": "Test",
     "defective": "Defective",
     "notConnected": "(not connected)",
     "servoBricklet": "Servo Bricklet {{number}}"
