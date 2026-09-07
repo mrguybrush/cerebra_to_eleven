@@ -7,6 +7,7 @@ import {playAudioFromSpeech} from "./play-audio-from-speech-block";
 import {moveToPose} from "./pose-block";
 import {setSolidStateRelay} from "./solid-state-relay-block";
 import {runScriptBlocks} from "./run-script-block";
+import {callUrlBlocks} from "./call-url-block";
 import {button_blocks} from "./button-block";
 import {display_blocks} from "./display-block";
 import {playWav} from "./play-wav-block";
@@ -22,6 +23,7 @@ export function customBlockDefinition() {
     Blockly.common.defineBlocks(moveToPose);
     Blockly.common.defineBlocks(setSolidStateRelay);
     Blockly.common.defineBlocks(runScriptBlocks);
+    Blockly.common.defineBlocks(callUrlBlocks);
     Blockly.common.defineBlocks(button_blocks);
     Blockly.common.defineBlocks(display_blocks);
     Blockly.common.defineBlocks(playWav);

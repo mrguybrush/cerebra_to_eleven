@@ -30,6 +30,7 @@ export const IMPORT_SET_SOLID_STATE_RELAY =
 export const IMPORT_SOLID_STATE_RELAY_STATE =
     "from datatypes.msg import SolidStateRelayState";
 export const IMPORT_PARAMIKO = "import paramiko";
+export const IMPORT_URLLIB_REQUEST = "import urllib.request";
 
 // ros
 

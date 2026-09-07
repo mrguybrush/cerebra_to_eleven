@@ -7,6 +7,7 @@ import * as playAudioFromSpeech from "./play-audio-from-speech-generator";
 import * as moveToPose from "./pose-generator";
 import * as setSolidStateRelay from "./solid-state-relay-generator";
 import * as runScript from "./run-script-generator";
+import * as callUrl from "./call-url-generator";
 import * as buttonGen from "./button-generator";
 import * as displayGen from "./display-generator";
 import * as playWavGen from "./play-wav-generator";
@@ -28,6 +29,7 @@ const generators: typeof pythonGenerator.forBlock = {
     ...moveToPose,
     ...setSolidStateRelay,
     ...runScript,
+    ...callUrl,
     ...buttonGen,
     ...displayGen,
     ...playWavGen,

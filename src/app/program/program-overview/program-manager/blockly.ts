@@ -364,6 +364,13 @@ export const toolbox: string = `<xml xmlns="http://www.w3.org/1999/xhtml" id="to
     <block type="run_script"></block>
     <block type="set_solid_state_relay"></block>
     <block type="get_solid_state_relay"></block>
+    <block type="call_url">
+        <value name="URL">
+            <shadow type="text">
+                <field name="TEXT">http://192.168.0.50/relay/0?turn=on</field>
+            </shadow>
+        </value>
+    </block>
 </category>
 <sep></sep>
 <category name="%{BKY_PIB_CAT_MOTORIC}" colour="355">

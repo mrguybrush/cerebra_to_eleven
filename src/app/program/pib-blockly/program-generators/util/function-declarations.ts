@@ -237,6 +237,23 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(status: str) -> None:
         logging.error(f"setting solid state relay failed.")
 `;
 
+// call-url
+
+export const CALL_URL_FUNCTION = (generator: CodeGenerator) => `
+
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(url: str) -> None:
+
+    if not (url.startswith("http://") or url.startswith("https://")):
+        logging.error(f"call_url: '{url}' is not a valid http(s) URL, skipping.")
+        return
+
+    try:
+        with urllib.request.urlopen(url, timeout=5) as response:
+            logging.info(f"call_url: GET {url} -> HTTP {response.status}")
+    except Exception as e:
+        logging.error(f"call_url: request to {url} failed: {e}")
+`;
+
 // get-solid-state-relay
 
 export const GET_SOLID_STATE_RELAY_FUNCTION = (generator: CodeGenerator) => `

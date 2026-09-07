@@ -107,6 +107,12 @@ const EN_MESSAGES: {[key: string]: string} = {
     PIB_RUN_SCRIPT_USE_CUSTOM_TOOLTIP:
         "When present, host/user/password/port fields are shown on the block.",
 
+    // Call URL (HTTP) - e.g. to control other devices on the network like
+    // Shelly smart plugs (http://<ip>/relay/0?turn=on)
+    PIB_CALL_URL: "call URL %1",
+    PIB_CALL_URL_TOOLTIP:
+        "Sends an HTTP GET request to the given URL - e.g. to switch a Shelly smart plug or similar network device on/off. Ignores the response, only logs success/failure.",
+
     // Button blocks
     PIB_ON_BUTTON_PRESSED: "when button  %1 is pressed",
     PIB_ON_BUTTON_PRESSED_TOOLTIP:
@@ -268,6 +274,12 @@ const DE_MESSAGES: {[key: string]: string} = {
     PIB_RUN_SCRIPT_USE_CUSTOM: "eigene Verbindung verwenden",
     PIB_RUN_SCRIPT_USE_CUSTOM_TOOLTIP:
         "Wenn vorhanden, werden Host/Benutzer/Passwort/Port am Block angezeigt.",
+
+    // URL aufrufen (HTTP) - z.B. um andere Geräte im Netzwerk zu steuern,
+    // etwa eine Shelly-Steckdose (http://<ip>/relay/0?turn=on)
+    PIB_CALL_URL: "rufe URL auf %1",
+    PIB_CALL_URL_TOOLTIP:
+        "Sendet eine HTTP-GET-Anfrage an die angegebene URL - z.B. um eine Shelly-Steckdose oder ein ähnliches Netzwerkgerät ein-/auszuschalten. Die Antwort wird ignoriert, Erfolg/Fehler wird nur geloggt.",
 
     // Button-Blöcke
     PIB_ON_BUTTON_PRESSED: "wenn Button  %1 gedrückt wird",
