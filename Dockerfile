@@ -40,6 +40,13 @@ RUN set -e; \
       https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 
 ARG NODE_ENV=production
+# Caps Node's V8 heap so a memory-hungry build fails with a clear JS heap
+# OOM error instead of exhausting the HOST's memory - on a 4GB Pi with only
+# a few hundred MB of swap, an uncapped webpack/esbuild process that grows
+# unbounded can trigger the kernel OOM killer, which may kill ANY process on
+# the system (not just this build) and has been observed to freeze the
+# whole robot, touchscreen included, rather than just failing this build.
+ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN if [ "$NODE_ENV" = "production" ]; then \
       npm run build --prod; \
     else \
