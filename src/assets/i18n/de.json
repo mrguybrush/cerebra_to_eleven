@@ -28,7 +28,24 @@
     "settingsTab": "Einstellungen",
     "programAssignmentTab": "Zuordnungen",
     "pinAssignmentTab": "Pinbelegung",
-    "hardwareIdsTab": "Hardware-IDs"
+    "hardwareIdsTab": "Hardware-IDs",
+    "diagnoseTab": "Diagnose"
+  },
+  "diagnose": {
+    "headline": "Systemdiagnose",
+    "hint": "Speicherplatz, Arbeitsspeicher, Prozessorlast und Temperatur des Roboter-Rechners - aktualisiert sich automatisch alle paar Sekunden. Hilfreich, um zu sehen, ob dem Roboter bei laengerer Nutzung (z. B. beim Posieren mit gleichzeitiger Sprachinteraktion) die Ressourcen ausgehen.",
+    "loadFailed": "Systemwerte konnten nicht geladen werden.",
+    "disk": "Speicherplatz (SD-Karte)",
+    "memory": "Arbeitsspeicher",
+    "cpu": "Prozessor",
+    "temperature": "Temperatur",
+    "used": "belegt",
+    "free": "frei",
+    "available": "verfügbar",
+    "loadAverage": "Systemlast (1/5/15 Min)",
+    "cores": "Kerne",
+    "calculating": "wird berechnet…",
+    "unavailable": "nicht verfügbar"
   },
   "settings": {
     "learningGroup": {

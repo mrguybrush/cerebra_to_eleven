@@ -4,6 +4,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {ApiService} from "./api.service";
 import {UrlConstants} from "./url.constants";
 import {MenuVisibility} from "../types/menu-visibility";
+import {SystemInfo} from "../types/system-info";
 
 /**
  * Auto-Off: Minuten ohne Bewegung, nach denen der Roboter automatisch in
@@ -134,6 +135,15 @@ export class SystemSettingsService {
                     return of(percent);
                 }),
             );
+    }
+
+    /** Speicherplatz, RAM, CPU-Last und Temperatur des Roboter-Rechners -
+     * fuer Live-Polling gedacht (siehe diagnose.component.ts), das Backend
+     * beantwortet das ueber statvfs/proc/sysfs sub-Millisekunden schnell. */
+    getSystemInfo(): Observable<SystemInfo> {
+        return this.apiService
+            .get(UrlConstants.SYSTEM_INFO)
+            .pipe(map((dto) => dto as SystemInfo));
     }
 
     /** Startet den kompletten Raspberry Pi neu (nicht nur einen Container). */

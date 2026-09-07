@@ -25,6 +25,7 @@ export enum UrlConstants {
     VOLUME = "/system-settings/volume",
     RESTART_DISPLAY = "/system-settings/restart-display",
     REBOOT = "/system-settings/reboot",
+    SYSTEM_INFO = "/system-settings/system-info",
     MENU_VISIBILITY = "/system-settings/menu-visibility",
     MOVEMENT_SETTINGS = "/movement-settings",
     FACIAL_EXPRESSIONS = "/facial-expressions",

@@ -1,0 +1,114 @@
+<div>
+    <div class="mb-3 pl-2 form-headline">
+        {{ 'diagnose.headline' | translate }}
+    </div>
+    <div class="diagnose-hint pl-2">
+        {{ 'diagnose.hint' | translate }}
+    </div>
+
+    <div
+        *ngIf="loadFailed && !info"
+        class="diagnose-error pl-2">
+        {{ 'diagnose.loadFailed' | translate }}
+    </div>
+
+    <div
+        *ngIf="info as i"
+        class="diagnose-grid">
+        <div class="diagnose-card">
+            <div class="diagnose-card-title">
+                {{ 'diagnose.disk' | translate }}
+            </div>
+            <div class="progress-track">
+                <div
+                    class="progress-fill"
+                    [ngClass]="usagePercentClass(i.disk.usedPercent)"
+                    [style.width.%]="i.disk.usedPercent"></div>
+            </div>
+            <div
+                class="diagnose-value"
+                [ngClass]="usagePercentClass(i.disk.usedPercent)">
+                {{ i.disk.usedPercent }} %
+            </div>
+            <div class="diagnose-detail">
+                {{ formatGigabytes(i.disk.usedBytes) }} /
+                {{ formatGigabytes(i.disk.totalBytes) }} GB
+                {{ 'diagnose.used' | translate }}
+                ({{ formatGigabytes(i.disk.freeBytes) }} GB
+                {{ 'diagnose.free' | translate }})
+            </div>
+        </div>
+
+        <div class="diagnose-card">
+            <div class="diagnose-card-title">
+                {{ 'diagnose.memory' | translate }}
+            </div>
+            <div class="progress-track">
+                <div
+                    class="progress-fill"
+                    [ngClass]="usagePercentClass(i.memory.usedPercent)"
+                    [style.width.%]="i.memory.usedPercent"></div>
+            </div>
+            <div
+                class="diagnose-value"
+                [ngClass]="usagePercentClass(i.memory.usedPercent)">
+                {{ i.memory.usedPercent }} %
+            </div>
+            <div class="diagnose-detail">
+                {{ formatGigabytes(i.memory.usedBytes) }} /
+                {{ formatGigabytes(i.memory.totalBytes) }} GB
+                {{ 'diagnose.used' | translate }}
+                ({{ formatGigabytes(i.memory.availableBytes) }} GB
+                {{ 'diagnose.available' | translate }})
+            </div>
+        </div>
+
+        <div class="diagnose-card">
+            <div class="diagnose-card-title">
+                {{ 'diagnose.cpu' | translate }}
+            </div>
+            <ng-container *ngIf="i.cpu.usedPercent !== null; else cpuPending">
+                <div class="progress-track">
+                    <div
+                        class="progress-fill"
+                        [ngClass]="usagePercentClass(i.cpu.usedPercent)"
+                        [style.width.%]="i.cpu.usedPercent"></div>
+                </div>
+                <div
+                    class="diagnose-value"
+                    [ngClass]="usagePercentClass(i.cpu.usedPercent)">
+                    {{ i.cpu.usedPercent }} %
+                </div>
+            </ng-container>
+            <ng-template #cpuPending>
+                <div class="diagnose-value">
+                    {{ 'diagnose.calculating' | translate }}
+                </div>
+            </ng-template>
+            <div class="diagnose-detail">
+                {{ 'diagnose.loadAverage' | translate }}:
+                {{ i.cpu.loadAverage1Min }} / {{ i.cpu.loadAverage5Min }} /
+                {{ i.cpu.loadAverage15Min }}
+                ({{ i.cpu.coreCount }} {{ 'diagnose.cores' | translate }})
+            </div>
+        </div>
+
+        <div class="diagnose-card">
+            <div class="diagnose-card-title">
+                {{ 'diagnose.temperature' | translate }}
+            </div>
+            <ng-container *ngIf="i.temperatureCelsius !== null; else tempUnavailable">
+                <div
+                    class="diagnose-value diagnose-value-large"
+                    [ngClass]="temperatureClass(i.temperatureCelsius)">
+                    {{ i.temperatureCelsius }} °C
+                </div>
+            </ng-container>
+            <ng-template #tempUnavailable>
+                <div class="diagnose-value">
+                    {{ 'diagnose.unavailable' | translate }}
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

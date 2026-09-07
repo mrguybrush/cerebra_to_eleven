@@ -60,6 +60,7 @@ import {SystemComponent} from "./system/system.component";
 import {SettingsComponent} from "./system/settings/settings.component";
 import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
 import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.component";
+import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
 import {FacialExpressionComponent} from "./facial-expression/facial-expression.component";
 
 @NgModule({
@@ -102,6 +103,7 @@ import {FacialExpressionComponent} from "./facial-expression/facial-expression.c
         SettingsComponent,
         ProgramAssignmentComponent,
         PinAssignmentComponent,
+        DiagnoseComponent,
         FacialExpressionComponent,
     ],
     imports: [

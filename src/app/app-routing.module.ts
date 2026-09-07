@@ -31,6 +31,7 @@ import {SystemComponent} from "./system/system.component";
 import {SettingsComponent} from "./system/settings/settings.component";
 import {ProgramAssignmentComponent} from "./system/program-assignment/program-assignment.component";
 import {PinAssignmentComponent} from "./system/pin-assignment/pin-assignment.component";
+import {DiagnoseComponent} from "./system/diagnose/diagnose.component";
 
 const routes: Routes = [
     {
@@ -78,6 +79,10 @@ const routes: Routes = [
             {
                 path: "pin-assignment",
                 component: PinAssignmentComponent,
+            },
+            {
+                path: "diagnose",
+                component: DiagnoseComponent,
             },
             {path: "", redirectTo: "settings", pathMatch: "full"},
         ],

@@ -28,7 +28,24 @@
     "settingsTab": "Settings",
     "programAssignmentTab": "Assignments",
     "pinAssignmentTab": "Pin Layout",
-    "hardwareIdsTab": "Hardware IDs"
+    "hardwareIdsTab": "Hardware IDs",
+    "diagnoseTab": "Diagnostics"
+  },
+  "diagnose": {
+    "headline": "System Diagnostics",
+    "hint": "Storage, memory, CPU load and temperature of the robot's computer - refreshes automatically every few seconds. Useful for seeing whether the robot is running low on resources during extended use (e.g. posing while also talking to it).",
+    "loadFailed": "Could not load system info.",
+    "disk": "Storage (SD card)",
+    "memory": "Memory",
+    "cpu": "CPU",
+    "temperature": "Temperature",
+    "used": "used",
+    "free": "free",
+    "available": "available",
+    "loadAverage": "Load average (1/5/15 min)",
+    "cores": "cores",
+    "calculating": "calculating…",
+    "unavailable": "unavailable"
   },
   "settings": {
     "learningGroup": {
