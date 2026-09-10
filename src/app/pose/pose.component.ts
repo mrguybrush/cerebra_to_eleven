@@ -1,6 +1,7 @@
 import {
     Component,
     ElementRef,
+    OnDestroy,
     OnInit,
     QueryList,
     TemplateRef,
@@ -10,7 +11,7 @@ import {
 import {FormControl, Validators} from "@angular/forms";
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
 import {CdkDragDrop} from "@angular/cdk/drag-drop";
-import {Observable, concatMap, from, map} from "rxjs";
+import {Observable, Subscription, concatMap, from, map} from "rxjs";
 import {PoseService} from "src/app/shared/services/pose.service";
 import {MovementSettingsService} from "src/app/shared/services/movement-settings.service";
 import {RosService} from "src/app/shared/services/ros-service/ros.service";
@@ -49,7 +50,7 @@ const POSE_COLLECTION_EXPORT_KIND = "pib-pose-collection";
     templateUrl: "./pose.component.html",
     styleUrls: ["./pose.component.css"],
 })
-export class PoseComponent implements OnInit {
+export class PoseComponent implements OnInit, OnDestroy {
     @ViewChild("modalContent") modalContent: TemplateRef<any> | undefined;
     @ViewChild("deleteAllModalContent") deleteAllModalContent:
         | TemplateRef<any>
@@ -138,6 +139,21 @@ export class PoseComponent implements OnInit {
     readonly minSpeedPercent = 10;
     speedSaved = false;
 
+    // These three subscribe() calls in ngOnInit() are on shared, long-lived
+    // service singletons (not one-shot HTTP calls that complete on their
+    // own) - without unsubscribing in ngOnDestroy, every visit to this page
+    // left its subscription running forever. frame$ fires at up to ~10Hz
+    // while pose tracking is active, so each leaked visit meant one more
+    // stale drawPreview() call per frame piling up on top of the current
+    // page instance, and captureResult$ leaking meant an old visit's
+    // callback could re-fire browserPoseTrackerService.stop() and even
+    // pop a duplicate save-name dialog for the SAME capture result. This is
+    // very likely the cause of "gets slower/laggier the longer you use
+    // pose tracking, and doesn't recover" - each page visit compounded it.
+    private speedPercentSubscription?: Subscription;
+    private frameSubscription?: Subscription;
+    private captureResultSubscription?: Subscription;
+
     constructor(
         private poseService: PoseService,
         private gestureService: GestureService,
@@ -170,42 +186,62 @@ export class PoseComponent implements OnInit {
 
         // Regler mit dem tatsaechlich gespeicherten Tempo vorbelegen (auch
         // wenn es z.B. per Blockly geaendert wurde).
-        this.movementSettingsService.speedPercent$.subscribe((percent) => {
-            this.pendingSpeedPercent = percent;
-        });
+        this.speedPercentSubscription =
+            this.movementSettingsService.speedPercent$.subscribe((percent) => {
+                this.pendingSpeedPercent = percent;
+            });
 
-        this.browserPoseTrackerService.frame$.subscribe((dataUrl) => {
-            if (dataUrl) {
-                this.drawPreview(dataUrl);
-            }
-        });
+        this.frameSubscription = this.browserPoseTrackerService.frame$.subscribe(
+            (dataUrl) => {
+                if (dataUrl) {
+                    this.drawPreview(dataUrl);
+                }
+            },
+        );
 
-        this.gestureCaptureService.captureResult$.subscribe((result) => {
-            this.browserPoseTrackerService.stop();
-            if (!result) {
-                return;
-            }
-            if (result.mode === "static" && result.positions) {
-                const motorPositions: MotorPosition[] = Object.entries(
-                    result.positions,
-                ).map(([motorName, position]) => ({motorName, position}));
-                this.getNameInput(
-                    this.translateService.instant("pose.saveGestureTitle"),
-                    this.translateService.instant("pose.newGestureDefault"),
-                ).subscribe((name) =>
-                    this.gestureService.saveGesture(name, motorPositions).subscribe(),
-                );
-            } else if (result.mode === "dynamic" && result.frames) {
-                this.getNameInput(
-                    this.translateService.instant("pose.saveMovementSequenceTitle"),
-                    this.translateService.instant("pose.newMovementSequenceDefault"),
-                ).subscribe((name) =>
-                    this.movementSequenceService
-                        .saveSequence(name, result.sampleRateHz ?? 10, result.frames!)
-                        .subscribe(),
-                );
-            }
-        });
+        this.captureResultSubscription =
+            this.gestureCaptureService.captureResult$.subscribe((result) => {
+                this.browserPoseTrackerService.stop();
+                if (!result) {
+                    return;
+                }
+                if (result.mode === "static" && result.positions) {
+                    const motorPositions: MotorPosition[] = Object.entries(
+                        result.positions,
+                    ).map(([motorName, position]) => ({motorName, position}));
+                    this.getNameInput(
+                        this.translateService.instant("pose.saveGestureTitle"),
+                        this.translateService.instant("pose.newGestureDefault"),
+                    ).subscribe((name) =>
+                        this.gestureService
+                            .saveGesture(name, motorPositions)
+                            .subscribe(),
+                    );
+                } else if (result.mode === "dynamic" && result.frames) {
+                    this.getNameInput(
+                        this.translateService.instant(
+                            "pose.saveMovementSequenceTitle",
+                        ),
+                        this.translateService.instant(
+                            "pose.newMovementSequenceDefault",
+                        ),
+                    ).subscribe((name) =>
+                        this.movementSequenceService
+                            .saveSequence(
+                                name,
+                                result.sampleRateHz ?? 10,
+                                result.frames!,
+                            )
+                            .subscribe(),
+                    );
+                }
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.speedPercentSubscription?.unsubscribe();
+        this.frameSubscription?.unsubscribe();
+        this.captureResultSubscription?.unsubscribe();
     }
 
     startCapture() {
